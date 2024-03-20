@@ -14,18 +14,18 @@ public class Student
     public float studentAverage;
     public string studentGrade;
 
-        
-
-    public void StudentInfo(Student student)
+    public string StudentScore()
     {
-        studentName = student.studentName;
-        studentKor = student.studentKor;
-        studentEng = student.studentEng;
-        studentMath = student.studentMath;
-        studentScore = student.studentScore;
-        studentAverage = student.studentAverage;
-        studentGrade = student.studentGrade;
-        
+        studentScore = studentKor + studentEng + studentMath;
+        studentAverage = studentScore / 3;
+
+        string score = studentScore.ToString();
+        string average = studentAverage.ToString("F2");
+
+        return $"총점 ({score}) 평균({average})";
+    }
+    public string StudentGrade()
+    {
         if (studentAverage > 80)
             studentGrade = "A등급";
         else if (studentAverage > 60)
@@ -36,6 +36,8 @@ public class Student
             studentGrade = "D등급";
         else
             studentGrade = "외계인";
+
+        return studentGrade;
     }
 }
 public class Grade_Mgr : MonoBehaviour
@@ -56,7 +58,7 @@ public class Grade_Mgr : MonoBehaviour
     void Start()
     {
         if (InfoSave_Btn != null)
-            InfoSave_Btn.onClick.AddListener(() => InfoSaveBtn(StudentName_IF.text, StudentScore1_IF.text, StudentScore2_IF.text, StudentScore3_IF.text));
+            InfoSave_Btn.onClick.AddListener(() => InfoSaveBtn());
     }
 
     // Update is called once per frame
@@ -65,9 +67,18 @@ public class Grade_Mgr : MonoBehaviour
         
     }
 
-    public void InfoSaveBtn(string Name, string Kor, string Eng, string Math)
+    public void InfoSaveBtn()
     {
-  
+        Student student = new Student();
+        {
+            student.studentName = StudentName_IF.text;
+            int.TryParse(StudentScore1_IF.text, out student.studentKor);
+            int.TryParse(StudentScore2_IF.text, out student.studentEng);
+            int.TryParse(StudentScore3_IF.text, out student.studentMath);
+        }
 
+        StudentInfo_Text.text = $"{student.studentName} : 국어({student.studentKor}) 영어({student.studentEng}) 수학({student.studentMath})";
+        StudentScore_Text.text = student.StudentScore();
+        StudentGrade_Text.text = student.StudentGrade();
     }
 }
