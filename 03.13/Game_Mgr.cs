@@ -21,11 +21,13 @@ public class Game_Mgr : MonoBehaviour
 
     public Text UserInfo_text;   //유저 정보 표시 텍스트
     public Text Result_Text;     //결과 표시 텍스트
+    public Text Record_Text;
 
     int m_Money = 1000;          //유저의 보유 금액
     int m_WinCount = 0;          //승리 카운트
     int m_LostCount = 0;         //패배 카운트
-    float m_Timer = 3.0f;         //타이머 카운트
+    float m_Timer = 3.0f;        //타이머 카운트
+    int m_Record;            //최고기록 카운트
 
 
     [Header("--- ShowUserData ---")]
@@ -72,6 +74,20 @@ public class Game_Mgr : MonoBehaviour
             if (m_Timer <= 0.0f)
                 UserGBB_Img.gameObject.SetActive(false);
         }   
+
+        if (m_Record < m_WinCount)
+        {
+            m_Record = m_WinCount;
+            PlayerPrefs.SetInt("BestRecord", m_Record);
+
+            Record_Text.text = $"{PlayerPrefs.GetString("UserName", "유저")}의 " +
+                               $"최고기록 : ({PlayerPrefs.GetInt("BestRecord")})";
+        }
+
+        if (Input.GetKeyDown(KeyCode.C) == true)
+        {
+            PlayerPrefs.DeleteAll();
+        }
     }
 
     void BtnClickMethod(GawiBawiBo a_UserSel)
@@ -193,11 +209,20 @@ public class Game_Mgr : MonoBehaviour
         else
             m_NickName = a_Nick;
 
-        if(UserInfo_text != null)
+
+
+        if (UserInfo_text != null)
         {
             UserInfo_text.text = m_NickName + "의 보유금액 : " + m_Money +
                 " : 승(" + m_WinCount + ")" +
                 " : 패(" + m_LostCount + ")";
+        }
+
+        PlayerPrefs.SetString("UserName", m_NickName);
+        if (Record_Text != null)
+        {
+            Record_Text.text = $"{PlayerPrefs.GetString("UserName", "유저")}의 " +
+                               $"최고기록 : ({PlayerPrefs.GetInt("BestRecord")})";
         }
     }
 }
