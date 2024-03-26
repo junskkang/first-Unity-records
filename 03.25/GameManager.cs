@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class Equipment
 {
+    string[] m_Item2 = { "드래곤", "엘프", "전사", "사자", "팔라독", "고양이", "강아지", "상어", "마법사" };
+    string[] m_Item3 = { "검", "활", "단검", "지팡이", "발톱", "반지", "갑옷" };
     public string m_Name;
     public int m_Level;
     public int m_Star;
@@ -13,8 +15,20 @@ public class Equipment
     public int m_LvUpCount;
     public int m_StarUpCount;
 
+    public Equipment()         //디폴트 생성자    이름입력 안하면 자동으로 아이템생성
+    {
+        int a_idx2 = Random.Range(0, m_Item2.Length);
+        int a_idx3 = Random.Range(0, m_Item3.Length);
+        m_Name = m_Item2[a_idx2] + "의" + m_Item3[a_idx3];
+        m_Level = Random.Range(1, 9);
+        m_Star = Random.Range(6, 9);
+        m_LvUpCount = 0;
+        m_StarUpCount = 0;
+        m_Price = Random.Range(100, 1001);
+        m_SellingPrice = m_Price;
+    }
 
-    public Equipment(string name = "")
+    public Equipment(string name)   //이름입력 하면 그 이름으로 아이템생성
     {
         m_Name = name;
         m_Level = Random.Range(1, 9);
@@ -23,7 +37,6 @@ public class Equipment
         m_StarUpCount = 0;
         m_Price = Random.Range(100, 1001);
         m_SellingPrice = m_Price;
-
     }
 
     public float Success()
@@ -118,6 +131,7 @@ public class GameManager : MonoBehaviour
             {
                 m_ItemList.Clear();
                 ItemList_Text.text = "";
+                m_FindItem = null;
             });
 
         if (ItemChoice_Btn != null)
@@ -154,14 +168,27 @@ public class GameManager : MonoBehaviour
 
     private void StartBtnClick()
     {
-        if (Nick_IF.text == "")
+        if  (Nick_IF.text.Trim() == "")
             return;
         else
         {
-            PlayerPrefs.SetString("UserName", Nick_IF.text);
-            m_Nick = PlayerPrefs.GetString("UserName", "");
-            PlayerPrefs.SetInt("UserGold", 10000);
-            m_UserGold = PlayerPrefs.GetInt("UserGold");
+            if (Nick_IF.text.Trim() == PlayerPrefs.GetString("UserName"))
+            {
+                m_UserGold = PlayerPrefs.GetInt("UserGold");
+                m_Nick = PlayerPrefs.GetString("UserName");
+                UserGold_Text.text = $"보유 골드 : {PlayerPrefs.GetInt("UserGold")}";
+                ItemAdd_IF.text = "";
+            }
+            else if (Nick_IF.text.Trim() != PlayerPrefs.GetString("UserName"))
+            {
+                m_UserGold = 10000;
+                PlayerPrefs.SetInt("UserGold", m_UserGold);
+                PlayerPrefs.SetString("UserName", Nick_IF.text.Trim());
+                m_Nick = PlayerPrefs.GetString("UserName", "");
+                UserGold_Text.text = $"보유 골드 : {PlayerPrefs.GetInt("UserGold")}";
+                ItemAdd_IF.text = "";
+                ItemList_Text.text = "";
+            }
         }
         //인벤토리 시작 
         StartScene.gameObject.SetActive(false);
@@ -172,9 +199,10 @@ public class GameManager : MonoBehaviour
 
     private void ItemAddClick()
     {
-        if (ItemAdd_IF.text == "")
-            return;
-        else if (m_ItemList.Count >= m_MaxItemCount)
+        //if (ItemAdd_IF.text.Trim() == "")
+        //    return;
+        //else 
+        if (m_ItemList.Count >= m_MaxItemCount)
             return;
         else if (m_UserGold <= 0)
         {
@@ -184,13 +212,41 @@ public class GameManager : MonoBehaviour
 
         else
         {
-            Equipment MyItem = new Equipment(ItemAdd_IF.text.Trim());
-            m_ItemList.Add(MyItem);
-            ItemList_Text.text += MyItem.Print(MyItem) + "\n";
-            //$"[{MyItem.m_Name}] : 레벨({MyItem.m_Level}) 등급({MyItem.m_Star}) 가격({MyItem.m_Price})\n";
-            m_UserGold -= 1000;
-            PlayerPrefs.SetInt("UserGold", m_UserGold);
-            UserGold_Text.text = $"보유 골드 : {PlayerPrefs.GetInt("UserGold")}";
+            if(ItemAdd_IF.text.Trim() != "")
+            { 
+                Equipment MyItem = new Equipment(ItemAdd_IF.text.Trim());
+
+                for (int ii = 0; ii < m_ItemList.Count; ii++)
+                {
+                    if (MyItem.m_Name == m_ItemList[ii].m_Name)
+                        return;
+                }
+
+                m_ItemList.Add(MyItem);
+                ItemList_Text.text += MyItem.Print(MyItem) + "\n";
+                //$"[{MyItem.m_Name}] : 레벨({MyItem.m_Level}) 등급({MyItem.m_Star}) 가격({MyItem.m_Price})\n";
+                m_UserGold -= 1000;
+                PlayerPrefs.SetInt("UserGold", m_UserGold);
+                UserGold_Text.text = $"보유 골드 : {PlayerPrefs.GetInt("UserGold")}";
+            }
+            else if (ItemAdd_IF.text.Trim() == "")
+            {
+                Equipment MyItem = new Equipment();
+
+                for (int ii = 0; ii < m_ItemList.Count; ii++)
+                {
+                    if (MyItem.m_Name == m_ItemList[ii].m_Name)
+                        return;
+                }
+                
+                m_ItemList.Add(MyItem);
+                ItemList_Text.text += MyItem.Print(MyItem) + "\n";
+                //$"[{MyItem.m_Name}] : 레벨({MyItem.m_Level}) 등급({MyItem.m_Star}) 가격({MyItem.m_Price})\n";
+                m_UserGold -= 1000;
+                PlayerPrefs.SetInt("UserGold", m_UserGold);
+                UserGold_Text.text = $"보유 골드 : {PlayerPrefs.GetInt("UserGold")}";
+
+            }
         }
 
     }
@@ -237,13 +293,17 @@ public class GameManager : MonoBehaviour
                 break;
             }
             else
+            { 
                 ItemUp.gameObject.SetActive(false);
+                m_FindItem = null;
+            }
         }
 
         if (m_FindItem != null)
         {
             ItemUp.gameObject.SetActive(true);
             ItemInfo_Text.text = m_FindItem.Print(m_FindItem);
+            UpResult_Text.text = "강화를 시도해보세요!";
         }
 
         if (m_FindItem.m_Level == 30)
@@ -484,6 +544,7 @@ public class GameManager : MonoBehaviour
             if (m_ItemList[ii].m_Name == m_FindItem.m_Name)
             {
                 m_ItemList.RemoveAt(ii);
+                m_FindItem = null;
                 AddSortClick();
                 Sell_Btn.gameObject.SetActive(false);
                 StarUp_Btn.gameObject.SetActive(false);
@@ -496,9 +557,6 @@ public class GameManager : MonoBehaviour
 
     private void SellClick()
     {
-        m_UserGold += (int)m_FindItem.m_SellingPrice;
-        PlayerPrefs.SetInt("UserGold", m_UserGold);
-        UserGold_Text.text = $"보유 골드 : {PlayerPrefs.GetInt("UserGold")}";
         for (int ii = 0; ii < m_ItemList.Count; ii++)
         {
             if (m_ItemList[ii].m_Name == m_FindItem.m_Name)
@@ -506,15 +564,21 @@ public class GameManager : MonoBehaviour
                 m_ItemList.RemoveAt(ii);
                 AddSortClick();
                 ItemUp.gameObject.SetActive(false);
+                m_UserGold += (int)m_FindItem.m_SellingPrice;
+                PlayerPrefs.SetInt("UserGold", m_UserGold);
+                UserGold_Text.text = $"보유 골드 : {PlayerPrefs.GetInt("UserGold")}";
+                m_FindItem = null;
             }
         }
     }
 
     private void RestartClick()
     {
+        m_ItemList.Clear();
         PlayerPrefs.DeleteAll();
         StartScene.gameObject.SetActive(true);
         InvenScene.gameObject.SetActive(false);
+        m_Nick = "";
         Nick_IF.text = "";
     }
 }
