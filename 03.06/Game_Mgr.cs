@@ -5,6 +5,14 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 
+public enum EvenOrOdd
+{
+    Even,
+    Odd
+}
+
+public
+
 public class Game_Mgr : MonoBehaviour
 {
     public Button Even_Btn;
@@ -23,9 +31,10 @@ public class Game_Mgr : MonoBehaviour
 
     [Header("--- Charater Image ---")]   // 유니티상 Inspector창에 나타나는 주석 
     public Image CharacterImg;           // Header아래에는 반드시 public 변수가 선언되어야 한다.
-    public Sprite WaitImg;
-    public Sprite WinImg;
-    public Sprite LostImg;
+    public Sprite[] ResultImg; 
+    //public Sprite WaitImg;
+    //public Sprite WinImg;
+    //public Sprite LostImg;
     public Image GameOverImg;
 
     [Header("--- Borrow ---")]
@@ -43,10 +52,10 @@ public class Game_Mgr : MonoBehaviour
     void Start()
     {
         if (Even_Btn != null)       // 버튼이 연결이 잘 되어 있으면 동작하라는 의미
-            Even_Btn.onClick.AddListener(EvenBtnClick);  // 버튼을 누르면 반응하는 함수를 대기 시켜 놓음
+            Even_Btn.onClick.AddListener(() => BtnClick(EvenOrOdd.Even));  // 버튼을 누르면 반응하는 함수를 대기 시켜 놓음
 
         if (Odd_Btn != null)
-            Odd_Btn.onClick.AddListener(OddBtnClick);
+            Odd_Btn.onClick.AddListener(() => BtnClick(EvenOrOdd.Odd));
 
         if (Replay_Btn != null)
             Replay_Btn.onClick.AddListener(ReplayBtnClick);
@@ -77,100 +86,27 @@ public class Game_Mgr : MonoBehaviour
         }
     }//void Update()
 
-    private void EvenBtnClick()
+    public void BtnClick(EvenOrOdd a_UserSel)
     {
+        if (m_Money <= 0)
+            return;
 
-        if (m_Money <= 0)  //버튼을 누를 때 게임 머니가 없다면
-            return;  // 즉시 함수를 빠져 나가는 명령어 아래의 코드들이 실행되지 않음
-
-        //Debug.Log("짝수 버튼 클릭");
-        //Result_Text.text = "짝수 버튼 클릭";
-
-        int a_UserSel = 0;  //유저의 선택 0번 짝수, 1번 홀수
-        int a_DiceNum = Random.Range(1, 7);   // 1 ~ 6까지 랜덤값 발생
-
+        //주사위 값 생성
+        int a_DiceNum = Random.Range(1, 7);
+        //주사위 값에 따른 한글 표기
         string a_StrCom = "짝수";
         if ((a_DiceNum % 2) == 1)
             a_StrCom = "홀수";
 
-        //판정
-        if (a_UserSel == (a_DiceNum % 2))  // 맞춘 경우
+        if (a_UserSel == (a_DiceNum % 2))
         {
             Result_Text.text = "주사위 값은 (" + a_DiceNum + ") (" + a_StrCom + ") 맞췄습니다.";
-            m_WinCount++;
-            m_Money += 100;
-
-            CharacterImg.sprite = WinImg;
+            Win();
         }
         else  // 틀린 경우
         {
             Result_Text.text = "주사위 값은 (" + a_DiceNum + ") (" + a_StrCom + ") 틀렸습니다.";
-            m_LostCount++;
-            m_Money -= 200;
-
-            CharacterImg.sprite = LostImg;
-
-            if (m_Money <= 0)   // 보유 게임 머니가 모두 소진된 상태
-            {
-                CharacterImg.gameObject.SetActive(false);
-                GameOverImg.gameObject.SetActive(true);
-               
-                m_Money = 0;
-                Result_Text.text = "Game Over";
-            }
-        }
-
-        //유저의 정보 UI 갱신
-        UserInfo_Text.text = m_NickName + "의 보유금액 : " + m_Money + 
-            " : 승(" + m_WinCount + ")" + 
-            " : 패(" + m_LostCount + ")";
-
-
-        m_WaitTimer = 5.0f;
-
-    }//private void EvenBtnClick()
-
-    private void OddBtnClick()
-    {
-
-        if (m_Money <= 0)  //버튼을 누를 때 게임 머니가 없다면
-            return;  // 즉시 함수를 빠져 나가는 명령어 아래의 코드들이 실행되지 않음
-
-        //Debug.Log("홀수 버튼을 눌렀어요.");
-        //Result_Text.text = "홀수 버튼을 눌렀어요.";
-
-        int a_UserSel = 1;  //유저의 선택 0번 짝수, 1번 홀수
-        int a_DiceNum = Random.Range(1, 7);   // 1 ~ 6까지 랜덤값 발생
-
-        string a_StrCom = "짝수";
-        if ((a_DiceNum % 2) == 1)
-            a_StrCom = "홀수";
-
-        //판정
-        if (a_UserSel == (a_DiceNum % 2))  // 맞춘 경우
-        {
-            Result_Text.text = "주사위 값은 (" + a_DiceNum + ") (" + a_StrCom + ") 맞췄습니다.";
-            m_WinCount++;
-            m_Money += 100;
-
-            CharacterImg.sprite = WinImg;
-        }
-        else  // 틀린 경우
-        {
-            Result_Text.text = "주사위 값은 (" + a_DiceNum + ") (" + a_StrCom + ") 틀렸습니다.";
-            m_LostCount++;
-            m_Money -= 200;
-
-            CharacterImg.sprite = LostImg;
-
-            if (m_Money <= 0)   // 보유 게임 머니가 모두 소진된 상태
-            {
-                CharacterImg.gameObject.SetActive(false);
-                GameOverImg.gameObject.SetActive(true);
-
-                m_Money = 0;
-                Result_Text.text = "Game Over";
-            }
+            Lost();
         }
 
         //유저의 정보 UI 갱신
@@ -178,10 +114,141 @@ public class Game_Mgr : MonoBehaviour
             " : 승(" + m_WinCount + ")" +
             " : 패(" + m_LostCount + ")";
 
-        m_WaitTimer = 5.0f;
+        //타이머 갱신
+        m_WaitTimer = 5.0f;  
 
-    }//private void OddBtnClick()
+    }
 
+    void Win()
+    {
+        m_WinCount++;
+        m_Money += 100;
+
+        CharacterImg.sprite = ResultImg[1];
+    }
+
+    void Lost()
+    {
+        m_LostCount++;
+        m_Money -= 200;
+
+        CharacterImg.sprite = ResultImg[2];
+
+        if (m_Money <= 0)   // 보유 게임 머니가 모두 소진된 상태
+        {
+            CharacterImg.gameObject.SetActive(false);
+            GameOverImg.gameObject.SetActive(true);
+
+            m_Money = 0;
+            Result_Text.text = "Game Over";
+        }
+    }
+    #region
+    //private void EvenBtnClick()
+    //{
+
+    //    if (m_Money <= 0)  //버튼을 누를 때 게임 머니가 없다면
+    //        return;  // 즉시 함수를 빠져 나가는 명령어 아래의 코드들이 실행되지 않음
+
+    //    //Debug.Log("짝수 버튼 클릭");
+    //    //Result_Text.text = "짝수 버튼 클릭";
+
+    //    int a_UserSel = 0;  //유저의 선택 0번 짝수, 1번 홀수
+    //    int a_DiceNum = Random.Range(1, 7);   // 1 ~ 6까지 랜덤값 발생
+
+    //    string a_StrCom = "짝수";
+    //    if ((a_DiceNum % 2) == 1)
+    //        a_StrCom = "홀수";
+
+    //    //판정
+    //    if (a_UserSel == (a_DiceNum % 2))  // 맞춘 경우
+    //    {
+    //        Result_Text.text = "주사위 값은 (" + a_DiceNum + ") (" + a_StrCom + ") 맞췄습니다.";
+    //        m_WinCount++;
+    //        m_Money += 100;
+
+    //        CharacterImg.sprite = WinImg;
+    //    }
+    //    else  // 틀린 경우
+    //    {
+    //        Result_Text.text = "주사위 값은 (" + a_DiceNum + ") (" + a_StrCom + ") 틀렸습니다.";
+    //        m_LostCount++;
+    //        m_Money -= 200;
+
+    //        CharacterImg.sprite = LostImg;
+
+    //        if (m_Money <= 0)   // 보유 게임 머니가 모두 소진된 상태
+    //        {
+    //            CharacterImg.gameObject.SetActive(false);
+    //            GameOverImg.gameObject.SetActive(true);
+
+    //            m_Money = 0;
+    //            Result_Text.text = "Game Over";
+    //        }
+    //    }
+
+    //    //유저의 정보 UI 갱신
+    //    UserInfo_Text.text = m_NickName + "의 보유금액 : " + m_Money + 
+    //        " : 승(" + m_WinCount + ")" + 
+    //        " : 패(" + m_LostCount + ")";
+
+
+    //    m_WaitTimer = 5.0f;
+
+    //}//private void EvenBtnClick()
+
+    //private void OddBtnClick()
+    //{
+
+    //    if (m_Money <= 0)  //버튼을 누를 때 게임 머니가 없다면
+    //        return;  // 즉시 함수를 빠져 나가는 명령어 아래의 코드들이 실행되지 않음
+
+    //    //Debug.Log("홀수 버튼을 눌렀어요.");
+    //    //Result_Text.text = "홀수 버튼을 눌렀어요.";
+
+    //    int a_UserSel = 1;  //유저의 선택 0번 짝수, 1번 홀수
+    //    int a_DiceNum = Random.Range(1, 7);   // 1 ~ 6까지 랜덤값 발생
+
+    //    string a_StrCom = "짝수";
+    //    if ((a_DiceNum % 2) == 1)
+    //        a_StrCom = "홀수";
+
+    //    //판정
+    //    if (a_UserSel == (a_DiceNum % 2))  // 맞춘 경우
+    //    {
+    //        Result_Text.text = "주사위 값은 (" + a_DiceNum + ") (" + a_StrCom + ") 맞췄습니다.";
+    //        m_WinCount++;
+    //        m_Money += 100;
+
+    //        CharacterImg.sprite = WinImg;
+    //    }
+    //    else  // 틀린 경우
+    //    {
+    //        Result_Text.text = "주사위 값은 (" + a_DiceNum + ") (" + a_StrCom + ") 틀렸습니다.";
+    //        m_LostCount++;
+    //        m_Money -= 200;
+
+    //        CharacterImg.sprite = LostImg;
+
+    //        if (m_Money <= 0)   // 보유 게임 머니가 모두 소진된 상태
+    //        {
+    //            CharacterImg.gameObject.SetActive(false);
+    //            GameOverImg.gameObject.SetActive(true);
+
+    //            m_Money = 0;
+    //            Result_Text.text = "Game Over";
+    //        }
+    //    }
+
+    //    //유저의 정보 UI 갱신
+    //    UserInfo_Text.text = m_NickName + "의 보유금액 : " + m_Money +
+    //        " : 승(" + m_WinCount + ")" +
+    //        " : 패(" + m_LostCount + ")";
+
+    //    m_WaitTimer = 5.0f;
+
+    //}//private void OddBtnClick()
+    #endregion
     private void ReplayBtnClick()
     {
         SceneManager.LoadScene("EvenOddGame");
