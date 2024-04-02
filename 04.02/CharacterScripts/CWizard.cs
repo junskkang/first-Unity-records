@@ -21,11 +21,12 @@ public class Wizard_Stat : Chr_Stat
 
     //캐릭터의 스탯 정보를 기반으로 지형에 돌아다니는 캐릭터 객체 추가하려고 할 때
     //Hero게임 오브젝트에 빙의 시키길 원하는 클래스 추가 함수
-    public override CUnit MyAddComponent(GameObject a_Hero)
+    public override CUnit MyAddComponent(GameObject a_ParentGObj)
     {
         //매개변수로 받은 Hero GameObject에 CWizard 컴포넌트 붙여주고
-        CUnit a_RefHero = a_Hero.AddComponent<CWizard>();
+        CUnit a_RefHero = a_ParentGObj.AddComponent<CWizard>();
         a_RefHero.m_ChrStat = this;  //지금 이 Wizard_Stat객체를 CUnit쪽 m_ChrStat 변수에 대입해준다.
+        //this == GlobalValue.g_CurSelCStat
         return a_RefHero;
     }
 }

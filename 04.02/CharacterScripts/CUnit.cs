@@ -7,6 +7,7 @@ public enum CharicType
     Wizard,
     Barbarian,
     Archer,
+    Healer,
     Count
 }
 
@@ -23,7 +24,7 @@ public class Chr_Stat      //Stat, Atrribute 설정데이터
 
     //캐릭터의 스텟 정보보를 기반으로 지형에 돌아다니는 캐릭터 객체를 추가하려고 할 때
     //Hero 게임 오브젝트에 빙의 시키길 원하는 클래스 추가 함수
-    public virtual CUnit MyAddComponent(GameObject a_Hero)
+    public virtual CUnit MyAddComponent(GameObject a_ParentGObj)
     {
         CUnit a_RefHero = null;
         return a_RefHero;
