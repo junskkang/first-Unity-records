@@ -26,7 +26,7 @@ public class ArrowGenerator : MonoBehaviour
                 if (span <= 0.18f)
                     span = 0.18f;
                 GameObject go = Instantiate(arrowPrefabs);   //프리팹 인스턴스 불러오기
-                int px = Random.Range(-8, 8);                 //임의의 x 좌표값 변수 생성
+                int px = Random.Range(-8, 9);                 //임의의 x 좌표값 변수 생성
                 go.transform.position = new Vector3(px, 7, 0);//임의의 x 좌표값에서 생성
             }
         }

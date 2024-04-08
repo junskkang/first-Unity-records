@@ -13,19 +13,31 @@ public enum GameState
 public class GameDirector : MonoBehaviour
 {
     GameObject hpGauge;
+    Image m_HpImg;
     [HideInInspector] public int m_Gold = 0;
     public Text Gold_Text;
-    public static GameState m_State = GameState.GameIng;
+    public static GameState m_State;
 
+    [Header("Game Over")]
     public Text Result_Text;
     public Button Replay_Btn;
     public RawImage GameOver_Img;
 
+    public GameObject UI_Mask;
+
+    private void Awake()
+    {
+        if(UI_Mask != null)
+            UI_Mask.SetActive(true);
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        Time.timeScale = 1.0f; //일시정지를 해제. 스태틱변수이기 때문에 마지막 값이 저장됨.
         m_State = GameState.GameIng;
         this.hpGauge = GameObject.Find("hpGauge");
+        m_HpImg = hpGauge.GetComponent<Image>();
     }
 
     // Update is called once per frame
@@ -41,10 +53,11 @@ public class GameDirector : MonoBehaviour
     }
     public void DecreaseHp()
     {
-        this.hpGauge.GetComponent<Image>().fillAmount -= 0.1f;
+        m_HpImg.fillAmount -= 0.1f;
 
-        if (this.hpGauge.GetComponent<Image>().fillAmount <= 0)
+        if (m_HpImg.fillAmount <= 0)
         {
+            Time.timeScale = 0.0f; // 델타타임 값을 사용하는 애들 일시정지 효과
             m_State = GameState.GameEnd;
             if(Result_Text != null)
             {
