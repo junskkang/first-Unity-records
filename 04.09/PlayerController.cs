@@ -19,11 +19,23 @@ public class PlayerController : MonoBehaviour
     float hp = 3.0f;
     public Image[] HpImage;
 
+    GameObject m_OverlapBlock = null; //보상이나 화살 두세번 연속 충돌 방지용 변수
+
+    //대쉬관련 변수들
+    ParticleSystem dashParticle;
+    bool isDash = false;
+    float dashPower = 30.0f;
+    float dashDelayTime = 0.0f;
+    float dashDelay = 3.0f;
+    float dashTime = 0.0f;
+    float dashMaxTime = 0.1f;
+    public Image dashGaugeImg;
     void Start()
     {
         Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 0;
 
+        this.dashParticle = GetComponentInChildren<ParticleSystem>();
         this.rigid2D = GetComponent<Rigidbody2D>();
         this.animator = GetComponent<Animator>();
     }
@@ -39,7 +51,7 @@ public class PlayerController : MonoBehaviour
 
         //점프, 정확히 velocity가 0에 떨어지지 않을 경우에 대비하여....
         if ((0 < m_ReserveJump) &&
-            (-0.02f <= this.rigid2D.velocity.y && this.rigid2D.velocity.y <= 0.02f))// && this.rigid2D.velocity.y == 0) //구름에 닿았을 때
+            (-0.05f <= this.rigid2D.velocity.y && this.rigid2D.velocity.y <= 0.02f))// && this.rigid2D.velocity.y == 0) //구름에 닿았을 때
         {
             this.animator.SetTrigger("JumpTrigger");
             this.rigid2D.velocity = new Vector2(rigid2D.velocity.x, 0.0f);
@@ -93,7 +105,38 @@ public class PlayerController : MonoBehaviour
         {
             this.animator.speed = 1.0f;
         }
-        
+
+        //대쉬 구현
+        if (Input.GetKeyDown(KeyCode.D))
+            isDash = true;
+
+        if (dashDelayTime < dashDelay)        //dashDelay == 3.0f 쿨타임 3초
+        {
+            dashDelayTime += Time.deltaTime;
+            isDash = false;
+        }
+        else //쿨타임이 돌지 않는동안
+        {
+            DashFlicker();
+
+            if (isDash == true)
+            {
+                dashParticle.Play();          //잔상 이펙트 플레이
+                dashTime += Time.deltaTime;   //dash 발동 시간
+                if (dashTime <= dashMaxTime)   //dashMaTime == 0.1초 
+                    this.rigid2D.velocity = transform.up * dashPower;
+                //this.rigid2D.velocity = transform.right * transform.localScale.x * dashPower;
+                //key값에 따라 해당 방향에 dashPower만큼 세게 밀어주기
+                else
+                {
+                    isDash = false;
+                    dashDelayTime = 0.0f;     //dash 쿨타임 초기화
+                    dashTime = 0.0f;          //dash 발동시간 초기화
+                    dashGaugeImg.color = new Color(dashGaugeImg.color.r, dashGaugeImg.color.g, dashGaugeImg.color.b, 1.0f);
+                }
+            }
+        }
+        dashGaugeImg.fillAmount = dashDelayTime / dashDelay;
 
 
         //플레이어가 화면 밖으로 나간다면 처음으로
@@ -135,15 +178,75 @@ public class PlayerController : MonoBehaviour
         }
         else if (coll.gameObject.name.Contains("arrowPrefab") == true)
         {
-            //화살과 충돌
-            Destroy(coll.gameObject); //화살 삭제
+            if (m_OverlapBlock != coll.gameObject) //같은 오브젝트에 두번 충돌되는 것 방지
+            {
+                hp -= 1.0f;                //플레이어 체력 감소
+                HpImgUpdate();             //UI업데이트
+                if (hp <= 0.0f)            //사망
+                {
+                    Die();
+                }
 
-            //플레이어 체력 감소
+                m_OverlapBlock = coll.gameObject;
+            }
+            //화살과 충돌
+            Destroy(coll.gameObject); //삭제되는 시점이 쓰인 위치보다 느려
+            //DestroyImmediate(coll.gameObject); //그 시점에서 그 즉시 오브젝트 삭제
+        }
+        else if (coll.gameObject.name.Contains("fish") == true)
+        {
+            if(m_OverlapBlock != coll.gameObject)
+            {
+                hp += 0.5f;
+                
+                if (hp >= 3.0f)
+                    hp = 3.0f;
+                HpImgUpdate();
+
+                m_OverlapBlock = coll.gameObject;
+            }
+            Destroy(coll.gameObject);
         }
     }
 
     void Die()
     {
-        SceneManager.LoadScene("ClearScene");
+        SceneManager.LoadScene("GameOverScene");
+    }
+
+    void HpImgUpdate()
+    {
+        float a_CacHp = 0.0f;
+        for(int ii = 0; ii < HpImage.Length; ii++)
+        {
+            a_CacHp = hp - (float)ii;
+            if (a_CacHp < 0.0f) // 체력이 없는 경우
+            {
+                a_CacHp = 0.0f;
+            }
+
+            if (1.0f < a_CacHp)
+                a_CacHp = 1.0f;
+
+            if (0.45f < a_CacHp && a_CacHp < 0.55f)
+                a_CacHp = 0.445f;
+
+            HpImage[ii].fillAmount = a_CacHp;
+        }
+    }
+    public float alpha = -6.0f;
+    void DashFlicker()
+    {
+        if (dashGaugeImg == null)
+            return;
+
+        if (dashGaugeImg.color.a >= 1.0f)
+            alpha = -6.0f;
+        else if (dashGaugeImg.color.a <= 0.0f)
+            alpha = 6.0f;
+
+        //RGB값은 100% 투명도만 조정
+        dashGaugeImg.color = new Color(dashGaugeImg.color.r, dashGaugeImg.color.g, dashGaugeImg.color.b,
+            dashGaugeImg.color.a + alpha * Time.deltaTime);
     }
 }

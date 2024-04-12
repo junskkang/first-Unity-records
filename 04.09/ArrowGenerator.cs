@@ -1,12 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ArrowGenerator : MonoBehaviour
 {
     public GameObject arrowPrefab;
     float spawn = 2.0f;
     float delta = 0.0f;
+
     void Start()
     {
         
@@ -25,4 +28,6 @@ public class ArrowGenerator : MonoBehaviour
             go.GetComponent<ArrowCtrl>().InitArrow(dropIdx);
         }
     }
+
+    
 }
