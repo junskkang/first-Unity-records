@@ -2,17 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum Moving
-{
-    IsMoving,
-    Stop,
-    GameOver
+//public enum Moving
+//{
+//    IsMoving,
+//    Stop,
+//    GameOver
      
-}
+//}
 
 public class CameraController : MonoBehaviour
 {
-    int playerHp = 3;
     float m_WalkSpeed = 30.0f;
     float m_RotateSpeed = 0.5f;
     Vector3 m_StartPos;
@@ -48,9 +47,12 @@ public class CameraController : MonoBehaviour
                 this.transform.position = new Vector3((this.transform.position.x + m_WalkSpeed * Time.deltaTime),
                     this.transform.position.y, this.transform.position.z);
 
+            float a_CacPosY = GameManager.Inst.m_RefMap.SampleHeight(transform.position);
+            transform.position = new Vector3(transform.position.x, 5 + a_CacPosY, transform.position.z);
+
 
             //카메라 시점 회전
-            if(Input.GetMouseButtonDown(1))
+            if (Input.GetMouseButtonDown(1))
                 m_StartPos = Input.mousePosition;
             if (Input.GetMouseButton(1))
             {
@@ -71,21 +73,4 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.name.Contains("mummy"))
-        {
-            playerHp -= 1;
-
-            if (playerHp <= 0)
-            {
-                Die();
-            }
-        }
-    }
-
-    void Die()
-    {
-        state = Moving.GameOver;
-    }
 }
