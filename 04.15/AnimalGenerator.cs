@@ -4,70 +4,70 @@ using UnityEngine;
 
 public class AnimalGenerator : MonoBehaviour
 {
-    public GameObject Cat;
-    public GameObject LOVEDUCK;
-    public GameObject FLOWER;
-    public GameObject mole_attack;
-    public GameObject penguin;
-    public GameObject sheep;
+    public GameObject CatPrefab;
+    public GameObject DuckPrefab;
+    public GameObject FlowerPrefab;
+    public GameObject MolePrefab;
+    public GameObject PenguinPrefab;
+    public GameObject SheepPrefab;
 
     // Start is called before the first frame update
     void Start()
     {
         for (int i = 0; i < 20; i++)
         {
-            GameObject animal = Instantiate(Cat);
+            GameObject animal = Instantiate(CatPrefab);
 
             int ranX = Random.Range(-240, 241);
-            int ranY = Random.Range(5, 31);
+            int ranY = Random.Range(5, 21);
             int ranZ = Random.Range(-240, 241);
             animal.transform.position = new Vector3(ranX, transform.position.y + ranY, ranZ);
         }
 
         for (int i = 0; i < 20; i++)
         {
-            GameObject animal = Instantiate(LOVEDUCK);
+            GameObject animal = Instantiate(DuckPrefab);
     
             int ranX = Random.Range(-240, 241);
-            int ranY = Random.Range(5, 31);
+            int ranY = Random.Range(5, 21);
             int ranZ = Random.Range(-240, 241);
             animal.transform.position = new Vector3(ranX, transform.position.y + ranY, ranZ);
         }
 
         for (int i = 0; i < 20; i++)
         {
-            GameObject animal = Instantiate(FLOWER);
+            GameObject animal = Instantiate(FlowerPrefab);
 
             int ranX = Random.Range(-240, 241);
             int ranZ = Random.Range(-240, 241);
-            animal.transform.position = new Vector3(ranX, 5, ranZ);
+            animal.transform.position = new Vector3(ranX, 4, ranZ);
         }
 
         for (int i = 0; i < 20; i++)
         {
-            GameObject animal = Instantiate(mole_attack);
+            GameObject animal = Instantiate(MolePrefab);
 
             int ranX = Random.Range(-240, 241);
-            int ranY = Random.Range(5, 31);
+            int ranY = Random.Range(5, 21);
             int ranZ = Random.Range(-240, 241);
             animal.transform.position = new Vector3(ranX, transform.position.y + ranY, ranZ);
         }
         
         for (int i = 0; i < 20; i++)
         {
-            GameObject animal = Instantiate(penguin);
+            GameObject animal = Instantiate(PenguinPrefab);
 
             int ranX = Random.Range(-240, 241);
-            int ranY = Random.Range(5, 31);
+            int ranY = Random.Range(5, 21);
             int ranZ = Random.Range(-240, 241);
             animal.transform.position = new Vector3(ranX, transform.position.y + ranY, ranZ);
         }
 
         for (int i = 0; i < 20; i++)
         {
-            GameObject animal = Instantiate(sheep);
+            GameObject animal = Instantiate(SheepPrefab);
             int ranX = Random.Range(-240, 241);
-            int ranY = Random.Range(5, 31);
+            int ranY = Random.Range(5, 21);
             int ranZ = Random.Range(-240, 241);
             animal.transform.position = new Vector3(ranX, transform.position.y + ranY, ranZ);
         }
@@ -85,7 +85,8 @@ public class AnimalGenerator : MonoBehaviour
     {
         if (collision.gameObject.name.Contains("bamsongi") == true)
         {
-                Destroy(gameObject);
+            Destroy(gameObject);
+            
         }
     }
     

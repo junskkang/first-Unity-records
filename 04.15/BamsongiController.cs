@@ -48,7 +48,11 @@ public class BamsongiController : MonoBehaviour
                 a_ChildList[i].enabled = false;
             }
 
-            //Destroy(collision.gameObject); //충돌된 적 삭제는 머미컨트롤에서 구현
+            if (collision.gameObject.name.Contains("Mummy") == false)
+            { 
+                Destroy(collision.gameObject); //충돌된 적 삭제는 머미컨트롤에서 구현
+                GameManager.Inst.AddScore(5);
+            }
         }
 
     }

@@ -57,7 +57,18 @@ public class MummyCtrl : MonoBehaviour
             if (mummyHp <= 0)
             { 
                 Destroy(gameObject);
-                GameManager.Inst.score += 10;
+
+                //½Ì±ÛÅæ ÆÐÅÏ »ç¿ë
+                GameManager.Inst.AddScore();
+
+                ////½Ì±ÛÅæ ÆÐÅÏÀÌ ¾øÀ¸¸é....
+                //GameObject a_Obj = GameObject.Find("GameManager");
+                //if(a_Obj != null)
+                //{
+                //    GameManager a_GM = a_Obj.GetComponent<GameManager>();
+                //    if(a_GM != null)
+                //        a_GM.AddScore();
+                //}
             }
         }
 

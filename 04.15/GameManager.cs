@@ -13,9 +13,9 @@ public class GameManager : MonoBehaviour
     int hp = 3;
     public Image[] LifeImg;
     public Text timerText;
-    float timer = 60.0f;
+    float m_Timer = 60.0f;
     public Text scoreText;
-    public int score = 0;
+    public static int score = 0;
 
     //미이라 관련 변수
     PlayerCtrl playerCtrl;
@@ -27,6 +27,10 @@ public class GameManager : MonoBehaviour
     //GameScene 안에서만 적용되는 싱글톤 패턴
     public static GameManager Inst = null;
 
+    //동물 생성 변수
+    public GameObject[] AnimalArr;
+    public Transform AnimalGroup;
+
     private void Awake()
     {
         Inst = this;
@@ -34,13 +38,18 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        AnimalRandGen();  //동물 젠
+
+        score = 0; //static변수 초기화
+        Time.timeScale = 1.0f;
+
         playerCtrl = GameObject.FindObjectOfType<PlayerCtrl>();
     }
 
     
     void Update()
     {
-        if(PlayerCtrl.state == Moving.Stop)
+        if (PlayerCtrl.state == Moving.Stop)
             MummyGenerator();
 
         UIUpdate();
@@ -112,11 +121,12 @@ public class GameManager : MonoBehaviour
 
     void UIUpdate()
     {
-        timer -= Time.deltaTime;
+        m_Timer -= Time.deltaTime;
 
-        if (timer < 0)
+        if (m_Timer < 0)
         {
-            timer = 0.0f;
+            m_Timer = 0.0f;
+            Time.timeScale = 0.0f;      //일시정지 효과. start에서 풀어놔야 정상 동작함
             PlayerCtrl.state = Moving.GameOver;
             SceneManager.LoadScene("GameOver");
         }
@@ -124,24 +134,46 @@ public class GameManager : MonoBehaviour
 
         if (timerText != null)
         {
-            if (timer < 20.0f)
+            if (m_Timer < 20.0f)
             {
                 timerText.color = Color.red;
                 timerText.fontSize = 55;
                 timerText.fontStyle = FontStyle.Bold;
                 
             }
-            else if (timer < 40.0f)
+            else if (m_Timer < 40.0f)
             { 
                 timerText.color = Color.yellow;
                 timerText.fontSize = 50;
             }
-            timerText.text = timer.ToString("F2");
+            timerText.text = m_Timer.ToString("F2");
         }
-            
-        
+    }
+    
+    public void AddScore(int Value = 10)
+    {
+        score += Value;
 
         if (scoreText != null)
-            scoreText.text = $"Score : {score}"; 
+            scoreText.text = $"Score : {score}";
+    }
+
+    void AnimalRandGen()
+    {
+        for(int i = 0; i < 200; i++)
+        {
+            Vector3 RandomXYZ = new Vector3(
+                Random.Range(-250.0f, 250.0f), 10.0f, Random.Range(-250.0f, 250.0f));
+            //지형 높이에다가 추가적으로 0~15미터 추가
+            RandomXYZ.y = m_RefMap.SampleHeight(RandomXYZ) + Random.Range(0.0f, 15.0f);
+
+            int Kind = Random.Range(0, AnimalArr.Length);   //동물들 담겨져 있는 배열 중 인덱스 랜덤선택
+            GameObject go = Instantiate(AnimalArr[Kind]);   //그 인덱스에 담겨져 있는 동물 인스턴스
+            go.transform.SetParent(AnimalGroup);      //부모를 AnimalGroup으로 해라
+            go.transform.position = RandomXYZ;
+            if (Kind == 2)
+                go.transform.position = new Vector3(go.transform.position.x, 4, go.transform.position.z);
+            go.transform.eulerAngles = new Vector3(0.0f, Random.Range(0.0f, 360.0f), 0.0f);
+        }
     }
 }

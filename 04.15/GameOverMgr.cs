@@ -13,7 +13,7 @@ public class GameOverMgr : MonoBehaviour
     void Start()
     {
         if (scoreText != null)
-            scoreText.text = $"Score : {GameManager.Inst.score}";
+            scoreText.text = $"Score : {GameManager.score}";
     }
 
     // Update is called once per frame

@@ -7,7 +7,6 @@ public enum Moving
     IsMoving,
     Stop,
     GameOver
-
 }
 
 public class PlayerCtrl : MonoBehaviour
@@ -25,10 +24,17 @@ public class PlayerCtrl : MonoBehaviour
     float rotSpeed = 350.0f;
     Vector3 m_CacVec = Vector3.zero;
 
+    //점프를 위한 변수
+    Rigidbody rigid;
+    float jumpPower = 1000.0f;
+    int m_ReserveJump;
+
+
 
     void Start()
     {
         state = Moving.Stop;
+        this.rigid = GetComponent<Rigidbody>();
     }
 
 
@@ -74,8 +80,31 @@ public class PlayerCtrl : MonoBehaviour
         //    moveDir.Normalize();
         //transform.Translate(moveDir * Time.deltaTime * moveSpeed, Space.World);
 
-        float a_CacPosY = GameManager.Inst.m_RefMap.SampleHeight(transform.position);
-        transform.position = new Vector3(transform.position.x, 5 + a_CacPosY, transform.position.z);
+        if (this.transform.position.y <= 5.2f)
+        {
+            float a_CacPosY = GameManager.Inst.m_RefMap.SampleHeight(transform.position);
+            transform.position = new Vector3(transform.position.x, 5 + a_CacPosY, transform.position.z);
+        }
+        //점프 구현
+        //한번 스페이스를 눌렀을 때 3번의 프레임동안 점프에 성공시킬 기회를 줌
+        if (Input.GetKeyDown(KeyCode.Space) == true) //스페이스를 누르면 변수값 충전
+        {
+            m_ReserveJump = 3;
+        }
 
+        //점프, 정확히 velocity가 0에 떨어지지 않을 경우에 대비하여....
+        if ((0 < m_ReserveJump) &&
+            (4.95f <= this.rigid.transform.position.y && this.transform.position.y <= 5.2f))// && this.rigid2D.velocity.y == 0) //구름에 닿았을 때
+        {
+            this.rigid.velocity = new Vector3(rigid.velocity.x, 0.0f, rigid.velocity.z);
+            this.rigid.AddForce(transform.up * this.jumpPower);  //힘을 가하는 함수
+
+            m_ReserveJump = 0;
+        }
+
+        if (0 < m_ReserveJump)
+        {
+            m_ReserveJump--;
+        }
     }
 }
