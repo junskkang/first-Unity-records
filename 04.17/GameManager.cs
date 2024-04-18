@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour
 {
     public Text timerText;
     public Text pointText;
-    float m_Timer = 30.0f;
+    float m_Timer = 10.0f;
     int m_Point = 0;
     GameObject itemGenerator;
 
