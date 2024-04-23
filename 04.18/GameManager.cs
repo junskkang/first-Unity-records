@@ -73,18 +73,16 @@ public class GameManager : MonoBehaviour
         if (a_turn == 0)
         {
             state = Turn.player;
-            m_Timer = 15.0f;
+            m_Timer = 2.0f;
             Debug.Log("유저 턴");
         }
         else
         {
             state = Turn.Computer;
-            m_Timer = 4.0f;
+            m_Timer = 3.0f;
             Debug.Log("컴퓨터 턴");
             NumInputBtn.interactable = false;
         }
-        //m_Timer = 15.0f;
-        //state = Turn.player;
 
         if (NumInputBtn != null)
             NumInputBtn.onClick.AddListener(()=>
@@ -110,32 +108,15 @@ public class GameManager : MonoBehaviour
         {
             NumInputBtn.interactable = true;
         }
-        //else if (state == Turn.player && m_Timer <= 0.0f)   //15초 초과시 숫자 자동선택
-        //{
-        //    int a_AutoChoiceNum = Random.Range(0, MyBingoArr.Length);
-        //    for (int i = 0; i < myBingo.Count; i++)
-        //    {
-        //        int.TryParse(ComBingoText[a_AutoChoiceNum].text, out int checkNum);
-        //        if (myBingo[i].myNum == checkNum)
-        //        {
-        //            a_AutoChoiceNum = Random.Range(0, MyBingoArr.Length);
-        //            i = -1;
-        //        }
-        //        else
-        //            continue;
-        //    }
-        //    string a_AutoChoice = MyBingoText[a_AutoChoiceNum].text.ToString();
-        //    NumCheck(a_AutoChoice);
-        //    //m_Timer = 4.0f;
-        //    state = Turn.Computer;
-
-            
-        //}
+        else if (state == Turn.player && m_Timer <= 0.0f)   //15초 초과시 숫자 자동선택
+        {
+            AutoDuplicationCheck();
+        }
 
         //컴퓨터 턴에 숫자 자동 선택
         if (state == Turn.Computer && m_Timer <= 0.0f)
         {
-            DuplicationCheck();
+            ComDuplicationCheck();
         }
 
         if (Input.GetKeyDown(KeyCode.Return) && state == Turn.player && m_Timer > 0.0f)
@@ -150,14 +131,37 @@ public class GameManager : MonoBehaviour
     void ButtonInput()
     {
         NumCheck(NumInput.text);
-        m_Timer = 4.0f;
+        m_Timer = 3.0f;
         state = Turn.Computer;
         NumInput.text = "";
         NumInput.ActivateInputField();
         NumInputBtn.interactable = false;
     }
 
-    void DuplicationCheck()
+    void AutoDuplicationCheck()
+    {
+        int a_AutoChoiceNum = Random.Range(0, myBingo.Count);
+        for (int i = 0; i < myBingo.Count; i++)
+        {
+
+            int.TryParse(ComBingoText[a_AutoChoiceNum].text, out int checkNum);
+            if (myBingo[i].myNum == checkNum)
+            {
+                string a_Comchoice = MyBingoText[a_AutoChoiceNum].text.ToString();
+                NumCheck(a_Comchoice);
+                m_Timer = 3.0f;
+                state = Turn.Computer;
+                NumInputBtn.interactable = false;
+                return;
+            }
+            else
+            {
+                continue;
+            }
+        }
+        AutoDuplicationCheck();
+    }
+    void ComDuplicationCheck()
     {
         int a_ComChoiceNum = Random.Range(0, comBingo.Count);
         for (int i = 0; i < comBingo.Count; i++)
@@ -167,7 +171,7 @@ public class GameManager : MonoBehaviour
             {
                 string a_Comchoice = ComBingoText[a_ComChoiceNum].text.ToString();
                 NumCheck(a_Comchoice);
-                m_Timer = 15.0f;
+                m_Timer = 2.0f;
                 state = Turn.player;
                 NumInputBtn.interactable = true;
                 return;
@@ -177,7 +181,7 @@ public class GameManager : MonoBehaviour
                 continue;
             }
         }
-        DuplicationCheck();
+        ComDuplicationCheck();
     }
 
     void BingoNumCreate()
@@ -265,6 +269,7 @@ public class GameManager : MonoBehaviour
             {
                 //myBingo.RemoveAt(i);
                 MyBingoArr[i].interactable = false;
+                myBingo[i].myNum = 0;
                 //Debug.Log($"{choiceNum}을 입력, {i}번 버튼이 꺼졌습니다.");
                 break;
             }
@@ -277,6 +282,7 @@ public class GameManager : MonoBehaviour
             {
                 //myBingo.RemoveAt(i);
                 ComBingoArr[i].interactable = false;
+                comBingo[i].comNum = 0;
                 //Debug.Log($"{choiceNum}을 입력, {i}번 버튼이 꺼졌습니다.");
                 break;
             }
