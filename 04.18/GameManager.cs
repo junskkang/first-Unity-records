@@ -41,7 +41,7 @@ public class GameManager : MonoBehaviour
     [Header("User Bingo")]
     public Button[] MyBingoArr;
     public Text[] MyBingoText;
-    public GameObject[] myLine;
+    public Image[] myLine;
     int MyBingoCount = 0;
     List<MyBingo> myBingo = new List<MyBingo>();
 
@@ -49,7 +49,7 @@ public class GameManager : MonoBehaviour
     [Header("Com Bingo")]
     public Button[] ComBingoArr;
     public Text[] ComBingoText;
-    public GameObject[] ComLine;
+    public Image[] ComLine;
     int ComBingoCount = 0;
     List<ComBingo> comBingo = new List<ComBingo>();
 
@@ -73,7 +73,7 @@ public class GameManager : MonoBehaviour
         if (a_turn == 0)
         {
             state = Turn.player;
-            m_Timer = 2.0f;
+            m_Timer = 10.0f;
             Debug.Log("유저 턴");
         }
         else
@@ -171,7 +171,7 @@ public class GameManager : MonoBehaviour
             {
                 string a_Comchoice = ComBingoText[a_ComChoiceNum].text.ToString();
                 NumCheck(a_Comchoice);
-                m_Timer = 2.0f;
+                m_Timer = 10.0f;
                 state = Turn.player;
                 NumInputBtn.interactable = true;
                 return;
@@ -288,16 +288,31 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        //BingoCheck(MyBingoArr, myLine, ref MyBingoCount);
+        //BingoCheck(ComBingoArr, ComLine, ref ComBingoCount);
         MyBingoCheck();
         ComBingoCheck();
         Win();
     }
-    void ComBingoCheck()
+    void BingoCheck(Button[] a_BingArr, Image[] a_Line, ref int a_BingoCount)
+    {
+        //가로줄
+        if (a_BingArr[0].interactable == false && a_BingArr[1].interactable == false
+            && a_BingArr[2].interactable == false && a_BingArr[3].interactable == false
+            && a_BingArr[4].interactable == false && a_Line[0].gameObject.activeSelf == false)
+        {
+            //가로1번줄 빙고 SetActive(true);
+            a_Line[0].gameObject.SetActive(true);
+            a_BingoCount ++;
+            Debug.Log("가로 1번줄 빙고!");
+        }
+    }
+        void ComBingoCheck()
     {
         //가로줄
         if (ComBingoArr[0].interactable == false && ComBingoArr[1].interactable == false
             && ComBingoArr[2].interactable == false && ComBingoArr[3].interactable == false
-            && ComBingoArr[4].interactable == false && ComLine[0].activeSelf == false)
+            && ComBingoArr[4].interactable == false && ComLine[0].gameObject.activeSelf == false)
         {
             //가로1번줄 빙고 SetActive(true);
             ComLine[0].gameObject.SetActive(true);
@@ -307,7 +322,7 @@ public class GameManager : MonoBehaviour
 
         if (ComBingoArr[5].interactable == false && ComBingoArr[6].interactable == false
             && ComBingoArr[7].interactable == false && ComBingoArr[8].interactable == false
-            && ComBingoArr[9].interactable == false && ComLine[1].activeSelf == false)
+            && ComBingoArr[9].interactable == false && ComLine[1].gameObject.activeSelf == false)
         {
             //가로2번줄 빙고 SetActive(true);
             ComLine[1].gameObject.SetActive(true);
@@ -317,7 +332,7 @@ public class GameManager : MonoBehaviour
 
         if (ComBingoArr[10].interactable == false && ComBingoArr[11].interactable == false
             && ComBingoArr[12].interactable == false && ComBingoArr[13].interactable == false
-            && ComBingoArr[14].interactable == false && ComLine[2].activeSelf == false)
+            && ComBingoArr[14].interactable == false && ComLine[2].gameObject.activeSelf == false)
         {
             //가로3번줄 빙고 SetActive(true);
             ComLine[2].gameObject.SetActive(true);
@@ -327,7 +342,7 @@ public class GameManager : MonoBehaviour
 
         if (ComBingoArr[15].interactable == false && ComBingoArr[16].interactable == false
             && ComBingoArr[17].interactable == false && ComBingoArr[18].interactable == false
-            && ComBingoArr[19].interactable == false && ComLine[3].activeSelf == false)
+            && ComBingoArr[19].interactable == false && ComLine[3].gameObject.activeSelf == false)
         {
             //가로4번줄 빙고 SetActive(true);
             ComLine[3].gameObject.SetActive(true);
@@ -337,7 +352,7 @@ public class GameManager : MonoBehaviour
 
         if (ComBingoArr[20].interactable == false && ComBingoArr[21].interactable == false
             && ComBingoArr[22].interactable == false && ComBingoArr[23].interactable == false
-            && ComBingoArr[24].interactable == false && ComLine[4].activeSelf == false)
+            && ComBingoArr[24].interactable == false && ComLine[4].gameObject.activeSelf == false)
         {
             //가로5번줄 빙고 SetActive(true);
             ComLine[4].gameObject.SetActive(true);
@@ -348,7 +363,7 @@ public class GameManager : MonoBehaviour
         //세로줄
         if (ComBingoArr[0].interactable == false && ComBingoArr[5].interactable == false
             && ComBingoArr[10].interactable == false && ComBingoArr[15].interactable == false
-            && ComBingoArr[20].interactable == false && ComLine[5].activeSelf == false)
+            && ComBingoArr[20].interactable == false && ComLine[5].gameObject.activeSelf == false)
         {
             //세로1번줄 빙고 SetActive(true);
             ComLine[5].gameObject.SetActive(true);
@@ -358,7 +373,7 @@ public class GameManager : MonoBehaviour
 
         if (ComBingoArr[1].interactable == false && ComBingoArr[6].interactable == false
             && ComBingoArr[11].interactable == false && ComBingoArr[16].interactable == false
-            && ComBingoArr[21].interactable == false && ComLine[6].activeSelf == false)
+            && ComBingoArr[21].interactable == false && ComLine[6].gameObject.activeSelf == false)
         {
             //세로2번줄 빙고 SetActive(true);
             ComLine[6].gameObject.SetActive(true);
@@ -368,7 +383,7 @@ public class GameManager : MonoBehaviour
 
         if (ComBingoArr[2].interactable == false && ComBingoArr[7].interactable == false
             && ComBingoArr[12].interactable == false && ComBingoArr[17].interactable == false
-            && ComBingoArr[22].interactable == false && ComLine[7].activeSelf == false)
+            && ComBingoArr[22].interactable == false && ComLine[7].gameObject.activeSelf == false)
         {
             //세로3번줄 빙고 SetActive(true);
             ComLine[7].gameObject.SetActive(true);
@@ -377,7 +392,7 @@ public class GameManager : MonoBehaviour
         }
         if (ComBingoArr[3].interactable == false && ComBingoArr[8].interactable == false
             && ComBingoArr[13].interactable == false && ComBingoArr[18].interactable == false
-            && ComBingoArr[23].interactable == false && ComLine[8].activeSelf == false)
+            && ComBingoArr[23].interactable == false && ComLine[8].gameObject.activeSelf == false)
         {
             //세로4번줄 빙고 SetActive(true);
             ComLine[8].gameObject.SetActive(true);
@@ -386,7 +401,7 @@ public class GameManager : MonoBehaviour
         }
         if (ComBingoArr[4].interactable == false && ComBingoArr[9].interactable == false
             && ComBingoArr[14].interactable == false && ComBingoArr[19].interactable == false
-            && ComBingoArr[24].interactable == false && ComLine[9].activeSelf == false)
+            && ComBingoArr[24].interactable == false && ComLine[9].gameObject.activeSelf == false)
         {
             //세로5번줄 빙고 SetActive(true);
             ComLine[9].gameObject.SetActive(true);
@@ -397,7 +412,7 @@ public class GameManager : MonoBehaviour
         //대각선줄
         if (ComBingoArr[0].interactable == false && ComBingoArr[6].interactable == false
            && ComBingoArr[12].interactable == false && ComBingoArr[18].interactable == false
-           && ComBingoArr[24].interactable == false && ComLine[10].activeSelf == false)
+           && ComBingoArr[24].interactable == false && ComLine[10].gameObject.activeSelf == false)
         {
             //대각선1번줄 빙고 SetActive(true);
             ComLine[10].gameObject.SetActive(true);
@@ -406,7 +421,7 @@ public class GameManager : MonoBehaviour
         }
         if (ComBingoArr[4].interactable == false && ComBingoArr[8].interactable == false
             && ComBingoArr[12].interactable == false && ComBingoArr[16].interactable == false
-            && ComBingoArr[20].interactable == false && ComLine[11].activeSelf == false)
+            && ComBingoArr[20].interactable == false && ComLine[11].gameObject.activeSelf == false)
         {
             //대각선2번줄 빙고 SetActive(true);
             ComLine[11].gameObject.SetActive(true);
@@ -419,7 +434,7 @@ public class GameManager : MonoBehaviour
         //가로줄
         if (MyBingoArr[0].interactable == false && MyBingoArr[1].interactable == false
             && MyBingoArr[2].interactable == false && MyBingoArr[3].interactable == false
-            && MyBingoArr[4].interactable == false && myLine[0].activeSelf == false)
+            && MyBingoArr[4].interactable == false && myLine[0].gameObject.activeSelf == false)
         {
             //가로1번줄 빙고 SetActive(true);
             myLine[0].gameObject.SetActive(true);
@@ -429,7 +444,7 @@ public class GameManager : MonoBehaviour
 
         if (MyBingoArr[5].interactable == false && MyBingoArr[6].interactable == false
             && MyBingoArr[7].interactable == false && MyBingoArr[8].interactable == false
-            && MyBingoArr[9].interactable == false && myLine[1].activeSelf == false)
+            && MyBingoArr[9].interactable == false && myLine[1].gameObject.activeSelf == false)
         {
             //가로2번줄 빙고 SetActive(true);
             myLine[1].gameObject.SetActive(true);
@@ -439,7 +454,7 @@ public class GameManager : MonoBehaviour
         
         if (MyBingoArr[10].interactable == false && MyBingoArr[11].interactable == false
             && MyBingoArr[12].interactable == false && MyBingoArr[13].interactable == false
-            && MyBingoArr[14].interactable == false && myLine[2].activeSelf == false)
+            && MyBingoArr[14].interactable == false && myLine[2].gameObject.activeSelf == false)
         {
             //가로3번줄 빙고 SetActive(true);
             myLine[2].gameObject.SetActive(true);
@@ -449,7 +464,7 @@ public class GameManager : MonoBehaviour
         
         if (MyBingoArr[15].interactable == false && MyBingoArr[16].interactable == false
             && MyBingoArr[17].interactable == false && MyBingoArr[18].interactable == false
-            && MyBingoArr[19].interactable == false && myLine[3].activeSelf == false)
+            && MyBingoArr[19].interactable == false && myLine[3].gameObject.activeSelf == false)
         {
             //가로4번줄 빙고 SetActive(true);
             myLine[3].gameObject.SetActive(true);
@@ -459,7 +474,7 @@ public class GameManager : MonoBehaviour
         
         if (MyBingoArr[20].interactable == false && MyBingoArr[21].interactable == false
             && MyBingoArr[22].interactable == false &&     MyBingoArr[23].interactable == false
-            && MyBingoArr[24].interactable == false && myLine[4].activeSelf == false)
+            && MyBingoArr[24].interactable == false && myLine[4].gameObject.activeSelf == false)
         {
             //가로5번줄 빙고 SetActive(true);
             myLine[4].gameObject.SetActive(true);
@@ -470,7 +485,7 @@ public class GameManager : MonoBehaviour
         //세로줄
         if (MyBingoArr[0].interactable == false && MyBingoArr[5].interactable == false
             && MyBingoArr[10].interactable == false && MyBingoArr[15].interactable == false
-            && MyBingoArr[20].interactable == false && myLine[5].activeSelf == false)
+            && MyBingoArr[20].interactable == false && myLine[5].gameObject.activeSelf == false)
         {
             //세로1번줄 빙고 SetActive(true);
             myLine[5].gameObject.SetActive(true);
@@ -480,7 +495,7 @@ public class GameManager : MonoBehaviour
        
         if (MyBingoArr[1].interactable == false && MyBingoArr[6].interactable == false
             && MyBingoArr[11].interactable == false && MyBingoArr[16].interactable == false
-            && MyBingoArr[21].interactable == false && myLine[6].activeSelf == false)
+            && MyBingoArr[21].interactable == false && myLine[6].gameObject.activeSelf == false)
         {
             //세로2번줄 빙고 SetActive(true);
             myLine[6].gameObject.SetActive(true);
@@ -490,7 +505,7 @@ public class GameManager : MonoBehaviour
         
         if (MyBingoArr[2].interactable == false && MyBingoArr[7].interactable == false
             && MyBingoArr[12].interactable == false && MyBingoArr[17].interactable == false
-            && MyBingoArr[22].interactable == false && myLine[7].activeSelf == false)
+            && MyBingoArr[22].interactable == false && myLine[7].gameObject.activeSelf == false)
         {
             //세로3번줄 빙고 SetActive(true);
             myLine[7].gameObject.SetActive(true);
@@ -499,7 +514,7 @@ public class GameManager : MonoBehaviour
         }
         if (MyBingoArr[3].interactable == false && MyBingoArr[8].interactable == false
             && MyBingoArr[13].interactable == false && MyBingoArr[18].interactable == false
-            && MyBingoArr[23].interactable == false && myLine[8].activeSelf == false)
+            && MyBingoArr[23].interactable == false && myLine[8].gameObject.activeSelf == false)
         {
             //세로4번줄 빙고 SetActive(true);
             myLine[8].gameObject.SetActive(true);
@@ -508,7 +523,7 @@ public class GameManager : MonoBehaviour
         }
         if (MyBingoArr[4].interactable == false && MyBingoArr[9].interactable == false
             && MyBingoArr[14].interactable == false && MyBingoArr[19].interactable == false
-            && MyBingoArr[24].interactable == false && myLine[9].activeSelf == false)
+            && MyBingoArr[24].interactable == false && myLine[9].gameObject.activeSelf == false)
         {
             //세로5번줄 빙고 SetActive(true);
             myLine[9].gameObject.SetActive(true);
@@ -519,7 +534,7 @@ public class GameManager : MonoBehaviour
         //대각선줄
         if (MyBingoArr[0].interactable == false && MyBingoArr[6].interactable == false
            && MyBingoArr[12].interactable == false && MyBingoArr[18].interactable == false
-           && MyBingoArr[24].interactable == false && myLine[10].activeSelf == false)
+           && MyBingoArr[24].interactable == false && myLine[10].gameObject.activeSelf == false)
         {
             //대각선1번줄 빙고 SetActive(true);
             myLine[10].gameObject.SetActive(true);
@@ -528,7 +543,7 @@ public class GameManager : MonoBehaviour
         }
         if (MyBingoArr[4].interactable == false && MyBingoArr[8].interactable == false
             && MyBingoArr[12].interactable == false && MyBingoArr[16].interactable == false
-            && MyBingoArr[20].interactable == false && myLine[11].activeSelf == false)
+            && MyBingoArr[20].interactable == false && myLine[11].gameObject.activeSelf == false)
         {
             //대각선2번줄 빙고 SetActive(true);
             myLine[11].gameObject.SetActive(true);
