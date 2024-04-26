@@ -26,6 +26,14 @@ public class HeroCtrl : MonoBehaviour
     float minX = 0.02f;
     float maxY = 0.93f;
     float minY = 0.08f;
+
+    //마우스 클릭 이동 관련 변수 (Mouse Picking Move)
+    [HideInInspector] public bool m_bMoveOnOff = false; //현재 마우스 피킹으로 이동 중인지
+    Vector3 m_TargetPos;    //마우스 피킹 목표점
+    float m_CacStep;    //한스탭 계산용 변수
+    
+    Vector3 m_PickVec = Vector3.zero;
+    public ClickMark m_ClickMark;
     
     void Start()
     {
@@ -35,7 +43,11 @@ public class HeroCtrl : MonoBehaviour
     
     void Update()
     {
+        MousePickCtrl();
+
         KeyBoardUpdate();
+
+        MousePickUpdate();
 
         //총알 발사 코드
         if ( 0.0f < m_CacAttTick)       //총알 장전
@@ -93,7 +105,73 @@ public class HeroCtrl : MonoBehaviour
                 transform.Translate(m_DirVec * m_MoveSpeed * Time.deltaTime);
         }
     }
+    #region ---- 마우스 클릭이동
+    //float m_Tick = 0.0f;
+    void MousePickCtrl()    //마우스 클릭을 감지하는 함수
+    {
+        //if (0.0f < m_Tick)
+        //    m_Tick -= Time.deltaTime;
 
+        //if (m_Tick < 0.0f)
+        //{
+        //    if (Input.GetMouseButton(0) == true)    //마우스 왼쪽버튼 클릭시
+        //    {
+        //        m_PickVec = Camera.main.ScreenToWorldPoint(Input.mousePosition);    //현재 마우스 위치 값
+        //        SetMsPicking(m_PickVec);
+        //        m_Tick = 0.1f;
+
+        //    }
+        //}
+
+        if (Input.GetMouseButtonDown(0) == true)    //마우스 왼쪽버튼 클릭시
+        {
+            m_PickVec = Camera.main.ScreenToWorldPoint(Input.mousePosition);    //현재 마우스 위치 값
+            SetMsPicking(m_PickVec);
+
+            if (m_ClickMark != null)
+                m_ClickMark.PlayEff(m_PickVec, this);
+        }
+
+    }
+
+    void SetMsPicking(Vector3 a_Pos)
+    {
+        Vector3 a_CacVec = a_Pos - this.transform.position; //현재 캐릭터 위치에서 타겟 위치를 향하는 벡터
+        a_CacVec.y = 0;
+        if (a_CacVec.magnitude < 1.0f)  //너무 짧은 거리는 이동 안시킬래
+            return;
+
+        m_bMoveOnOff = true;    //클릭으로 이동 중인 상태
+        m_DirVec = a_CacVec;    
+        m_DirVec.Normalize();   //방향 벡터
+        m_TargetPos = new Vector3(a_Pos.x, transform.position.y, a_Pos.z);  //x와 z를 갖는 목표 지점 저장
+    }
+
+    void MousePickUpdate()
+    {
+        if (h != 0.0f || v != 0.0f) //키보드 이동 중이면
+            m_bMoveOnOff = false;   //마우스 이동 취소
+
+        if (m_bMoveOnOff == true)
+        {
+            m_CacStep = Time.deltaTime * m_MoveSpeed;   //이번 프레임에 움직이게 될 한 걸음
+            Vector3 a_CacEndVec = m_TargetPos - transform.position;
+            a_CacEndVec.y = 0.0f;
+
+            if (a_CacEndVec.magnitude <= m_CacStep)  //목표지점까지의 거리보다 보폭이 크거나 같으면 도착으로 간주
+            {
+                m_bMoveOnOff = false;
+            }
+            else
+            {
+                m_DirVec = a_CacEndVec;
+                m_DirVec.Normalize();
+                transform.Translate(m_DirVec*m_CacStep, Space.World);
+            }
+        }
+
+    }
+#endregion
     public void ShootFire(Vector3 a_Pos)    //목표지점을 매개변수로 받음
     {//클릭 이벤트가 발생했을 때 함수 호출
         GameObject a_Obj = Instantiate(GameMgr.m_BulletPrefab);

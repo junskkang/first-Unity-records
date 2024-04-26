@@ -75,6 +75,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        
         Time.timeScale = 1.0f;
 
         //빙고숫자 생성
@@ -487,22 +488,37 @@ public class GameManager : MonoBehaviour
     {
         for (int i = 0; i < ComBingoArr.Length; i++)
         {
-        
+            if (ComLine[0].gameObject.activeSelf == true && i < 5)
+            {
+                i = 5;
+            }
+
+            if (ComLine[1].gameObject.activeSelf == true && 5 <= i && i < 10)
+            {
+                i = 10;
+            }
+
+            if (ComLine[2].gameObject.activeSelf == true && 10 <= i && i < 15)
+            {
+                i = 15;
+            }
+
+            if (ComLine[3].gameObject.activeSelf == true && 15 <= i && i < 20)
+            {
+                i = 20;
+            }
+
+            if (ComLine[5].gameObject.activeSelf == true && i % 5 == 0)
+            {
+                i++;
+            }
 
             if (ComBingoArr[i].interactable == false)
             {
-                
+
+                                           
                 string a_Str = "";
-                
-                //int horCount = hor1Check + hor2Check + hor3Check + hor4Check + hor5Check;
-                //int verCount = ver1Check + ver2Check + ver3Check + ver4Check + ver5Check;
                 int a_Ran = 0;
-                //if (verCount == horCount)
-                //    a_Ran = Random.Range(0, 4);
-                //else if (verCount > horCount)
-                //    a_Ran = Random.Range(0, 2);
-                //else
-                //    a_Ran = Random.Range(2, 4);
 
                 if (i % 5 == 0)     //세로 첫번째줄
                 {
