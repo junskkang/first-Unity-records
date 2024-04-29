@@ -27,6 +27,10 @@ public class HeroCtrl : MonoBehaviour
     float maxY = 0.93f;
     float minY = 0.08f;
 
+    //JoyStick 이동 처리 변수
+    float m_JoyMvLen = 0.0f;                //조이스틱 땡기는 힘
+    Vector3 m_JoyMvDir = Vector3.zero;      //조이스틱 땡기는 방향
+
     //마우스 클릭 이동 관련 변수 (Mouse Picking Move)
     [HideInInspector] public bool m_bMoveOnOff = false; //현재 마우스 피킹으로 이동 중인지
     Vector3 m_TargetPos;    //마우스 피킹 목표점
@@ -45,9 +49,11 @@ public class HeroCtrl : MonoBehaviour
     {
         MousePickCtrl();
 
-        KeyBoardUpdate();
+        KeyBoardUpdate();       //키보드이동 1순위
 
-        MousePickUpdate();
+        JoyStickMvUpdate();     //조이스틱이동 2순위
+
+        MousePickUpdate();      //마우스이동 3순위
 
         //총알 발사 코드
         if ( 0.0f < m_CacAttTick)       //총알 장전
@@ -64,6 +70,7 @@ public class HeroCtrl : MonoBehaviour
         }
     }
 
+    #region ---- 키보드 이동
     void KeyBoardUpdate()   //키보드 이동처리
     {
         h = Input.GetAxisRaw("Horizontal"); // -1 ~ 1
@@ -105,6 +112,34 @@ public class HeroCtrl : MonoBehaviour
                 transform.Translate(m_DirVec * m_MoveSpeed * Time.deltaTime);
         }
     }
+    #endregion
+    #region ---- 조이스틱 이동
+    public void SetJoyStickMv(float a_JoyMvLen, Vector3 a_JoyMvDir)
+    {
+        m_JoyMvLen = a_JoyMvLen;
+        if (0.0f < a_JoyMvLen)
+        {
+            m_JoyMvDir = new Vector3(a_JoyMvDir.x, 0.0f, a_JoyMvDir.y);
+            
+            //UI 좌표는 xy좌표지만 캐릭터의 이동은 xz축으로 움직이고 있으므로
+            //UI의 y좌표를 캐릭터 이동의 z축에다가 넣어주는 것
+        }
+    }
+
+    public void JoyStickMvUpdate()
+    {
+        if (h != 0.0f || v != 0.0f)
+            return;
+
+        //조이스틱 이동코드
+        if (0.0f < m_JoyMvLen)
+        {
+            m_DirVec = m_JoyMvDir;
+            float a_MvStep = m_MoveSpeed * Time.deltaTime;
+            transform.Translate(m_DirVec * m_JoyMvLen * a_MvStep, Space.Self);
+        }
+    }
+    #endregion
     #region ---- 마우스 클릭이동
     //float m_Tick = 0.0f;
     void MousePickCtrl()    //마우스 클릭을 감지하는 함수
@@ -123,7 +158,8 @@ public class HeroCtrl : MonoBehaviour
         //    }
         //}
 
-        if (Input.GetMouseButtonDown(0) == true)    //마우스 왼쪽버튼 클릭시
+        if (Input.GetMouseButtonDown(0) == true &&
+            GameMgr.IsPointerOverUIObject() == false)    //마우스 왼쪽버튼 클릭시
         {
             m_PickVec = Camera.main.ScreenToWorldPoint(Input.mousePosition);    //현재 마우스 위치 값
             SetMsPicking(m_PickVec);
@@ -149,7 +185,7 @@ public class HeroCtrl : MonoBehaviour
 
     void MousePickUpdate()
     {
-        if (h != 0.0f || v != 0.0f) //키보드 이동 중이면
+        if (0.0f < m_JoyMvLen || h != 0.0f || v != 0.0f) //키보드 이동 중이면, 조이스틱 이동 중이면
             m_bMoveOnOff = false;   //마우스 이동 취소
 
         if (m_bMoveOnOff == true)

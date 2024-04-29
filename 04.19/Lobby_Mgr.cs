@@ -10,6 +10,7 @@ public class Lobby_Mgr : MonoBehaviour
     public Button Store_Btn;
     public Button MyRoom_Btn;
     public Button Exit_Btn;
+    public Button GameStartBtn;
 
     // Start is called before the first frame update
     void Start()
@@ -22,6 +23,12 @@ public class Lobby_Mgr : MonoBehaviour
 
         if (Exit_Btn != null)
             Exit_Btn.onClick.AddListener(ExitBtnClick);
+
+        if (GameStartBtn != null)
+            GameStartBtn.onClick.AddListener(() =>
+            {
+                SceneManager.LoadScene("GameScene");
+            });
     }
 
     private void StoreBtnClick()
