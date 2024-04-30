@@ -44,12 +44,29 @@ public class GameMgr : MonoBehaviour
     Vector3 posJoyBack;
     Vector3 dirStick;
 
+    //데미지 띄우기용 변수
+    Vector3 m_StCacPos = Vector3.zero;
+    [Header("Damage Text")]
+    public Transform m_Damage_Canvas = null;
+    public GameObject m_DamageTxtRoot = null;
+
     [HideInInspector] public HeroCtrl m_RefHero = null;
 
+
+    //싱글턴 패턴 접근
+    public static GameMgr Inst;
+
+    private void Awake()
+    {
+        Inst = this;
+    }
 
     // Start is called before the first frame update
     void Start()
     {
+        Application.targetFrameRate = 60;   //실행 프레임 60으로 고정
+        QualitySettings.vSyncCount = 0;
+
         m_RefHero = FindObjectOfType<HeroCtrl>();
         //게임매니저는 시작하면서 불렛프리팹을 로딩함
         m_BulletPrefab = Resources.Load("BulletPrefab") as GameObject;
@@ -279,6 +296,18 @@ public class GameMgr : MonoBehaviour
     }
     #endregion
 
+    public void DamageText(int a_Value, Vector3 a_OwnerPos)
+    {
+        GameObject a_DmgClone = Instantiate(m_DamageTxtRoot);   //프리팹 생성
+        if (a_DmgClone != null && m_Damage_Canvas != null)
+        {
+            Vector3 a_StCacPos = new Vector3(a_OwnerPos.x, 0.8f, a_OwnerPos.z + 4.0f) ;     //위치 잡아주기
+            a_DmgClone.transform.SetParent(m_Damage_Canvas);    //생성된 프리팹을 캔버스의 자식으로
+            DamageText a_DamageTx = a_DmgClone.GetComponent<DamageText>();  //스크립트 붙여주기
+            a_DamageTx.DamageTxtSpawn(a_Value, new Color32(200, 0, 0, 255));    //함수 실행
+            a_DmgClone.transform.position = a_StCacPos; //위치값 넣어주기
+        }
+    }
     public static bool IsPointerOverUIObject() //UGUI의 UI들이 먼저 피킹되는지 확인하는 함수
     {
         PointerEventData a_EDCurPos = new PointerEventData(EventSystem.current);
