@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class HeroCtrl : MonoBehaviour
 {
@@ -38,6 +39,11 @@ public class HeroCtrl : MonoBehaviour
     
     Vector3 m_PickVec = Vector3.zero;
     public ClickMark m_ClickMark;
+
+    //체력 관련 변수
+    float m_MaxHp = 100.0f;
+    float m_CurHp = 100.0f;
+    public Image HpBarImg;
     
     void Start()
     {
@@ -217,5 +223,41 @@ public class HeroCtrl : MonoBehaviour
 
         BulletCtrl a_BulletSc = a_Obj.GetComponent<BulletCtrl>();
         a_BulletSc.BulletSpawn(transform.position, m_CacEndVec.normalized, m_ShootRange);
+    }
+
+    private void OnTriggerEnter(Collider coll)
+    {
+        if (coll.gameObject.name.Contains("BulletPrefab") == true)
+        {
+            if (coll.gameObject.CompareTag(AllyType.BT_Ally.ToString()) == true)
+                    return;
+
+            TakeDamage(5.0f);
+
+            Destroy(coll.gameObject);
+        }
+    }
+
+    public void TakeDamage(float a_Value)
+    {
+        if (m_CurHp <= 0.0f)
+            return;
+
+        GameMgr.Inst.DamageText((int)a_Value, transform.position);
+
+        m_CurHp -= a_Value;
+
+        if (m_CurHp < 0.0f)
+            m_CurHp = 0.0f;
+
+        if (HpBarImg != null)
+            HpBarImg.fillAmount = m_CurHp/m_MaxHp;
+
+        if (m_CurHp <= 0.0f)
+        {
+            m_CurHp = 0.0f;
+
+            //게임오버
+        }
     }
 }

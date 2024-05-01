@@ -2,8 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum AllyType
+{
+    BT_Ally,        //아군
+    BT_Enemy,       //적군
+
+}
+
 public class BulletCtrl : MonoBehaviour
 {
+    [HideInInspector] public AllyType m_AllyType = AllyType.BT_Ally;
     //이동 관련 변수
     Vector3 m_DirVec = Vector3.zero;    //날아갈 방향 벡터
     Vector3 m_StartPos = new Vector3(0, 0, 1);  //스폰 위치 계산용 변수
@@ -67,5 +75,7 @@ public class BulletCtrl : MonoBehaviour
         //사거리 저장 
         //캐릭터에서 함수를 호출하며 매개변수로 넘어온 a_ShootRange를 저장 
         m_ShootRange = a_ShootRange;
+
+        //m_AllyType = a_AllyType;
     }
 }
