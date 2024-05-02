@@ -44,9 +44,15 @@ public class HeroCtrl : MonoBehaviour
     float m_MaxHp = 100.0f;
     float m_CurHp = 100.0f;
     public Image HpBarImg;
+
+    //애니메이션 관련 변수
+    AnimSequence m_AnimSeq;
+    Quaternion m_CacRot;
     
     void Start()
     {
+        //차일드 중 첫번째로 나오는 AnimSequence.cs 파일 찾아오기
+        m_AnimSeq = gameObject.GetComponentInChildren<AnimSequence>();
         
     }
 
@@ -61,6 +67,8 @@ public class HeroCtrl : MonoBehaviour
 
         MousePickUpdate();      //마우스이동 3순위
 
+        //LimitMove();            //바깥으로 못나가게 체크
+
         //총알 발사 코드
         if ( 0.0f < m_CacAttTick)       //총알 장전
             m_CacAttTick -= Time.deltaTime;
@@ -72,6 +80,24 @@ public class HeroCtrl : MonoBehaviour
                 //마우스의 좌표를 월드좌표계로 받아서 그 벡터를 매개변수로 넣음
                 ShootFire(Camera.main.ScreenToWorldPoint(Input.mousePosition));
                 m_CacAttTick = m_AttSpeed;
+            }
+        }
+
+        //애니메이션 셋팅
+        //조이스틱 움직임도 없고, 키보드 움직임도 없고, 마우스 이동도 없을 때
+        if (m_JoyMvLen <= 0.0f && (0.0f == h && 0.0f == v) && m_bMoveOnOff == false)
+        {
+            m_AnimSeq.ChangeAniState(UnitState.Idle);
+        }
+        else
+        {
+            if (m_DirVec.magnitude <= 0.0f)
+                m_AnimSeq.ChangeAniState(UnitState.Idle);
+            else
+            {
+                //방향에 따른 애니메이션 설정하는 부분
+                m_CacRot = Quaternion.LookRotation(m_DirVec);       //바라보고 있는 방향벡터를 담아줌
+                m_AnimSeq.CheckAnimDir(m_CacRot.eulerAngles.y);     //방향의 y값을 넣어서 각도 체크 후 상태전환
             }
         }
     }
@@ -214,6 +240,25 @@ public class HeroCtrl : MonoBehaviour
 
     }
 #endregion
+
+    void LimitMove()
+    {
+        //월드좌표를 뷰포트좌표(0~1)로 전환
+        Vector3 pos = Camera.main.WorldToViewportPoint(transform.position);
+
+        if (pos.x < 0.02f) pos.x = 0.02f;
+        if (pos.x > 0.98f) pos.x = 0.98f;
+        if (pos.y < 0.1f) pos.y = 0.1f;
+        if (pos.y < 0.9f) pos.y = 0.9f;
+
+        pos.x = Mathf.Clamp(pos.x, 0.03f, 0.97f);
+        pos.y = Mathf.Clamp(pos.y, 0.07f, 0.95f);
+
+        //다시 월드좌표로 환산
+        Vector3 a_CacPos = Camera.main.ViewportToWorldPoint(pos);
+        a_CacPos.y = transform.position.y;
+        transform.position = a_CacPos;
+    }
     public void ShootFire(Vector3 a_Pos)    //목표지점을 매개변수로 받음
     {//클릭 이벤트가 발생했을 때 함수 호출
         GameObject a_Obj = Instantiate(GameMgr.m_BulletPrefab);

@@ -5,6 +5,8 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement; // Event Trigger를 이용하기 위해 필요
 
+
+//Terrain, NaviMesh << X,Z 평면에서 제공되는 유니티 기능
 enum JoyStickType
 {
     Fixed = 0,      //조이스틱 고정

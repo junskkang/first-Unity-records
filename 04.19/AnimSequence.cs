@@ -37,6 +37,8 @@ public class AnimSequence : MonoBehaviour
 
         m_EachAniDelay = 0.5f;
         m_NowAniSocket = m_Frt_Idle;
+
+        
         if (m_NowAniSocket != null && 0 < m_NowAniSocket.Length)
         {
             m_CurAniInx = 0;
@@ -50,6 +52,100 @@ public class AnimSequence : MonoBehaviour
     
     void Update()
     {
-        
+        UpdateFrameAni();
     }
+
+    public void UpdateFrameAni()
+    {
+        if (m_NowAniSocket == null)
+            return;
+
+        m_FrameCount = m_NowAniSocket.Length;
+
+        if (m_FrameCount <= 0)
+            return;
+
+        m_AniTickCount += Time.deltaTime;
+        if (m_EachAniDelay < m_AniTickCount)        //다음 프레임
+        {
+            m_CurAniInx++;
+            if (m_FrameCount <= m_CurAniInx)        //마지막 프레임일 때
+                m_CurAniInx = 0;
+
+            if (m_RefRender != null)
+                m_RefRender.material.SetTexture("_MainTex", m_NowAniSocket[m_CurAniInx]);
+
+            m_AniTickCount = 0.0f;
+        }
+    }
+
+    public void ChangeAniState(UnitState a_NewState)
+    {
+        if (currentState == a_NewState) return;
+
+        if (a_NewState == UnitState.Idle)
+        {
+            if (m_Frt_Idle == null) return;
+            if (m_Frt_Idle.Length <= 0) return;
+            m_NowAniSocket = m_Frt_Idle;
+        }
+        else if (a_NewState == UnitState.Front_Walk)
+        {
+            if (m_Front_Wk == null) return;
+            if (m_Front_Wk.Length <= 0) return;
+            m_NowAniSocket = m_Front_Wk;
+        }
+        else if (a_NewState == UnitState.Back_Walk)
+        {
+            if (m_Back_Wk == null) return;
+            if (m_Back_Wk.Length <= 0) return;
+            m_NowAniSocket = m_Back_Wk;
+        }
+        else if (a_NewState == UnitState.Left_Walk)
+        {
+            if (m_Left_Wk == null) return;
+            if (m_Left_Wk.Length <= 0) return;
+            m_NowAniSocket= m_Left_Wk;
+        }
+        else if (a_NewState == UnitState.Right_Walk)
+        {
+            if (m_Right_Wk == null) return;
+            if (m_Right_Wk.Length <= 0) return;
+            m_NowAniSocket = m_Right_Wk;
+        }
+
+        if (a_NewState == UnitState.Idle)
+            m_EachAniDelay = 0.5f;      //숨쉬기 동작은 0.5초마다 스위치
+        else
+            m_EachAniDelay = 0.15f;     //다른 동작은 0.15초마다 스위치
+
+        m_CurAniInx = 0;
+        m_AniTickCount = 0;
+        currentState = a_NewState;
+        if(m_RefRender != null)
+            m_RefRender.material.SetTexture("_MainTex", m_NowAniSocket[m_CurAniInx]);
+    }
+
+    //캐릭터의 이동방향에 따라서 애니메이션 모션 상태를 바꿔주는 함수
+    public void CheckAnimDir(float a_Angle)
+    {
+        if (50.0f < a_Angle && a_Angle < 130.0f)
+        {
+            ChangeAniState(UnitState.Right_Walk);
+        }
+        else if (130 <= a_Angle && a_Angle <= 230.0f)
+        {
+            ChangeAniState(UnitState.Front_Walk);
+        }
+        else if (230.0f < a_Angle && a_Angle < 310.0f)
+        {
+            ChangeAniState(UnitState.Left_Walk);
+        }
+        else
+        {
+            ChangeAniState(UnitState.Back_Walk);
+        }
+    }
+
+    
 }
