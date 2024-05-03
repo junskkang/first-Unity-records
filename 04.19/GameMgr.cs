@@ -55,6 +55,20 @@ public class GameMgr : MonoBehaviour
     [HideInInspector] public HeroCtrl m_RefHero = null;
 
 
+    //인벤토리 스크롤뷰
+    [Header("Inventory ScrollView")]
+    public Button m_InvenBtn = null;
+    public Transform m_InvenScrollTr = null;
+    bool m_Inven_ScOnOff = false;
+    float m_ScSpeed = 1800.0f;
+    Vector3 m_ScOnPos = new Vector3(0.0f, 0.0f, 0.0f);
+    Vector3 m_ScOffPos = new Vector3(320.0f, 0.0f, 0.0f);
+
+    public Transform m_MkInvenContent = null;
+    public GameObject m_MkItemNode = null;
+    public Button m_ItemSellBtn = null;
+
+
     //싱글턴 패턴 접근
     public static GameMgr Inst;
 
@@ -160,13 +174,23 @@ public class GameMgr : MonoBehaviour
             trigger.triggers.Add(entry) ;
         }
         #endregion
+
+        //인벤토리 판넬 On Off
+        if (m_InvenBtn != null)
+            m_InvenBtn.onClick.AddListener(() =>
+            {
+                m_Inven_ScOnOff = !m_Inven_ScOnOff;
+                //if(m_ItemSellBtn != null)
+                //    m_ItemSellBtn.gameObject.SetActive(m_Inven_ScOnOff);
+            });
+
     }
 
 
     // Update is called once per frame
     void Update()
     {
-        
+        InvenScOnOffUpdate();
     }
 
 #region --- Fixed Joystick 
@@ -334,4 +358,27 @@ public class GameMgr : MonoBehaviour
         return (0 < results.Count);
 #endif
     }//public bool IsPointerOverUIObject() 
+
+    void InvenScOnOffUpdate()       //인벤토리 판넬 OnOff 연출 함수
+    {
+        if (m_InvenScrollTr == null) return;
+
+        if (m_Inven_ScOnOff == false)
+        {
+            if (m_InvenScrollTr.localPosition.x < m_ScOffPos.x)
+            {
+                m_InvenScrollTr.localPosition =
+                    Vector3.MoveTowards(m_InvenScrollTr.localPosition, m_ScOffPos, m_ScSpeed * Time.deltaTime);
+            }
+        }
+        else //(m_Inven_ScOnOff == true)
+        {
+            if (m_ScOffPos.x < m_InvenScrollTr.localPosition.x)
+            {
+                m_InvenScrollTr.localPosition =
+                    Vector3.MoveTowards(m_InvenScrollTr.localPosition, m_ScOnPos, m_ScSpeed * Time.deltaTime);
+            }
+        }
+
+    }
 }
