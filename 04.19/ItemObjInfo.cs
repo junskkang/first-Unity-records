@@ -45,7 +45,7 @@ public class ItemObjInfo : MonoBehaviour
 
     public void InitItem(Item_Type a_Item_Type, string a_Name, int a_Level, int a_Star)
     {
-        m_ItemValue.UniqueID = 0; //GlobalUserData.GetUnique();
+        m_ItemValue.UniqueID = GlobalUserData.GetUnique();
         m_ItemValue.m_Item_Type = a_Item_Type;
         m_ItemValue.m_ItemName = a_Name;
         m_ItemValue.m_ItemLevel = a_Level;

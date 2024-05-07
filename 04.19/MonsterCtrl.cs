@@ -107,6 +107,7 @@ public class MonsterCtrl : MonoBehaviour
         {
             //보상
             ItemDrop();
+            GameMgr.Inst.monKillCount++;
 
             Destroy(gameObject);    //몬스터 제거
         }

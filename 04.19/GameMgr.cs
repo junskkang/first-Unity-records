@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement; // Event Trigger를 이용하기 위해 필요
+using UnityEngine.SceneManagement;
+using System.Threading;// Event Trigger를 이용하기 위해 필요
 
+//전체검색 키 : Ctrl + ,
 
 //Terrain, NaviMesh << X,Z 평면에서 제공되는 유니티 기능
 enum JoyStickType
@@ -27,6 +29,15 @@ public class GameMgr : MonoBehaviour
     //다른 클래스에서는 이 변수에 접근하지 못하도록 하지만 인스펙터 창에는 연결 가능하게끔
     //[HideInInspector] : public 속성이라 다른 클래스에서 접근 가능하지만 유니티 인스펙터 창에서 가려지게끔
     [SerializeField] private Button m_UserInfoBtn = null;
+    [SerializeField] private RawImage userInfoPanel;
+    bool m_InfoOnOff = false;
+    public Text hpText;
+    public Text bombCountText;
+    public Text monKillCountText;
+    public Text goldText;
+
+    [SerializeField] public int monKillCount = 0;
+
 
 
     //Fixed JoyStick 처리
@@ -60,7 +71,7 @@ public class GameMgr : MonoBehaviour
     public Button m_InvenBtn = null;
     public Transform m_InvenScrollTr = null;
     bool m_Inven_ScOnOff = false;
-    float m_ScSpeed = 1800.0f;
+    float m_ScSpeed = 1800.0f;      //인벤토리 열리는 속도 조절 함수
     Vector3 m_ScOnPos = new Vector3(0.0f, 0.0f, 0.0f);
     Vector3 m_ScOffPos = new Vector3(320.0f, 0.0f, 0.0f);
 
@@ -82,6 +93,11 @@ public class GameMgr : MonoBehaviour
     {
         Application.targetFrameRate = 60;   //실행 프레임 60으로 고정
         QualitySettings.vSyncCount = 0;
+
+        Time.timeScale = 1.0f;
+        GlobalUserData.LoadGameInfo();
+        RefreshInGameItemScv();
+
 
         m_RefHero = FindObjectOfType<HeroCtrl>();
         //게임매니저는 시작하면서 불렛프리팹을 로딩함
@@ -180,8 +196,19 @@ public class GameMgr : MonoBehaviour
             m_InvenBtn.onClick.AddListener(() =>
             {
                 m_Inven_ScOnOff = !m_Inven_ScOnOff;
-                //if(m_ItemSellBtn != null)
-                //    m_ItemSellBtn.gameObject.SetActive(m_Inven_ScOnOff);
+                if (m_ItemSellBtn != null)
+                    m_ItemSellBtn.gameObject.SetActive(m_Inven_ScOnOff);
+            });
+
+        if (m_ItemSellBtn != null)
+            m_ItemSellBtn.onClick.AddListener(ItemSelMethod);
+
+        if (m_UserInfoBtn != null)
+            m_UserInfoBtn.onClick.AddListener(() =>
+            {
+                m_InfoOnOff = !m_InfoOnOff;
+                if (userInfoPanel != null)
+                    userInfoPanel.gameObject.SetActive(m_InfoOnOff);
             });
 
     }
@@ -191,6 +218,8 @@ public class GameMgr : MonoBehaviour
     void Update()
     {
         InvenScOnOffUpdate();
+
+        UserInfo();
     }
 
 #region --- Fixed Joystick 
@@ -373,7 +402,7 @@ public class GameMgr : MonoBehaviour
         }
         else //(m_Inven_ScOnOff == true)
         {
-            if (m_ScOffPos.x < m_InvenScrollTr.localPosition.x)
+            if (m_ScOnPos.x < m_InvenScrollTr.localPosition.x)
             {
                 m_InvenScrollTr.localPosition =
                     Vector3.MoveTowards(m_InvenScrollTr.localPosition, m_ScOnPos, m_ScSpeed * Time.deltaTime);
@@ -381,4 +410,109 @@ public class GameMgr : MonoBehaviour
         }
 
     }
+
+    public void InvenAddItem(GameObject a_Obj)
+    {
+        ItemObjInfo a_RefItemInfo = a_Obj.GetComponent<ItemObjInfo>(); 
+        if (a_RefItemInfo != null)
+        {
+            ItemValue a_Node = new ItemValue();
+            a_Node.UniqueID = a_RefItemInfo.m_ItemValue.UniqueID;
+            a_Node.m_Item_Type = a_RefItemInfo.m_ItemValue.m_Item_Type;
+            a_Node.m_ItemName = a_RefItemInfo.m_ItemValue.m_ItemName;
+            a_Node.m_ItemLevel = a_RefItemInfo.m_ItemValue.m_ItemLevel;
+            a_Node.m_ItemStar = a_RefItemInfo.m_ItemValue.m_ItemStar;
+            GlobalUserData.g_ItemList.Add(a_Node);
+            
+            AddNodeScrollView(a_Node);  //스크롤 뷰에 추가
+            GlobalUserData.RefreshItemSave();   //파일 저장
+        }
+    }
+
+    void AddNodeScrollView(ItemValue a_Node)
+    {
+        GameObject a_ItemObj = Instantiate(m_MkItemNode);
+        a_ItemObj.transform.SetParent(m_MkInvenContent, false);
+        //false일경우 : 로컬 기준의 정보를 유지한 채 차일드화 된다.
+
+        //획득한 아이템에 따라 이미지 교체
+        ItemNode a_MyItemInfo = a_ItemObj.GetComponent<ItemNode>();
+        if (a_MyItemInfo != null)
+            a_MyItemInfo.SetItemRsc(a_Node);
+    }
+
+    private void RefreshInGameItemScv() //인게임 스크롤뷰 갱신
+    {
+        //GlobalUserData.g_ItemList에 저장된 값을 scroll View에 복원해 주는 함수
+        ItemNode[] a_MyNodeList =
+            m_MkInvenContent.GetComponentsInChildren<ItemNode>(true);
+        for(int i = 0;  i < a_MyNodeList.Length; i++)
+        {
+            Destroy(a_MyNodeList[i]);
+        }
+
+        for (int i = 0; i < GlobalUserData.g_ItemList.Count; i++)
+        {
+            AddNodeScrollView(GlobalUserData.g_ItemList[i]);
+        }
+    }
+
+    private void ItemSelMethod()
+    {
+        //아이템 하나당 100원씩 판매
+
+        //스크롤뷰의 노드를 모두 돌면서 선택되어 있는 것들만 판매하고
+        //해당 UniqueID를 g_ItemList에서 찾아서 제거해준다.
+        ItemNode[] a_MyNodeList = 
+            m_MkInvenContent.GetComponentsInChildren<ItemNode>(true);
+        //true : Active가 꺼져 있는 오브젝트까지 모두 가져오는 옵션
+        for (int i = 0; i < a_MyNodeList.Length; i++)
+        {
+            if (a_MyNodeList[i].m_SelOnOff == false)    //선택이 안되어 있는 애는 패스
+                continue;
+
+            //글로벌 리스트에서 판매하려는 아이템의 고유번호를 찾아서 제거해줘야 함.
+            for(int b = 0; b< GlobalUserData.g_ItemList.Count; b++)
+            {
+                if (a_MyNodeList[i].m_UniqueID == GlobalUserData.g_ItemList[b].UniqueID)
+                {
+                    GlobalUserData.g_ItemList.RemoveAt(b);
+                    break;
+                }
+            }
+
+            Destroy(a_MyNodeList[i].gameObject);
+
+            AddGold(100);
+        }
+
+        GlobalUserData.RefreshItemSave();   //변화가 생겼으니 다시 저장
+
+    }
+
+    public void UserInfo()
+    {
+        if (userInfoPanel == null)
+            return;
+
+        if (hpText != null)
+            hpText.text = $"HP : {m_RefHero.m_CurHp} / {m_RefHero.m_MaxHp}";
+
+        if (bombCountText != null)
+            bombCountText.text = $"x  {GlobalUserData.g_BombCount}";
+
+        if (monKillCountText != null)
+            monKillCountText.text = $"x  {monKillCount}";
+
+        if (goldText != null)
+            goldText.text = $"x  {GlobalUserData.g_UserGold.ToString("N0")}";
+    }
+
+    public void AddGold(int a_Gold)
+    {
+        GlobalUserData.g_UserGold += a_Gold;
+
+        GlobalUserData.SaveGameInfo();
+    }
+
 }

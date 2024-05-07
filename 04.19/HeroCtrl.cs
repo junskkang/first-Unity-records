@@ -41,8 +41,8 @@ public class HeroCtrl : MonoBehaviour
     public ClickMark m_ClickMark;
 
     //체력 관련 변수
-    float m_MaxHp = 100.0f;
-    float m_CurHp = 100.0f;
+    public float m_MaxHp = 200.0f;
+    public float m_CurHp = 200.0f;
     public Image HpBarImg;
 
     //애니메이션 관련 변수
@@ -275,12 +275,31 @@ public class HeroCtrl : MonoBehaviour
         if (coll.gameObject.name.Contains("BulletPrefab") == true)
         {
             if (coll.gameObject.CompareTag(AllyType.BT_Ally.ToString()) == true)
-                    return;
+                return;
 
             TakeDamage(5.0f);
 
             Destroy(coll.gameObject);
         }
+        else if (coll.gameObject.name.Contains("coin_") == true)
+        {
+            GameMgr.Inst.AddGold(10);
+            GlobalUserData.SaveGameInfo();
+            Destroy(coll.gameObject);
+        }
+        else if (coll.gameObject.name.Contains("bomb_") == true)
+        {
+            
+            GlobalUserData.g_BombCount++;
+            GlobalUserData.SaveGameInfo();
+            Destroy(coll.gameObject);
+        }
+        else if (coll.gameObject.name.Contains("Item_Obj") == true)
+        {
+            GameMgr.Inst.InvenAddItem(coll.gameObject);
+            Destroy(coll.gameObject);
+        }
+
     }
 
     public void TakeDamage(float a_Value)
@@ -296,7 +315,7 @@ public class HeroCtrl : MonoBehaviour
             m_CurHp = 0.0f;
 
         if (HpBarImg != null)
-            HpBarImg.fillAmount = m_CurHp/m_MaxHp;
+            HpBarImg.fillAmount = m_CurHp / m_MaxHp;
 
         if (m_CurHp <= 0.0f)
         {
