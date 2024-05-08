@@ -41,8 +41,8 @@ public class HeroCtrl : MonoBehaviour
     public ClickMark m_ClickMark;
 
     //체력 관련 변수
-    public float m_MaxHp = 200.0f;
-    public float m_CurHp = 200.0f;
+    [HideInInspector] public float m_MaxHp = 200.0f;
+    [HideInInspector] public float m_CurHp = 200.0f;
     public Image HpBarImg;
 
     //애니메이션 관련 변수
@@ -83,6 +83,11 @@ public class HeroCtrl : MonoBehaviour
             }
         }
 
+        //Bomb 스킬
+        if (Input.GetKeyDown(KeyCode.R) == true)
+        {
+            UseeBombSkill();
+        }
         //애니메이션 셋팅
         //조이스틱 움직임도 없고, 키보드 움직임도 없고, 마우스 이동도 없을 때
         if (m_JoyMvLen <= 0.0f && (0.0f == h && 0.0f == v) && m_bMoveOnOff == false)
@@ -268,6 +273,33 @@ public class HeroCtrl : MonoBehaviour
 
         BulletCtrl a_BulletSc = a_Obj.GetComponent<BulletCtrl>();
         a_BulletSc.BulletSpawn(transform.position, m_CacEndVec.normalized, m_ShootRange);
+    }
+
+    void UseeBombSkill()
+    {
+        if(GlobalUserData.g_BombCount <= 0) return;
+
+        //360도 총알 발사
+        Vector3 a_TargetV = Vector3.zero;
+        GameObject a_NewBObj = null;
+        BulletCtrl a_BL_sc = null;
+        for (float Angle = 0.0f; Angle < 360.0f; Angle += 15.0f)
+        {
+            //원을 그리는 함수 Cos과 Sin의 순서는 방향을 시계방향으로 돌릴건지, 반시계방향으로 돌릴건지의 차이
+            //x좌표 = Sin / z좌표 = Cos >> 시계방향
+            //x좌표 = Cos / z좌표 = Sin >> 반시계방향
+            a_TargetV.x = Mathf.Cos(Angle*Mathf.Deg2Rad);       //Deg2Rad : 상수값. Degree to Radians Converter
+            a_TargetV.y = 0.0f;
+            a_TargetV.z = Mathf.Sin(Angle*Mathf.Deg2Rad);
+            a_TargetV.Normalize();
+
+            a_NewBObj = Instantiate(GameMgr.m_BulletPrefab);
+            a_BL_sc = a_NewBObj.GetComponent<BulletCtrl>();
+            a_BL_sc.BulletSpawn(transform.position, a_TargetV, 30.0f, 120.0f);      //주인공위치 중점으로, a_TargetV 방향으로 날려라
+        }
+        GlobalUserData.g_BombCount--;
+
+        GameMgr.Inst.UserInfo();
     }
 
     private void OnTriggerEnter(Collider coll)

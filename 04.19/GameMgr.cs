@@ -499,13 +499,26 @@ public class GameMgr : MonoBehaviour
             hpText.text = $"HP : {m_RefHero.m_CurHp} / {m_RefHero.m_MaxHp}";
 
         if (bombCountText != null)
-            bombCountText.text = $"x  {GlobalUserData.g_BombCount}";
+        {
+            if (GlobalUserData.g_BombCount <= 0)
+                bombCountText.text = $"x  00";
+            else
+                bombCountText.text = $"x  {GlobalUserData.g_BombCount}";
+        }
+            
 
         if (monKillCountText != null)
             monKillCountText.text = $"x  {monKillCount}";
 
         if (goldText != null)
-            goldText.text = $"x  {GlobalUserData.g_UserGold.ToString("N0")}";
+        {
+            if (GlobalUserData.g_UserGold <= 0)
+                goldText.text = $"x  00";
+            else
+                goldText.text = $"x  {GlobalUserData.g_UserGold.ToString("N0")}";
+        }
+
+            
     }
 
     public void AddGold(int a_Gold)
@@ -514,5 +527,11 @@ public class GameMgr : MonoBehaviour
 
         GlobalUserData.SaveGameInfo();
     }
+
+    public void AddBombSkill(int a_Val = 1)
+    {
+        GlobalUserData.g_BombCount += a_Val;
+    }
+
 
 }

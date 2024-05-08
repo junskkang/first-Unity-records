@@ -21,6 +21,8 @@ public class BulletCtrl : MonoBehaviour
 
     //사거리 관련 변수
     float m_ShootRange = 30.0f; //사거리
+
+    [HideInInspector] public float m_Damage = 10.0f;
     void Start()
     {
         
@@ -55,7 +57,7 @@ public class BulletCtrl : MonoBehaviour
 
     }
 
-    public void BulletSpawn(Vector3 a_OwnPos, Vector3 a_DirVec, float a_ShootRange = 30.0f)
+    public void BulletSpawn(Vector3 a_OwnPos, Vector3 a_DirVec, float a_ShootRange = 30.0f, float a_Dmg = 10)
     {
         //날아가야 할 방향 벡터 구하기
         a_DirVec.y = 0.0f;
@@ -75,6 +77,8 @@ public class BulletCtrl : MonoBehaviour
         //사거리 저장 
         //캐릭터에서 함수를 호출하며 매개변수로 넘어온 a_ShootRange를 저장 
         m_ShootRange = a_ShootRange;
+
+        m_Damage = a_Dmg;
 
         //m_AllyType = a_AllyType;
     }

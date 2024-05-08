@@ -78,7 +78,7 @@ public class MonsterCtrl : MonoBehaviour
             if (coll.gameObject.CompareTag(AllyType.BT_Enemy.ToString()) == true)
                 return;         //몬스터가 쏜 총알을 몬스터가 맞았을 때 제외. 팀킬 x
 
-            TakeDamage(10.0f);
+            TakeDamage(coll.gameObject.GetComponent<BulletCtrl>().m_Damage);
 
             Destroy(coll.gameObject);   //부딪힌 총알 제거
         }
@@ -302,6 +302,9 @@ public class MonsterCtrl : MonoBehaviour
     public void ItemDrop()
     {
         int a_Rnd = Random.Range(0, 6);
+
+        if (a_Rnd == 1)     //드롭되는 아이템 중 1번인 폭탄이 드랍되지 않도록
+            a_Rnd = 0;
 
         GameObject a_Item = null;
         a_Item = (GameObject)Instantiate(Resources.Load("Item_Obj"));
