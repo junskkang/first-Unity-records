@@ -14,6 +14,7 @@ public class MyRoomManager : MonoBehaviour
     public Button ToLobbyBtn;
     public Button ClearBtn;
     public Text GameGoldText;
+    int CurGold = 0;
 
     //내 인벤토리
     [Header("My Inventory")]
@@ -54,7 +55,9 @@ public class MyRoomManager : MonoBehaviour
         if (ClearBtn != null)
             ClearBtn.onClick.AddListener(() =>
             {
+                GlobalData.gameGold = 0;
                 PlayerPrefs.DeleteAll();
+                GlobalData.SaveGold();
                 GlobalData.LoadGold();
 
                 if (GameGoldText != null)
@@ -108,6 +111,8 @@ public class MyRoomManager : MonoBehaviour
     {
         CharacterBtnClick();
         CharBuyBtnClick();
+
+
     }
 
     void InvenBtnClick()

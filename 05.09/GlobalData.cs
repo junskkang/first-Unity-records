@@ -15,6 +15,6 @@ public class GlobalData
 
     public static void LoadGold()
     {
-        PlayerPrefs.GetInt("GameGold", 0);
+        gameGold = PlayerPrefs.GetInt("GameGold", 0);
     }
 }

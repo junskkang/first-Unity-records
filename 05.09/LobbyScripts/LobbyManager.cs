@@ -15,6 +15,7 @@ public class LobbyManager : MonoBehaviour
     
     public Button MyInfoBtn;
     public Text HelpText;
+    public Text GoldText;
 
     //HelpText Å¸ÀÌ¸Ó
     float textTimer = 0.0f;
@@ -37,6 +38,12 @@ public class LobbyManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        GlobalData.LoadGold();
+        
+        if (GoldText != null)
+            GoldText.text = GlobalData.gameGold.ToString("N0");
+
+
         if (ToTitleBtn != null)
             ToTitleBtn.onClick.AddListener(() =>
             {

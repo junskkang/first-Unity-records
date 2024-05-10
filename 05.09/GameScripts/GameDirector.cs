@@ -51,6 +51,7 @@ public class GameDirector : MonoBehaviour
             ToLobbyBtn.onClick.AddListener(() =>
             {
                 GlobalData.gameGold += this.point;
+                this.point = 0;
                 GlobalData.SaveGold();
                 SceneManager.LoadScene("LobbyScene");
             });
@@ -74,6 +75,7 @@ public class GameDirector : MonoBehaviour
             Time.timeScale = 0.0f;
 
             GlobalData.gameGold += this.point;
+            this.point = 0;
             GlobalData.SaveGold();
         }
         else if (0 <= this.time && this.time < 5)
