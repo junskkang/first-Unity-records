@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum Item_Type
+public enum Item_Type       
 {
     Ammo, Coin, Grenade, Heart, Weapon
 }

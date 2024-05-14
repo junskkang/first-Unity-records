@@ -12,6 +12,9 @@ public class PlayerCtrl : MonoBehaviour
     bool wDown;
     bool jDown;
     bool iDown;
+    bool sDown1;        //swap 1번 장비
+    bool sDown2;
+    bool sDown3;    
 
     float jumpPower = 15;
 
@@ -29,7 +32,7 @@ public class PlayerCtrl : MonoBehaviour
     GameObject nearObject;
     public GameObject[] weapons;
     public bool[] hasWeapons;
-
+    GameObject equipWeapon;
     private void Awake()
     {
         rigid = GetComponent<Rigidbody>();
@@ -49,6 +52,7 @@ public class PlayerCtrl : MonoBehaviour
         Turn();
         Jump();
         Dodge();
+        Swap();
         Interaction();
     }
 
@@ -59,6 +63,9 @@ public class PlayerCtrl : MonoBehaviour
         wDown = Input.GetButton("Walk");
         jDown = Input.GetButtonDown("Jump");
         iDown = Input.GetButtonDown("Interaction");
+        sDown1 = Input.GetButtonDown("Swap1");
+        sDown2 = Input.GetButtonDown("Swap2");
+        sDown3 = Input.GetButtonDown("Swap3");
     }
 
     void Move()
@@ -109,7 +116,22 @@ public class PlayerCtrl : MonoBehaviour
         playerSpeed *= 0.5f;
         isDodge = false;
     }
+    void Swap()
+    {
+        int weaponIndex = -1;
+        if (sDown1) weaponIndex = 0;
+        if (sDown2) weaponIndex = 1;
+        if (sDown3) weaponIndex = 2;
 
+        if((sDown1 ||  sDown2 || sDown3) && !isJump && !isDodge) 
+        {
+            if(equipWeapon != null)     //빈손이면 실행하지 마세요
+                equipWeapon.SetActive(false);   //이미 들고 있는 장비가 있으면 그걸 꺼주세요
+
+            equipWeapon = weapons[weaponIndex]; 
+            equipWeapon.SetActive(true);        //누른 무기로 스왑
+        }
+    }
     void Interaction()
     {
         if (iDown && nearObject != null && !isJump && !isDodge)
