@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -48,12 +49,17 @@ public class HeroCtrl : MonoBehaviour
     //애니메이션 관련 변수
     AnimSequence m_AnimSeq;
     Quaternion m_CacRot;
+
+    //닉네임 관련 변수
+    public Text m_Nickname;
     
     void Start()
     {
         //차일드 중 첫번째로 나오는 AnimSequence.cs 파일 찾아오기
         m_AnimSeq = gameObject.GetComponentInChildren<AnimSequence>();
-        
+
+        if (m_Nickname != null)
+            m_Nickname.text = PlayerPrefs.GetString("UserNick", "나 강림");
     }
 
     
@@ -355,5 +361,11 @@ public class HeroCtrl : MonoBehaviour
 
             //게임오버
         }
+    }
+
+    internal void ChangeNickName(string nickStr)
+    {
+        if(m_Nickname != null)
+            m_Nickname.text = nickStr;
     }
 }

@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class Store_Mgr : MonoBehaviour
 {
     public Button BackBtn;
+    public Text HelpText;
 
     //LeftGroup User List 관리 변수
     int g_UniqueUD = 0;

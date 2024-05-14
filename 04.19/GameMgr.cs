@@ -79,6 +79,11 @@ public class GameMgr : MonoBehaviour
     public GameObject m_MkItemNode = null;
     public Button m_ItemSellBtn = null;
 
+    //환경설정 Dialog 관련 변수
+    [Header("Config Dialog Box")]
+    public Button m_CfgBtn = null;
+    public GameObject Canvas_Dialog = null;
+    GameObject m_ConfigBoxObj = null;
 
     //싱글턴 패턴 접근
     public static GameMgr Inst;
@@ -102,6 +107,7 @@ public class GameMgr : MonoBehaviour
         m_RefHero = FindObjectOfType<HeroCtrl>();
         //게임매니저는 시작하면서 불렛프리팹을 로딩함
         m_BulletPrefab = Resources.Load("BulletPrefab") as GameObject;
+        
 
         if (m_BackBtn != null)
             m_BackBtn.onClick.AddListener(() =>
@@ -209,6 +215,20 @@ public class GameMgr : MonoBehaviour
                 m_InfoOnOff = !m_InfoOnOff;
                 if (userInfoPanel != null)
                     userInfoPanel.gameObject.SetActive(m_InfoOnOff);
+            });
+
+        //환경설정 버튼
+        if (m_CfgBtn != null)
+            m_CfgBtn.onClick.AddListener(() =>
+            {
+                if(m_ConfigBoxObj == null)
+                    m_ConfigBoxObj = Resources.Load("ConfigBox") as GameObject;
+
+                GameObject a_CfgBox = Instantiate(m_ConfigBoxObj);
+                a_CfgBox.transform.SetParent(Canvas_Dialog.transform, false);
+                //false : 로컬 프리팹에 저장된 좌표 및 스케일을 그대로 유지
+
+                Time.timeScale = 0.0f;  //환경설정 창 열였을 때 일시정지 효과
             });
 
     }
