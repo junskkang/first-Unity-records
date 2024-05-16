@@ -55,6 +55,9 @@ public class MonsterCtrl : MonoBehaviour
     Vector3 a_CacPtAngle = Vector3.zero;
     Vector3 a_Vert;
 
+    [HideInInspector] public int m_SpawnIdx = -1;   //List<SpawnPos> m_SpawnPosList의 인덱스
+    int m_Level = 1;        //몬스터 레벨
+
 
 
 
@@ -108,6 +111,10 @@ public class MonsterCtrl : MonoBehaviour
             //보상
             ItemDrop();
             GameMgr.Inst.monKillCount++;
+
+            //4~6초 뒤 같은 자리에서 다시 스폰 요청
+            if (m_Level < 3 && Monster_Mgr.Inst != null)        //3레벨 몬스터는 사망시 리스폰x 기획의도
+                Monster_Mgr.Inst.ResetSpawn(m_SpawnIdx);
 
             Destroy(gameObject);    //몬스터 제거
         }
@@ -329,5 +336,27 @@ public class MonsterCtrl : MonoBehaviour
         {
             a_RefItemInfo.InitItem((Item_Type)a_Rnd, a_Item.name, Random.Range(1, 6), Random.Range(1, 6));
         }
+    }
+
+    public void SetSpawnInfo(int Idx, int a_Level, float a_MaxHp, float a_AttSpeed, float a_MvSpeed)
+    {
+        m_SpawnIdx = Idx;
+        m_Level = a_Level;
+        m_MaxHp = a_MaxHp;
+        m_CurHp = a_MaxHp;
+        m_AttackSpeed = a_AttSpeed;
+        m_MoveVelocity = a_MvSpeed;
+
+        //몬스터 이미지 교체
+        if (Monster_Mgr.Inst == null) return;
+
+        int ImgIdx = m_Level - 1;
+        ImgIdx = Mathf.Clamp(ImgIdx, 0, 2);     //범위 외의 숫자가 나올 경우 해당 범위 내의 숫자로 만들어버림
+        Texture a_RefMonImg = Monster_Mgr.Inst.m_MonImg[ImgIdx];
+
+        MeshRenderer a_MeshList = gameObject.GetComponentInChildren<MeshRenderer>();
+        if (a_MeshList != null)
+            a_MeshList.material.SetTexture("_MainTex", a_RefMonImg);
+
     }
 }
