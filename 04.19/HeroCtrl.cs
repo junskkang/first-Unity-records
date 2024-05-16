@@ -360,6 +360,7 @@ public class HeroCtrl : MonoBehaviour
             m_CurHp = 0.0f;
 
             //게임오버
+            //GameMgr.Inst.GameOver();
         }
     }
 

@@ -85,6 +85,22 @@ public class GameMgr : MonoBehaviour
     public GameObject Canvas_Dialog = null;
     GameObject m_ConfigBoxObj = null;
 
+    //게임오버 연출 관련 변수
+    [Header("GameOver")]
+    public Image GameoverPanel;
+    public Transform TopCurtain;
+    Vector3 TopCurtainMove = new Vector3(0.0f, 0.0f, 0.0f);
+    public Transform RCurtain;
+    Vector3 RCurtainMove = new Vector3(640.0f, 0.0f, 0.0f);
+    public Transform LCurtain;
+    Vector3 LCurtainMove = new Vector3(-640.0f, 0.0f, 0.0f);
+    public Text GameoverText;
+    public Image SpotLight;
+    public Image DeadCharacter;
+    public Button BackLobby;
+    float m_StartTime = 0.0f;
+    float m_CurTime = 0.0f;
+
     //싱글턴 패턴 접근
     public static GameMgr Inst;
 
@@ -240,6 +256,12 @@ public class GameMgr : MonoBehaviour
         InvenScOnOffUpdate();
 
         UserInfo();
+        if (m_RefHero.m_CurHp <= 0.0f)
+        {
+            m_RefHero.m_CurHp = 0.0f;
+
+            GameOver();
+        }
     }
 
 #region --- Fixed Joystick 
@@ -553,5 +575,48 @@ public class GameMgr : MonoBehaviour
         GlobalUserData.g_BombCount += a_Val;
     }
 
+    public void GameOver()
+    {
+        GameoverPanel.gameObject.SetActive(true);
+
+        Time.timeScale = 0.0f;
+
+        if (GameoverPanel.gameObject.activeSelf == true)
+        {
+            TopCurtain.transform.localPosition =
+                Vector3.MoveTowards(TopCurtain.transform.localPosition, TopCurtainMove, 20);
+
+            if (TopCurtain.transform.localPosition.y == TopCurtainMove.y)
+            {
+                RCurtain.transform.localPosition =
+                Vector3.MoveTowards(RCurtain.transform.localPosition, RCurtainMove, 10);
+
+                LCurtain.transform.localPosition =
+                    Vector3.MoveTowards(LCurtain.transform.localPosition, LCurtainMove, 10);
+
+                if (RCurtain.transform.localPosition.x == RCurtainMove.x)
+                {
+                    GameoverText.gameObject.SetActive(true);
+
+                    SpotLight.fillAmount += 0.02f;
+
+                    if (SpotLight.fillAmount >= 1.0f)
+                    {
+                        SpotLight.fillAmount = 1.0f;
+                        DeadCharacter.gameObject.SetActive(true);
+                        BackLobby.gameObject.SetActive(true);
+                        if (BackLobby != null)
+                            BackLobby.onClick.AddListener(() =>
+                            {
+                                SceneManager.LoadScene("LobbyScene");
+                                Time.timeScale = 1.0f;
+                            });
+                    }
+                }
+            }
+
+        }
+
+    }
 
 }
