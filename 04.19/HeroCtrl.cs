@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,7 +10,7 @@ public class HeroCtrl : MonoBehaviour
 {
     //키보드 이동 관련 변수
     float h, v;                   //키보드 입력값을 받기 위한 변수
-    float m_MoveSpeed = 10.0f;    //초당 이동속도
+    float m_MoveSpeed = 15.0f;    //초당 이동속도
 
     Vector3 m_DirVec;             //이동하려는 방향 벡터 변수
 
@@ -272,12 +273,14 @@ public class HeroCtrl : MonoBehaviour
     }
     public void ShootFire(Vector3 a_Pos)    //목표지점을 매개변수로 받음
     {//클릭 이벤트가 발생했을 때 함수 호출
-        GameObject a_Obj = Instantiate(GameMgr.m_BulletPrefab);
+        //GameObject a_Obj = Instantiate(GameMgr.m_BulletPrefab);
 
         m_CacEndVec = a_Pos - transform.position;   //목표지점 - 현재캐릭터지점
         m_CacEndVec.y = 0.0f;
 
-        BulletCtrl a_BulletSc = a_Obj.GetComponent<BulletCtrl>();
+        //BulletCtrl a_BulletSc = a_Obj.GetComponent<BulletCtrl>();
+        BulletCtrl a_BulletSc = BulletPool_Mgr.Inst.GetBulletPool();
+        a_BulletSc.gameObject.tag = AllyType.BT_Ally.ToString();
         a_BulletSc.BulletSpawn(transform.position, m_CacEndVec.normalized, m_ShootRange);
     }
 
@@ -287,7 +290,7 @@ public class HeroCtrl : MonoBehaviour
 
         //360도 총알 발사
         Vector3 a_TargetV = Vector3.zero;
-        GameObject a_NewBObj = null;
+        //GameObject a_NewBObj = null;
         BulletCtrl a_BL_sc = null;
         for (float Angle = 0.0f; Angle < 360.0f; Angle += 15.0f)
         {
@@ -299,8 +302,10 @@ public class HeroCtrl : MonoBehaviour
             a_TargetV.z = Mathf.Sin(Angle*Mathf.Deg2Rad);
             a_TargetV.Normalize();
 
-            a_NewBObj = Instantiate(GameMgr.m_BulletPrefab);
-            a_BL_sc = a_NewBObj.GetComponent<BulletCtrl>();
+            //a_NewBObj = Instantiate(GameMgr.m_BulletPrefab);
+            //a_BL_sc = a_NewBObj.GetComponent<BulletCtrl>();
+            a_BL_sc = BulletPool_Mgr.Inst.GetBulletPool();
+            a_BL_sc.gameObject.tag = AllyType.BT_Ally.ToString();
             a_BL_sc.BulletSpawn(transform.position, a_TargetV, 30.0f, 120.0f);      //주인공위치 중점으로, a_TargetV 방향으로 날려라
         }
         GlobalUserData.g_BombCount--;
@@ -315,9 +320,12 @@ public class HeroCtrl : MonoBehaviour
             if (coll.gameObject.CompareTag(AllyType.BT_Ally.ToString()) == true)
                 return;
 
-            TakeDamage(5.0f);
+            TakeDamage(2.0f);
 
-            Destroy(coll.gameObject);
+            if(coll.gameObject.GetComponent<BulletCtrl>().m_IsPool == false)
+                Destroy(coll.gameObject);
+            else
+                coll.gameObject.SetActive(false);
         }
         else if (coll.gameObject.name.Contains("coin_") == true)
         {

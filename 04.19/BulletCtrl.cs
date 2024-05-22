@@ -23,6 +23,10 @@ public class BulletCtrl : MonoBehaviour
     float m_ShootRange = 30.0f; //사거리
 
     [HideInInspector] public float m_Damage = 10.0f;
+
+    [HideInInspector] public bool m_IsPool = false; 
+    // == true : 메모리풀로 관리되는 총알 SetActive 스위칭
+    // == false : Instantiate, Destroy로 생성 파괴를 반복하는 총알
     void Start()
     {
         
@@ -39,14 +43,24 @@ public class BulletCtrl : MonoBehaviour
 
         //총알 삭제
         Vector3 a_Pos = Camera.main.WorldToViewportPoint(transform.position);
-        if (a_Pos.x < -0.1f || 1.1f < a_Pos.x ||a_Pos.y < -0.1f || 1.1f < a_Pos.y)
-            Destroy(gameObject);
+        if (a_Pos.x < -0.1f || 1.1f < a_Pos.x || a_Pos.y < -0.1f || 1.1f < a_Pos.y)
+        {
+            if (m_IsPool == true)
+                gameObject.SetActive(false);
+            else
+                Destroy(gameObject);
+        }
         else
         {//총알의 사거리 제한
             float a_Length = Vector3.Distance(transform.position, m_StartPos);
             // == float a_Length = (transform.position - m_StartPos).magnitude;
             if (m_ShootRange < a_Length)
-                Destroy(gameObject);
+            {
+                if (m_IsPool == true)
+                    gameObject.SetActive(false);
+                else
+                    Destroy(gameObject);
+            }                
         }
 
         ////참고! 반대로 화면 바깥에서 화면 안쪽으로 스폰되는 투사체 
@@ -78,7 +92,11 @@ public class BulletCtrl : MonoBehaviour
         //캐릭터에서 함수를 호출하며 매개변수로 넘어온 a_ShootRange를 저장 
         m_ShootRange = a_ShootRange;
 
-        m_Damage = a_Dmg;
+        int cri = Random.Range(0, 10);
+        if (cri < 6)
+            m_Damage = a_Dmg;
+        else
+            m_Damage = a_Dmg * 2;
 
         //m_AllyType = a_AllyType;
     }

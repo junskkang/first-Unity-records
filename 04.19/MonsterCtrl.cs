@@ -70,7 +70,7 @@ public class MonsterCtrl : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         MonsterAI();
     }
@@ -81,9 +81,13 @@ public class MonsterCtrl : MonoBehaviour
             if (coll.gameObject.CompareTag(AllyType.BT_Enemy.ToString()) == true)
                 return;         //몬스터가 쏜 총알을 몬스터가 맞았을 때 제외. 팀킬 x
 
-            TakeDamage(coll.gameObject.GetComponent<BulletCtrl>().m_Damage);
+            BulletCtrl a_Bl_Ctrl = coll.gameObject.GetComponent<BulletCtrl>();
+            TakeDamage(a_Bl_Ctrl.m_Damage);
 
-            Destroy(coll.gameObject);   //부딪힌 총알 제거
+            if (a_Bl_Ctrl.m_IsPool == true)
+                coll.gameObject.SetActive(false);
+            else
+                Destroy(coll.gameObject);   //부딪힌 총알 제거
         }
 
     }
@@ -288,22 +292,109 @@ public class MonsterCtrl : MonoBehaviour
             m_bMvPtOnOff = true;
         }
     }
-
+    float m_ShootAngle;
     void ShootFire()
     {
         if (m_AggroTarget == null)
             return;
 
-        a_CacVLen = m_AggroTarget.transform.position - transform.position;
-        a_CacVLen.y = 0.0f;
+        if (m_Level == 1)
+        {
+            a_CacVLen = m_AggroTarget.transform.position - transform.position;
+            a_CacVLen.y = 0.0f;
 
-        Vector3 a_CacDir = a_CacVLen.normalized;        //방향 벡터
+            Vector3 a_CacDir = a_CacVLen.normalized;        //방향 벡터
 
-        GameObject BulletClone = Instantiate(GameMgr.m_BulletPrefab);
-        BulletClone.tag = AllyType.BT_Enemy.ToString();   //"BT_Enemy";
-        BulletCtrl a_BulletSc = BulletClone.GetComponent<BulletCtrl>();
-        a_BulletSc.BulletSpawn(transform.position, a_CacDir, 30.0f);
-        
+            //GameObject BulletClone = Instantiate(GameMgr.m_BulletPrefab);
+
+            //BulletCtrl a_BulletSc = BulletClone.GetComponent<BulletCtrl>();
+            BulletCtrl a_BulletSc = BulletPool_Mgr.Inst.GetBulletPool();
+            a_BulletSc.gameObject.tag = AllyType.BT_Enemy.ToString();   //"BT_Enemy";
+            a_BulletSc.BulletSpawn(transform.position, a_CacDir, 30.0f);
+        }
+        else if (m_Level == 2)
+        {
+            //랜덤 각도로 발사하기
+            a_CacVLen = m_AggroTarget.transform.position - transform.position;
+            a_CacVLen.y = 0.0f;
+
+            Quaternion a_CacRot = Quaternion.LookRotation(a_CacVLen.normalized);
+            float a_CacRan = Random.Range(-15.0f, 15.0f);
+            a_CacRot.eulerAngles = new Vector3(a_CacRot.eulerAngles.x,
+                                               a_CacRot.eulerAngles.y + a_CacRan,
+                                               a_CacRot.eulerAngles.z);
+            Vector3 a_DirVec = a_CacRot * Vector3.forward;
+            a_DirVec.Normalize();
+
+            //GameObject a_CloneObj = Instantiate(GameMgr.m_BulletPrefab);
+            //a_CloneObj.tag = AllyType.BT_Enemy.ToString();   //"BT_Enemy";
+            //BulletCtrl a_BL_Sc = a_CloneObj.GetComponent<BulletCtrl>();
+            BulletCtrl a_BL_Sc = BulletPool_Mgr.Inst.GetBulletPool();
+            a_BL_Sc.gameObject.tag = AllyType.BT_Enemy.ToString();   //"BT_Enemy";
+            a_BL_Sc.BulletSpawn(transform.position, a_DirVec, 30.0f);
+        }
+        else if (m_Level == 3)
+        {
+            //360도 공격
+            //Vector3 a_TargetV = Vector3.zero;
+            //GameObject a_NewObj = null;
+            //BulletCtrl a_Bl_Sc = null;
+            //for (float Angle = 0.0f; Angle < 360.0f; Angle += 15.0f)
+            //{
+            //    a_TargetV.x = Mathf.Cos(Angle * Mathf.Deg2Rad);
+            //    a_TargetV.y = 0.0f;
+            //    a_TargetV.z = Mathf.Sin(Angle * Mathf.Deg2Rad);
+            //    a_TargetV.Normalize();
+
+            //    //a_NewObj = Instantiate(GameMgr.m_BulletPrefab);
+            //    //a_Bl_Sc = a_NewObj.GetComponent<BulletCtrl>();
+            //    //a_NewObj.tag = AllyType.BT_Enemy.ToString();
+            //    a_Bl_Sc = BulletPool_Mgr.Inst.GetBulletPool();
+            //    a_Bl_Sc.gameObject.tag = AllyType.BT_Enemy.ToString();
+            //    a_Bl_Sc.BulletSpawn(transform.position, a_TargetV, 30.0f);
+            //}
+            //return;
+
+            //타겟을 중심으로 한 부채꼴 공격
+            //a_CacVLen = m_AggroTarget.transform.position - transform.position;
+            //a_CacVLen.y = 0.0f;
+            //Quaternion a_CacRot = Quaternion.identity;
+            //Vector3 a_DirVec = Vector3.forward;     //시계를 생각했을 때 12시 방향이므로 eulerangle = 0.0f
+            //GameObject a_CloneObj = null;
+            //BulletCtrl a_BL_Sc = null;
+            //for (float Angle = -30.0f; Angle <= 30.0f; Angle += 15.0f)
+            //{
+            //    a_CacRot = Quaternion.LookRotation(a_CacVLen.normalized);   //대상을 향하는 방향값을 가져옴
+            //    a_CacRot.eulerAngles = new Vector3(a_CacRot.eulerAngles.x,
+            //                                       a_CacRot.eulerAngles.y + Angle,
+            //                                       a_CacRot.eulerAngles.z); //그 방향값을 중심으로 +- 값을 더해줌
+            //    a_DirVec = a_CacRot * Vector3.forward;  //0시를 기준으로 해당 방향의 각도값을 벡터로
+
+            //    //a_CloneObj = Instantiate(GameMgr.m_BulletPrefab);
+            //    //a_CloneObj.tag = AllyType.BT_Enemy.ToString();   //"BT_Enemy";
+            //    //a_BL_Sc = a_CloneObj.GetComponent<BulletCtrl>();
+            //    a_BL_Sc = BulletPool_Mgr.Inst.GetBulletPool();
+            //    a_BL_Sc.gameObject.tag = AllyType.BT_Enemy.ToString();
+            //    a_BL_Sc.BulletSpawn(transform.position, a_DirVec, 30.0f);
+            //}
+            //return;
+
+            //회오리 발사
+            Vector3 a_TargetV = Vector3.zero;
+            a_TargetV.x = Mathf.Sin(m_ShootAngle * Mathf.Deg2Rad);
+            a_TargetV.y = 0.0f;
+            a_TargetV.z = Mathf.Cos(m_ShootAngle * Mathf.Deg2Rad);
+            a_TargetV.Normalize();
+
+            //GameObject a_CloneObj = Instantiate(GameMgr.m_BulletPrefab);
+            //a_CloneObj.tag = AllyType.BT_Enemy.ToString();   //"BT_Enemy";
+            //BulletCtrl a_BL_Sc = a_CloneObj.GetComponent<BulletCtrl>();
+            BulletCtrl a_BL_Sc = BulletPool_Mgr.Inst.GetBulletPool();
+            a_BL_Sc.gameObject.tag = AllyType.BT_Enemy.ToString();
+            a_BL_Sc.BulletSpawn(transform.position, a_TargetV, 30.0f);
+
+            m_ShootAngle += 15.0f;
+        }        
     }
 
     public void ItemDrop()
@@ -347,8 +438,17 @@ public class MonsterCtrl : MonoBehaviour
         m_AttackSpeed = a_AttSpeed;
         m_MoveVelocity = a_MvSpeed;
 
-        //몬스터 이미지 교체
-        if (Monster_Mgr.Inst == null) return;
+        if (m_Level == 2)
+            m_AttackSpeed = 0.1f;
+        //회오리 발사 시에
+        if (m_Level == 3)
+            m_AttackSpeed = 0.1f;
+            
+        //if (m_Level == 2) //360도 발사시에
+        //    m_AttackSpeed = 1.3f;
+
+            //몬스터 이미지 교체
+            if (Monster_Mgr.Inst == null) return;
 
         int ImgIdx = m_Level - 1;
         ImgIdx = Mathf.Clamp(ImgIdx, 0, 2);     //범위 외의 숫자가 나올 경우 해당 범위 내의 숫자로 만들어버림

@@ -98,8 +98,7 @@ public class GameMgr : MonoBehaviour
     public Image SpotLight;
     public Image DeadCharacter;
     public Button BackLobby;
-    float m_StartTime = 0.0f;
-    float m_CurTime = 0.0f;
+
 
     //싱글턴 패턴 접근
     public static GameMgr Inst;
