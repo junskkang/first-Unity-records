@@ -282,6 +282,9 @@ public class HeroCtrl : MonoBehaviour
         BulletCtrl a_BulletSc = BulletPool_Mgr.Inst.GetBulletPool();
         a_BulletSc.gameObject.tag = AllyType.BT_Ally.ToString();
         a_BulletSc.BulletSpawn(transform.position, m_CacEndVec.normalized, m_ShootRange);
+
+        Sound_Mgr.Inst.PlayEffSound("gun");
+
     }
 
     void UseeBombSkill()
@@ -311,6 +314,8 @@ public class HeroCtrl : MonoBehaviour
         GlobalUserData.g_BombCount--;
 
         GameMgr.Inst.UserInfo();
+        Sound_Mgr.Inst.PlayEffSound("explosion_large_01");
+        
     }
 
     private void OnTriggerEnter(Collider coll)

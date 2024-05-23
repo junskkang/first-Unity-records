@@ -246,6 +246,7 @@ public class GameMgr : MonoBehaviour
                 Time.timeScale = 0.0f;  //환경설정 창 열였을 때 일시정지 효과
             });
 
+        Sound_Mgr.Inst.PlayBGM("sound_bgm_island_001", 0.2f);
     }
 
 

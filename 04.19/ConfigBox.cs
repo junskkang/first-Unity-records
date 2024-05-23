@@ -36,6 +36,22 @@ public class ConfigBox : MonoBehaviour
 
 
         //체크상태, 슬라이드 상태, 닉네임 로딩 후 UI컨트롤에 적용
+        int a_SoundOnOff = PlayerPrefs.GetInt("SoundOnOff", 1);
+        if (m_SoundToggle != null)
+        {
+            //if (a_SoundOnOff == 1)
+            //    m_SoundToggle.isOn = true;
+            //else
+            //    m_SoundToggle.isOn = false;
+
+            //삼항조건연산식
+            m_SoundToggle.isOn = (a_SoundOnOff == 1) ? true : false;
+        }
+
+        if (m_VolumeSlider != null)
+            m_VolumeSlider.value = PlayerPrefs.GetFloat("SoundVolume", 1.0f);
+
+
         Text a_Placeholder = null;
         if (NickInputField != null)
         {
@@ -78,13 +94,26 @@ public class ConfigBox : MonoBehaviour
         Destroy(gameObject);
     }
 
-    private void SoundOnOff(bool arg0)
+    private void SoundOnOff(bool value)
     {
+        //체크 상태 저장
+        //if (value == true)
+        //    PlayerPrefs.SetInt("SoundOnOff", 1);
+        //else
+        //    PlayerPrefs.SetInt("SoundOnOff", 0);
+
+        int a_Value = (value == true) ? 1 : 0;
+        PlayerPrefs.SetInt("SoundOnOff", a_Value);  
+        //적용시점은 값을 조정하자마자 저장됨
+        //확인을 눌러야만 저장되게끔 하고 싶으면 이 코드를 확인버튼 함수로 옮기자
         
+        Sound_Mgr.Inst.SoundOnOff(value);
+               
     }
 
-    private void VolumeChanged(float arg0)
+    private void VolumeChanged(float value)
     {
-       
+        PlayerPrefs.SetFloat("SoundVolume", value);
+        Sound_Mgr.Inst.SoundVolume(value);
     }
 }
