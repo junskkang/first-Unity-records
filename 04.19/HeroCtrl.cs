@@ -66,6 +66,7 @@ public class HeroCtrl : MonoBehaviour
     
     void Update()
     {
+        if (m_CurHp <= 0) return; //사망 시 어떠한 동작도 안되게끔
         MousePickCtrl();
 
         KeyBoardUpdate();       //키보드이동 1순위
