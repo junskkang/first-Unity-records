@@ -8,7 +8,7 @@ public class HeroCtrl : MonoBehaviour
     //이동관련 변수
     float hAxis;
     float vAxis;
-    float moveSpeed = 8.0f;
+    float moveSpeed = 10.0f;
     Vector3 moveVec;
 
     //체력바관련 변수
@@ -17,17 +17,26 @@ public class HeroCtrl : MonoBehaviour
     public float maxHp = 100.0f;
 
     //총알 공격 관련 변수
-    float attackSpeed = 0.3f;
+    float attackSpeed = 0.2f;
     float attackTick = 0.0f;
     float attackRange = 40.0f;
     bool isAttack;
-    public GameObject bulletPrefab; 
+    public GameObject bulletPrefab;
+    public GameObject shootPos = null;
+
+    Vector3 HalfSize = Vector3.zero;
 
 
         
     void Start()
     {
-        
+        //캐릭터의 사이즈 구하기 (월드에 그려진 스프라이트 사이즈 구해오기)
+        SpriteRenderer sprRend = gameObject.GetComponentInChildren<SpriteRenderer>();
+        //sprRend.bounds.size.x 스프라이트의 가로 사이즈
+        //sprRend.bounds.size.y 스프라이트의 세로 사이즈
+        HalfSize.x = sprRend.bounds.size.x / 2.0f - 0.23f;  //원본 이미지의 여백 때문에 상수값으로 보정
+        HalfSize.y = sprRend.bounds.size.y / 2.0f - 0.05f;  //원본 이미지의 여백 때문에 상수값으로 보정
+        HalfSize.z = 1.0f;
     }
 
     // Update is called once per frame
@@ -41,18 +50,23 @@ public class HeroCtrl : MonoBehaviour
 
     void GetInput()
     {
-        hAxis = Input.GetAxisRaw("Horizontal");
-        vAxis = Input.GetAxisRaw("Vertical");
+        hAxis = Input.GetAxis("Horizontal");
+        vAxis = Input.GetAxis("Vertical");
         isAttack = Input.GetMouseButton(0);
     }
 
 
     void Move()
-    {
-        moveVec = new Vector3(hAxis, vAxis, 0).normalized;
+    {      
+        if (hAxis != 0 || vAxis != 0)
+        {
+            moveVec = new Vector3(hAxis, vAxis, transform.position.z);
+            if(1.0f < moveVec.magnitude)
+                moveVec.Normalize();
 
-        if (hAxis != 0 || vAxis != 0) 
             transform.position += moveVec * moveSpeed * Time.deltaTime;
+        }
+            
 
         #region 화면밖 이동제어
         //화면 밖 이동금지
@@ -102,6 +116,44 @@ public class HeroCtrl : MonoBehaviour
         //GameObject obj = Resources.Load("Bullet") as GameObject;
         GameObject obj = Instantiate(bulletPrefab);
         BulletCtrl bulletCtrl = obj.GetComponent<BulletCtrl>();
-        bulletCtrl.BulletFire(transform.position);
+        bulletCtrl.BulletFire(shootPos.transform.position);
+    }
+
+    void LimitMove()
+    {
+        Vector3 m_CacCurPos = transform.position;
+
+        if(m_CacCurPos.x < CameraResolution.m_ScWMin.x + HalfSize.x)    //화면의 왼쪽끝
+            m_CacCurPos.x = CameraResolution.m_ScWMin.x + HalfSize.x;
+
+        if (CameraResolution.m_ScWMax.x - HalfSize.x < m_CacCurPos.x)   //화면의 오른쪽끝
+            m_CacCurPos.x = CameraResolution.m_ScWMax.x - HalfSize.x;
+            
+        if (m_CacCurPos.y < CameraResolution.m_ScWMin.y + HalfSize.y)   //화면의 아래쪽끝
+            m_CacCurPos.y = CameraResolution.m_ScWMin.y + HalfSize.y;
+
+        if (CameraResolution.m_ScWMax.y - HalfSize.y < m_CacCurPos.y)   //화면의 위쪽끝
+            m_CacCurPos.y = CameraResolution.m_ScWMax.y - HalfSize.y;
+
+        transform.position = m_CacCurPos;
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag.Contains("Monster") == true)
+        {
+            Destroy(collision.gameObject);
+            curHp -= 10.0f;
+
+            if (curHp <= 0)
+            {
+                curHp = 0;
+            }
+                
+        }
+
+
+
+
     }
 }
