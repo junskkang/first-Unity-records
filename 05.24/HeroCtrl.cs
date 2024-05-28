@@ -13,8 +13,8 @@ public class HeroCtrl : MonoBehaviour
 
     //체력바관련 변수
     public Image HpBar;
-    public float curHp = 100.0f;
-    public float maxHp = 100.0f;
+    float curHp = 300.0f;
+    float maxHp = 300.0f;
 
     //총알 공격 관련 변수
     float attackSpeed = 0.2f;
@@ -22,14 +22,21 @@ public class HeroCtrl : MonoBehaviour
     float attackRange = 40.0f;
     bool isAttack;
     public GameObject bulletPrefab;
+    public Transform bulletPool;
     public GameObject shootPos = null;
 
     Vector3 HalfSize = Vector3.zero;
+
+    DamageManager damageManager = null;
+
+    //재화 관련 변수
+    int gold = 0;
 
 
         
     void Start()
     {
+        Time.timeScale = 1.0f;
         //캐릭터의 사이즈 구하기 (월드에 그려진 스프라이트 사이즈 구해오기)
         SpriteRenderer sprRend = gameObject.GetComponentInChildren<SpriteRenderer>();
         //sprRend.bounds.size.x 스프라이트의 가로 사이즈
@@ -37,6 +44,8 @@ public class HeroCtrl : MonoBehaviour
         HalfSize.x = sprRend.bounds.size.x / 2.0f - 0.23f;  //원본 이미지의 여백 때문에 상수값으로 보정
         HalfSize.y = sprRend.bounds.size.y / 2.0f - 0.05f;  //원본 이미지의 여백 때문에 상수값으로 보정
         HalfSize.z = 1.0f;
+
+        damageManager = GameObject.FindObjectOfType<DamageManager>();
     }
 
     // Update is called once per frame
@@ -115,6 +124,7 @@ public class HeroCtrl : MonoBehaviour
     {
         //GameObject obj = Resources.Load("Bullet") as GameObject;
         GameObject obj = Instantiate(bulletPrefab);
+        obj.transform.SetParent(bulletPool);
         BulletCtrl bulletCtrl = obj.GetComponent<BulletCtrl>();
         bulletCtrl.BulletFire(shootPos.transform.position);
     }
@@ -143,17 +153,42 @@ public class HeroCtrl : MonoBehaviour
         if (collision.gameObject.tag.Contains("Monster") == true)
         {
             Destroy(collision.gameObject);
-            curHp -= 10.0f;
 
-            if (curHp <= 0)
-            {
-                curHp = 0;
-            }
-                
+            if (collision.gameObject.GetComponent<MonsterCtrl>().type == MonsterType.Zombi)
+                TakeDamage(50);
+            if (collision.gameObject.GetComponent<MonsterCtrl>().type == MonsterType.Missile)
+                TakeDamage(80);
         }
 
+        if (collision.gameObject.name.Contains("Coin") == true)
+        {
+            Destroy(collision.gameObject);
 
+            gold += 100;
 
+            Debug.Log(gold);
+        }
+    }
 
+    public void TakeDamage(float value)
+    {
+        if (curHp <= 0.0f) return;
+
+        curHp -= value;
+
+        if (damageManager != null)
+            damageManager.DamageText((int)value, this.transform.position, Color.blue);
+
+        if (curHp <= 0.0f)
+            curHp = 0.0f;
+
+        if (HpBar != null)
+            HpBar.fillAmount = curHp / maxHp;
+
+        if (curHp <= 0.0f)
+        {
+            curHp = 0;
+            Time.timeScale = 0.0f;
+        }
     }
 }
