@@ -6,9 +6,9 @@ public class BulletCtrl : MonoBehaviour
 {
     HeroCtrl refHero = null;
 
-    Vector3 moveStep = Vector3.zero;
+    Vector3 moveStep;
     float moveSpeed = 15.0f;
-    float bulletDamage = 10.0f;
+    float bulletDamage = 20.0f;
 
     Vector3 spawnPos = Vector3.zero;
 
@@ -17,15 +17,18 @@ public class BulletCtrl : MonoBehaviour
     {
         Destroy(gameObject, 3.0f);  //3초후 제거
         refHero = GetComponent<HeroCtrl>();
-        spawnPos = transform.position;
+        //spawnPos = transform.position;
+        //moveStep = Vector3.zero;
     }
 
     // Update is called once per frame
     void Update()
     {
         //총알 이동
-        moveStep = Vector3.right * moveSpeed * Time.deltaTime;
-        this.transform.Translate(moveStep, Space.World);
+        
+        //this.transform.Translate(moveStep, Space.World);
+
+        transform.position += moveStep * moveSpeed * Time.deltaTime;
 
         //화면밖 총알 제거
         Vector3 Pos = Camera.main.WorldToViewportPoint(transform.position);
@@ -36,11 +39,25 @@ public class BulletCtrl : MonoBehaviour
 
     public void BulletFire(Vector3 ownVec, float Speed = 15.0f, float damage = 10.0f)
     {
+        moveStep = Vector3.right;
+
         spawnPos = ownVec;// + new Vector3(2.0f, 0.0f, 0.0f);
 
         transform.position = spawnPos;
 
         moveSpeed = Speed;
         bulletDamage = damage;
+    }
+
+    public void BulletSpawn(Vector3 startPos, Vector3 dirVec, float moveSpeed = 15.0f, float att = 20.0f)
+    {
+        spawnPos = startPos;
+
+        transform.position = spawnPos;
+
+        moveStep = dirVec;
+
+        this.moveSpeed = moveSpeed;
+        bulletDamage = att;
     }
 }

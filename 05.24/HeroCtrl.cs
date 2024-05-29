@@ -19,7 +19,7 @@ public class HeroCtrl : MonoBehaviour
     //총알 공격 관련 변수
     float attackSpeed = 0.2f;
     float attackTick = 0.0f;
-    float attackRange = 40.0f;
+    //float attackRange = 40.0f;
     bool isAttack;
     public GameObject bulletPrefab;
     public Transform bulletPool;
@@ -27,10 +27,8 @@ public class HeroCtrl : MonoBehaviour
 
     Vector3 HalfSize = Vector3.zero;
 
-    DamageManager damageManager = null;
+    //GameManager damageManager = null;
 
-    //재화 관련 변수
-    int gold = 0;
 
 
         
@@ -45,7 +43,7 @@ public class HeroCtrl : MonoBehaviour
         HalfSize.y = sprRend.bounds.size.y / 2.0f - 0.05f;  //원본 이미지의 여백 때문에 상수값으로 보정
         HalfSize.z = 1.0f;
 
-        damageManager = GameObject.FindObjectOfType<DamageManager>();
+        //damageManager = GameObject.FindObjectOfType<GameManager>();
     }
 
     // Update is called once per frame
@@ -164,9 +162,15 @@ public class HeroCtrl : MonoBehaviour
         {
             Destroy(collision.gameObject);
 
-            gold += 100;
+            GameManager.gold += 100;
 
-            Debug.Log(gold);
+            Debug.Log(GameManager.gold);
+        }
+
+        if (collision.gameObject.name.Contains("Enemy") == true)
+        {
+            TakeDamage(20.0f);
+            Destroy(collision.gameObject);
         }
     }
 
@@ -174,10 +178,11 @@ public class HeroCtrl : MonoBehaviour
     {
         if (curHp <= 0.0f) return;
 
-        curHp -= value;
+        value = -(value);
+        curHp += value;
 
-        if (damageManager != null)
-            damageManager.DamageText((int)value, this.transform.position, Color.blue);
+        if (GameManager.inst != null)
+            GameManager.inst.DamageText((int)value, this.transform.position, Color.blue);
 
         if (curHp <= 0.0f)
             curHp = 0.0f;
