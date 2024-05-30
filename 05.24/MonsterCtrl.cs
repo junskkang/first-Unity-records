@@ -28,8 +28,8 @@ public class MonsterCtrl : MonoBehaviour
     float cycleSpeed = 0.0f;//랜덤한 진동 속도 변수
 
     HeroCtrl refHero = null;
-    public Transform bulletPool;
-    public GameObject CoinPrefab;
+    public GameObject bulletPool;
+    //public GameObject CoinPrefab;
 
     //총알 발사 변수
     public GameObject shootPos = null;
@@ -61,7 +61,7 @@ public class MonsterCtrl : MonoBehaviour
     float roundAttTime = 0.0f;
     float roundCount = 0;
 
-
+    GameManager gameManager = null;
 
     void Start()
     {
@@ -79,6 +79,15 @@ public class MonsterCtrl : MonoBehaviour
             curHp = 500.0f;
             maxHp = 500.0f;
         }
+
+        if (bulletPool == null)
+        {
+            bulletPool = GameObject.Find("BulletPool");
+        }
+
+        gameManager = GameObject.FindObjectOfType<GameManager>();
+
+
     }
 
     
@@ -152,9 +161,10 @@ public class MonsterCtrl : MonoBehaviour
                     Vector3 toPlayerVec = refHero.transform.position - this.transform.position;
                     toPlayerVec.Normalize();
                     GameObject go = Instantiate(bulletPrefab);
-                    go.transform.SetParent(bulletPool);
+                    go.transform.SetParent(bulletPool.GetComponent<Transform>());
                     BulletCtrl bulletCtrl = go.GetComponent<BulletCtrl>();
                     bulletCtrl.BulletSpawn(shootPos.transform.position, toPlayerVec, shootSpeed);
+                    go.transform.right = new Vector3(-toPlayerVec.x, -toPlayerVec.y, go.transform.position.z);
                     gatlingCount++;
 
                     if (gatlingCount >= gatlingCountMax)
@@ -179,6 +189,7 @@ public class MonsterCtrl : MonoBehaviour
                     Vector3 roundAttack = Vector3.zero;
                     GameObject go = null;
                     BulletCtrl goBulletCtrl;
+                    float cacAngle = 0.0f;
                     for (float angle = 0.0f; angle < 360.0f; angle += 15.0f)
                     {
                         roundAttack.x = Mathf.Sin(angle * Mathf.Deg2Rad);
@@ -187,9 +198,23 @@ public class MonsterCtrl : MonoBehaviour
                         roundAttack.Normalize();
 
                         go = Instantiate(bulletPrefab);
-                        go.transform.SetParent(bulletPool);
+                        go.transform.SetParent(bulletPool.GetComponent<Transform>());
                         goBulletCtrl = go.GetComponent<BulletCtrl>();
                         goBulletCtrl.BulletSpawn(shootPos.transform.position, roundAttack, shootSpeed/0.6f);
+
+                        //총알이 날아가야할 방향으로 회전시키기
+                        //transform.right에다가 값을 넣는 이유는 이미지 자체의 머리가 오른쪽을 바라보고 있기 때문
+                        //새로운 값에다가 -를 붙이는 이유는 이미지를 x축 flip시켜놨기 때문
+                        //transform.right = x축
+                        //trasnform.up = y축
+                        //transform.forward = z축
+                        go.transform.right = new Vector3(-roundAttack.x, -roundAttack.y, go.transform.position.z);
+
+                        //다른 방식
+                        //ATan2(아크탄젠트) 탄젠트를 이용하는 함수 : y축으로부터 x축까지의 각도를 구해줌
+                        cacAngle = Mathf.Atan2(roundAttack.y, roundAttack.x) * Mathf.Deg2Rad;
+                        cacAngle += 180.0f; //Flip x에 체크되어 있기 때문
+                        go.transform.eulerAngles = new Vector3(0.0f, 0.0f, cacAngle);
                     }
                     roundCount++;
                     roundAttTime = 0.0f;
@@ -246,7 +271,7 @@ public class MonsterCtrl : MonoBehaviour
             shootTime = 0.0f;
 
             GameObject go = Instantiate(bulletPrefab);
-            go.transform.SetParent(bulletPool);
+            go.transform.SetParent(bulletPool.GetComponent<Transform>());
             BulletCtrl bulletCtrl = go.GetComponent<BulletCtrl>();
             bulletCtrl.BulletSpawn(shootPos.transform.position, Vector3.left, shootSpeed);
         }
@@ -277,8 +302,8 @@ public class MonsterCtrl : MonoBehaviour
 
         curHp += value;
 
-        if (GameManager.inst != null)
-            GameManager.inst.DamageText((int)value, this.transform.position, Color.red);
+        if (GameManager.Inst != null)
+            GameManager.Inst.DamageText((int)value, this.transform.position, Color.red);
 
         if (curHp <= 0.0f)
             curHp = 0.0f;   
@@ -288,7 +313,9 @@ public class MonsterCtrl : MonoBehaviour
 
         if (curHp <= 0.0f)
         {
-            GoldDrop1(this.transform.position, 100);
+            //GoldDrop1(this.transform.position, 100);
+            GameManager.Inst.GoldDrop(this.transform.position, 100);
+            //gameManager.GoldDrop(this.transform.position, 100);
             Destroy(gameObject);
         }
     }
@@ -300,15 +327,29 @@ public class MonsterCtrl : MonoBehaviour
             TakeDamage(80.0f);
             Destroy(coll.gameObject);
         }
-    }
 
-    public void GoldDrop1(Vector3 spawnPos, float value)
-    {
-        if (CoinPrefab != null)
+        if (coll.name.Contains("Skill2") == true)
         {
-            GameObject gold = Instantiate(CoinPrefab);
-            gold.transform.position = spawnPos;
+            TakeDamage(500.0f);
+        }
+
+        if (coll.name.Contains("Skill3") == true)
+        {
+            if(type == MonsterType.Boss)
+                TakeDamage(40.0f);
+
+            if (type == MonsterType.Zombi || type == MonsterType.Missile)
+                Destroy(this.gameObject);
         }
     }
+
+    //public void GoldDrop1(Vector3 spawnPos, float value)
+    //{
+    //    if (CoinPrefab != null)
+    //    {
+    //        GameObject gold = Instantiate(CoinPrefab);
+    //        gold.transform.position = spawnPos;
+    //    }
+    //}
 
 }

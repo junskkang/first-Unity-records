@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -29,9 +30,42 @@ public class HeroCtrl : MonoBehaviour
 
     //GameManager damageManager = null;
 
+    //스킬관련 변수
+    bool isNum1;
+    public GameObject skill1 = null;
+    float skill1Motion = 0.0f;
+    float skill1Cool = 0.0f;
+    float skill1Count = 5.0f;
+    public Image skill1Icon;
+    public Image skill1CoolUI;
+    bool isSkill1Possible = true;
+    float healHp = 0.0f;
+
+    bool isNum2;
+    public GameObject skill2 = null;
+    float skill2Cool = 0.0f;
+    float skill2Count = 20.0f;
+    public Image skill2Icon;
+    public Image skill2CoolUI;
+    bool isSkill2Possible = true;
+    Vector3 skill2StartPos = Vector3.zero;
+    Vector3 skill2EndPos = new Vector3(42.0f, 0.0f, 0.0f);
+    float skill2MoveSpeed = 20.0f;
 
 
-        
+    bool isNum3;
+    public GameObject skill3 = null;
+    float skill3Motion = 0.0f;
+    float skill3Cool = 0.0f;
+    float skill3Count = 15.0f;
+    public Image skill3Icon;
+    public Image skill3CoolUI;
+    bool isSkill3Possible = true;
+
+
+
+
+
     void Start()
     {
         Time.timeScale = 1.0f;
@@ -53,6 +87,9 @@ public class HeroCtrl : MonoBehaviour
         Move();
         PlayerHUD();
         Attack();
+        Skill1();
+        Skill2();
+        Skill3();
     }
 
     void GetInput()
@@ -60,6 +97,9 @@ public class HeroCtrl : MonoBehaviour
         hAxis = Input.GetAxis("Horizontal");
         vAxis = Input.GetAxis("Vertical");
         isAttack = Input.GetMouseButton(0);
+        isNum1 = Input.GetButtonDown("Skill1");
+        isNum2 = Input.GetButtonDown("Skill2");
+        isNum3 = Input.GetButtonDown("Skill3");
     }
 
 
@@ -127,6 +167,185 @@ public class HeroCtrl : MonoBehaviour
         bulletCtrl.BulletFire(shootPos.transform.position);
     }
 
+    void Skill1()
+    {
+        //1번 체력20%회복 스킬
+        if (isNum1)
+        {
+            if (skill1 != null && curHp < maxHp && isSkill1Possible == true)
+            {
+                skill1.SetActive(true);
+
+                healHp = maxHp * 20 / 100;
+
+                Debug.Log(healHp);
+                if (curHp + healHp >= maxHp)
+                    healHp = maxHp - curHp;
+
+                Debug.Log(healHp);
+                curHp += healHp;
+
+                if (GameManager.Inst != null)
+                    GameManager.Inst.DamageText((int)healHp, this.transform.position, Color.green);
+
+                if (curHp >= maxHp)
+                    curHp = maxHp;
+
+                skill1Count = skill1Cool;
+
+                skill1CoolUI.fillAmount = 0.0f;
+
+                isSkill1Possible = false;
+
+                if (!isSkill1Possible)
+                    skill1Icon.color = new Color(0.5f, 0.5f, 0.5f);
+            }
+        }
+        else if (!isNum1)  //쿨타임 관리
+        {
+            if (skill1Count >= 5.0f)
+            {
+                skill1Count = 5.0f;
+
+                isSkill1Possible = true;
+
+                if (isSkill1Possible)
+                    skill1Icon.color = new Color(1.0f, 1.0f, 1.0f);
+
+                healHp = 0.0f;
+
+                return;
+            }
+
+            skill1Count += Time.deltaTime;
+
+            skill1CoolUI.fillAmount = skill1Count / 5;
+        }
+
+
+        //스킬별 SetAcitve 온오프 관리
+        if (skill1.activeSelf == true)
+        {
+            skill1Motion += Time.deltaTime;
+
+            if (skill1Motion >= 1.1f)
+            {
+                skill1.SetActive(false);
+                skill1Motion = 0.0f;
+            }
+        }
+    }
+
+    void Skill2()
+    {
+        //스킬2 고양이 전진
+        if (isNum2)
+        {
+            if (skill2 != null && isSkill2Possible == true)
+            {
+                skill2StartPos = skill2.transform.position;
+
+                skill2.SetActive(true);
+                               
+
+                skill2Count = skill2Cool;
+
+                skill2CoolUI.fillAmount = 0.0f;
+
+                isSkill2Possible = false;
+
+                if (!isSkill2Possible)
+                    skill2Icon.color = new Color(0.5f, 0.5f, 0.5f);
+            }
+        }
+        else if (!isNum2)  //쿨타임 관리
+        {
+            if (skill2Count >= 20.0f)
+            {
+                skill2Count = 20.0f;
+
+                isSkill2Possible = true;
+
+                if (isSkill2Possible)
+                    skill2Icon.color = new Color(1.0f, 1.0f, 1.0f);
+
+                return;
+            }
+
+            skill2Count += Time.deltaTime;
+
+            skill2CoolUI.fillAmount = skill2Count / 20;
+        }
+
+
+        //스킬별 SetAcitve 온오프 관리
+        if (skill2.activeSelf == true)
+        {
+            skill2.transform.position += Vector3.right * skill2MoveSpeed * Time.deltaTime;
+
+            if (skill2.transform.position.x >= skill2EndPos.x - 0.1f)
+            {
+                skill2.SetActive(false);
+                skill2.transform.position = skill2StartPos;
+            }
+        }
+    }
+
+    void Skill3()
+    {
+        //3번 체력20%회복 스킬
+        if (isNum3)
+        {
+            if (skill3 != null && isSkill3Possible == true)
+            {
+                skill3.SetActive(true);
+
+                
+                
+                skill3Count = skill3Cool;
+
+                skill3CoolUI.fillAmount = 0.0f;
+
+                isSkill3Possible = false;
+
+                if (!isSkill3Possible)
+                    skill3Icon.color = new Color(0.0f, 0.5f, 0.5f);
+            }
+        }
+        else if (!isNum3)  //쿨타임 관리
+        {
+            if (skill3Count >= 15.0f)
+            {
+                skill3Count = 15.0f;
+
+                isSkill3Possible = true;
+
+                if (isSkill3Possible)
+                    skill3Icon.color = new Color(0.0f, 1.0f, 1.0f);
+
+                return;
+            }
+
+            skill3Count += Time.deltaTime;
+
+            skill3CoolUI.fillAmount = skill3Count / 15;
+        }
+
+
+        //스킬별 SetAcitve 온오프 관리
+        if (skill3.activeSelf == true)
+        {
+            skill3Motion += Time.deltaTime;
+
+            if (skill3Motion >= 3.0f)
+            {
+                
+                skill3.SetActive(false);
+                skill3Motion = 0.0f;
+            }
+        }
+    }
+
     void LimitMove()
     {
         Vector3 m_CacCurPos = transform.position;
@@ -149,25 +368,29 @@ public class HeroCtrl : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.tag.Contains("Monster") == true)
-        {
-            Destroy(collision.gameObject);
-
-            if (collision.gameObject.GetComponent<MonsterCtrl>().type == MonsterType.Zombi)
+        {            
+            if (collision.gameObject.GetComponent<MonsterCtrl>().type == MonsterType.Boss && skill3.activeSelf == false)
+                TakeDamage(100);
+            if (collision.gameObject.GetComponent<MonsterCtrl>().type == MonsterType.Zombi && skill3.activeSelf == false)
                 TakeDamage(50);
-            if (collision.gameObject.GetComponent<MonsterCtrl>().type == MonsterType.Missile)
+            if (collision.gameObject.GetComponent<MonsterCtrl>().type == MonsterType.Missile && skill3.activeSelf == false)
                 TakeDamage(80);
+
+            if (collision.gameObject.GetComponent<MonsterCtrl>().type == MonsterType.Boss) return;
+
+            Destroy(collision.gameObject);
         }
 
         if (collision.gameObject.name.Contains("Coin") == true)
         {
             Destroy(collision.gameObject);
 
-            GameManager.gold += 100;
+            GameManager.Inst.curGold += 100;
 
-            Debug.Log(GameManager.gold);
+            Debug.Log(GameManager.Inst.curGold);
         }
 
-        if (collision.gameObject.name.Contains("Enemy") == true)
+        if (collision.gameObject.name.Contains("Enemy") == true && skill3.activeSelf == false)    //적이 쏜 총알
         {
             TakeDamage(20.0f);
             Destroy(collision.gameObject);
@@ -181,8 +404,8 @@ public class HeroCtrl : MonoBehaviour
         value = -(value);
         curHp += value;
 
-        if (GameManager.inst != null)
-            GameManager.inst.DamageText((int)value, this.transform.position, Color.blue);
+        if (GameManager.Inst != null)
+            GameManager.Inst.DamageText((int)value, this.transform.position, Color.blue);
 
         if (curHp <= 0.0f)
             curHp = 0.0f;

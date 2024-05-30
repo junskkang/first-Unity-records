@@ -1,9 +1,19 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    //UI관련 변수들
+    public Text userInfoText;
+    public Text bestScoreText;
+    public Text curScoreText;
+    public Text goldText;
+    public Button lobbyBtn;
+
+    public int curScore = 0;
+    public int curGold = 0;
+
     //데미지 텍스트 관련 변수
     public Transform damageCanvas = null;   //유니티 연결용
     public GameObject damagePrefab = null;  //유니티 연결용
@@ -11,25 +21,38 @@ public class GameManager : MonoBehaviour
     DamageCtrl damageText;                  //컴포넌트 받아오기용
 
     //코인 관련 변수
-    public GameObject CoinPrefab;
-    public static int gold = 0;
+    public GameObject CoinPre = null;
+    GameObject coinClone;
+    
     HeroCtrl refHero = null;
 
     Vector3 startPos = Vector3.zero;
 
     //싱글턴 패턴
-    public static GameManager inst;
+    public static GameManager Inst = null;
 
-    private void Awake()
+    void Awake()
     {
-        inst = this;
+        Inst = this;
     }
     void Start()
     {
-        if (CoinPrefab == null)
-            CoinPrefab = Resources.Load("Coin") as GameObject;
+        Time.timeScale = 1.0f;
+        if (CoinPre == null)
+        {
+            CoinPre = Resources.Load("CoinPrefab") as GameObject;
+
+            Debug.Log("코인프리팹 로드 완료");
+        }
+            
 
         refHero = GameObject.FindObjectOfType<HeroCtrl>();
+
+        if (lobbyBtn != null)
+            lobbyBtn.onClick.AddListener(() =>
+            {
+                SceneManager.LoadScene("LobbyScene");
+            });
     }
 
     // Update is called once per frame
@@ -52,12 +75,20 @@ public class GameManager : MonoBehaviour
 
     }
 
-    public void GoldDrop1(Vector3 spawnPos, float value)
+    public void GoldDrop(Vector3 spawnPos, float value)
     {
-        if (CoinPrefab != null)
+
+        //Debug.Log("함수 호출은 된다");
+
+
+        coinClone = Instantiate(CoinPre);
+
+        if (coinClone != null)
         {
-            GameObject gold = Instantiate(CoinPrefab);
-            gold.transform.position = spawnPos;
+            coinClone.transform.position = spawnPos;
+            CoinCtrl coinCtrl = coinClone.GetComponent<CoinCtrl>();
+            coinCtrl.refHero = refHero;
         }
+
     }
 }

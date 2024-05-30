@@ -60,4 +60,14 @@ public class BulletCtrl : MonoBehaviour
         this.moveSpeed = moveSpeed;
         bulletDamage = att;
     }
+
+    void OnTriggerEnter2D(Collider2D coll)
+    {
+
+        if (coll.name.Contains("Skill2") == true)
+            Destroy(this.gameObject);
+
+        if (coll.name.Contains("Skill3") == true)
+            Destroy(this.gameObject);
+    }
 }

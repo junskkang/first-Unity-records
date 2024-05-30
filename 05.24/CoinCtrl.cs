@@ -8,10 +8,10 @@ public class CoinCtrl : MonoBehaviour
     float chaseSpeed = 10.0f;
     Vector3 moveVec = Vector3.zero;
     Vector3 moveDir = Vector3.zero;
-    HeroCtrl refHero = null;
+    [HideInInspector] public HeroCtrl refHero = null;
     void Start()
     {
-        refHero = GameObject.FindObjectOfType<HeroCtrl>();
+        //refHero = GameObject.FindObjectOfType<HeroCtrl>();
     }
 
     // Update is called once per frame
