@@ -107,7 +107,13 @@ public class MonsterCtrl : MonoBehaviour
         }
 
 
-        if (transform.position.x < CameraResolution.m_ScWMin.x - 2.0f) Destroy(gameObject);
+        if (transform.position.x < CameraResolution.m_ScWMin.x - 2.0f)
+        {
+            Destroy(gameObject);
+            GameManager.Inst.curScore -= 10;
+        }
+            
+
     }
 
     void BossAIUpdate()
@@ -313,9 +319,22 @@ public class MonsterCtrl : MonoBehaviour
 
         if (curHp <= 0.0f)
         {
-            //GoldDrop1(this.transform.position, 100);
-            GameManager.Inst.GoldDrop(this.transform.position, 100);
+            //ÀçÈ­ µå¶ø
+            if (this.type != MonsterType.Boss)
+                GameManager.Inst.GoldDrop(this.transform.position, 100);
+            else
+                GameManager.Inst.HeartDrop(this.transform.position, 100);
             //gameManager.GoldDrop(this.transform.position, 100);
+
+            //Á¡¼ö È¹µæ
+            if (type == MonsterType.Zombi)
+                GameManager.Inst.curScore += 20;
+            else if (type == MonsterType.Missile)
+                GameManager.Inst.curScore += 50;
+            else if (type == MonsterType.Boss)
+                GameManager.Inst.curScore += 300;
+
+
             Destroy(gameObject);
         }
     }

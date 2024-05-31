@@ -178,11 +178,11 @@ public class HeroCtrl : MonoBehaviour
 
                 healHp = maxHp * 20 / 100;
 
-                Debug.Log(healHp);
+                
                 if (curHp + healHp >= maxHp)
                     healHp = maxHp - curHp;
 
-                Debug.Log(healHp);
+                
                 curHp += healHp;
 
                 if (GameManager.Inst != null)
@@ -387,12 +387,28 @@ public class HeroCtrl : MonoBehaviour
 
             GameManager.Inst.curGold += 100;
 
-            Debug.Log(GameManager.Inst.curGold);
+            //Debug.Log(GameManager.Inst.curGold);
         }
 
         if (collision.gameObject.name.Contains("Enemy") == true && skill3.activeSelf == false)    //ÀûÀÌ ½ð ÃÑ¾Ë
         {
             TakeDamage(20.0f);
+            Destroy(collision.gameObject);
+        }
+
+        if (collision.gameObject.name.Contains("Heart") == true)
+        {         
+            if (curHp + GameManager.Inst.healValue >= maxHp)
+                GameManager.Inst.healValue = maxHp - curHp;
+
+            curHp += GameManager.Inst.healValue;
+                        
+            if (GameManager.Inst != null)
+                GameManager.Inst.DamageText((int)GameManager.Inst.healValue, this.transform.position, Color.green);
+
+            if (curHp >= maxHp)
+                curHp = maxHp;
+
             Destroy(collision.gameObject);
         }
     }

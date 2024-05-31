@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
     public Text goldText;
     public Button lobbyBtn;
 
+    public static int bestScore = 0;
     public int curScore = 0;
     public int curGold = 0;
 
@@ -23,6 +24,10 @@ public class GameManager : MonoBehaviour
     //코인 관련 변수
     public GameObject CoinPre = null;
     GameObject coinClone;
+
+    public GameObject heartPrefab = null;
+    GameObject heartClone;
+    public float healValue;
     
     HeroCtrl refHero = null;
 
@@ -38,13 +43,21 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         Time.timeScale = 1.0f;
+
         if (CoinPre == null)
         {
             CoinPre = Resources.Load("CoinPrefab") as GameObject;
 
             Debug.Log("코인프리팹 로드 완료");
         }
-            
+
+        if (heartPrefab == null)
+        {
+            heartPrefab = Resources.Load("BossHeart") as GameObject;
+
+            Debug.Log("보스 보상 로드 완료");
+        }
+
 
         refHero = GameObject.FindObjectOfType<HeroCtrl>();
 
@@ -53,12 +66,19 @@ public class GameManager : MonoBehaviour
             {
                 SceneManager.LoadScene("LobbyScene");
             });
+
+        bestScore = PlayerPrefs.GetInt("BestScore", 0);
+
+        if (bestScoreText != null)
+        {
+            bestScoreText.text = $"최고점수 : {bestScore.ToString("N0")}";
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        UIUpdate();
     }
 
     public void DamageText(int Value, Vector3 ownerPos, Color ownerColor)
@@ -90,5 +110,37 @@ public class GameManager : MonoBehaviour
             coinCtrl.refHero = refHero;
         }
 
+    }
+
+    public void HeartDrop(Vector3 spawnPos, float value)
+    {
+        heartClone = Instantiate(heartPrefab);
+
+        if (heartClone != null)
+        {
+            heartClone.transform.position = spawnPos;
+            healValue = value;           
+        }
+    }
+
+    void UIUpdate()
+    {
+        if (goldText != null)
+            goldText.text = $"보유골드 : {curGold.ToString("N0")}";
+
+        if (curScoreText != null)
+            curScoreText.text = $"현재점수 : {curScore.ToString("N0")}";
+
+
+        if (bestScore < curScore)
+        {
+            bestScore = curScore;
+            if (bestScoreText != null)
+            {
+                bestScoreText.text = $"최고점수 : {bestScore.ToString("N0")}";
+            }
+
+            PlayerPrefs.SetInt("BestScore", bestScore);
+        }
     }
 }

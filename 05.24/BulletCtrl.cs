@@ -63,11 +63,15 @@ public class BulletCtrl : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D coll)
     {
+        if (this.gameObject.tag == "EnemyBullet")
+        {           
 
-        if (coll.name.Contains("Skill2") == true)
-            Destroy(this.gameObject);
+            if (coll.gameObject.name.Contains("Skill") == true)
+                Destroy(this.gameObject);
 
-        if (coll.name.Contains("Skill3") == true)
-            Destroy(this.gameObject);
+            if (coll.name.Contains("Skill3") == true)
+                Destroy(this.gameObject);
+        }
+
     }
 }
