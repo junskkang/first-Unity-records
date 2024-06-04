@@ -61,6 +61,10 @@ public class MonsterCtrl : MonoBehaviour
     float roundAttTime = 0.0f;
     float roundCount = 0;
 
+    //이 몬스터를 추적하고 있는 유도탄의 참조 변수
+    [HideInInspector] public GameObject homingLockOn1 = null;
+    [HideInInspector] public GameObject homingLockOn2 = null;
+
     GameManager gameManager = null;
 
     void Start()
@@ -343,8 +347,19 @@ public class MonsterCtrl : MonoBehaviour
     {
         if (coll.tag == "AllyBullet")
         {
-            TakeDamage(80.0f);
-            Destroy(coll.gameObject);
+            if (coll.name.Contains("Homing") == true)       //유도탄이면
+            {
+                TakeDamage(120.0f);
+                Destroy(coll.gameObject);
+                
+            }
+            else       //일반 총알
+            {
+                TakeDamage(80.0f);
+                Destroy(coll.gameObject);
+            }
+
+
         }
 
         if (coll.name.Contains("Skill2") == true)

@@ -1,8 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+
+public enum SkillType
+{
+    Skill_0,
+    Skill_1,
+    Skill_2,
+    Skill_3,
+    Skill_4,
+    Skill_5,
+    SkCount
+}
 
 public class HeroCtrl : MonoBehaviour
 {
@@ -31,6 +43,7 @@ public class HeroCtrl : MonoBehaviour
     //GameManager damageManager = null;
 
     //스킬관련 변수
+    //체력회복
     bool isNum1;
     public GameObject skill1 = null;
     float skill1Motion = 0.0f;
@@ -40,7 +53,7 @@ public class HeroCtrl : MonoBehaviour
     public Image skill1CoolUI;
     bool isSkill1Possible = true;
     float healHp = 0.0f;
-
+    //전체공격
     bool isNum2;
     public GameObject skill2 = null;
     float skill2Cool = 0.0f;
@@ -51,8 +64,7 @@ public class HeroCtrl : MonoBehaviour
     Vector3 skill2StartPos = Vector3.zero;
     Vector3 skill2EndPos = new Vector3(42.0f, 0.0f, 0.0f);
     float skill2MoveSpeed = 20.0f;
-
-
+    //방어막 무적
     bool isNum3;
     public GameObject skill3 = null;
     float skill3Motion = 0.0f;
@@ -61,7 +73,35 @@ public class HeroCtrl : MonoBehaviour
     public Image skill3Icon;
     public Image skill3CoolUI;
     bool isSkill3Possible = true;
-
+    //유도탄
+    bool isNum4;
+    public GameObject skill4 = null;
+    float skill4Cool = 0.0f;
+    float skill4Count = 6.0f;
+    public Image skill4Icon;
+    public Image skill4CoolUI;
+    bool isSkill4Possible = true;
+    //더블샷
+    bool isNum5;
+    float skill5Cool = 0.0f;
+    float skill5Count = 12.0f;
+    public Image skill5Icon;
+    public Image skill5CoolUI;
+    bool isSkill5Possible = true;
+    float skill5Duration = 6.0f;
+    [HideInInspector] public bool isSkill5On = false;
+    //소환수
+    bool isNum6;
+    public GameObject skill6 = null;
+    float skill6Cool = 0.0f;
+    float skill6Count = 20.0f;
+    public Image skill6Icon;
+    public Image skill6CoolUI;
+    bool isSkill6Possible = true;
+    [HideInInspector] public float skill6Duration = 12.0f;
+    bool isSkill6On = false;
+    public GameObject subHero = null;
+    int subHeroCount = 4;
 
 
 
@@ -90,6 +130,9 @@ public class HeroCtrl : MonoBehaviour
         Skill1();
         Skill2();
         Skill3();
+        Skill4();
+        Skill5();
+        Skill6();
     }
 
     void GetInput()
@@ -100,6 +143,9 @@ public class HeroCtrl : MonoBehaviour
         isNum1 = Input.GetButtonDown("Skill1");
         isNum2 = Input.GetButtonDown("Skill2");
         isNum3 = Input.GetButtonDown("Skill3");
+        isNum4 = Input.GetButtonDown("Skill4");
+        isNum5 = Input.GetButtonDown("Skill5");
+        isNum6 = Input.GetButtonDown("Skill6");
     }
 
 
@@ -160,11 +206,30 @@ public class HeroCtrl : MonoBehaviour
 
     void BulletFire()
     {
-        //GameObject obj = Resources.Load("Bullet") as GameObject;
-        GameObject obj = Instantiate(bulletPrefab);
-        obj.transform.SetParent(bulletPool);
-        BulletCtrl bulletCtrl = obj.GetComponent<BulletCtrl>();
-        bulletCtrl.BulletFire(shootPos.transform.position);
+        if (isSkill5On)
+        {
+            GameObject doubleShoot = null;
+            Vector3 pos = Vector3.zero;
+            for (float yy = 0.6f; yy >= -1.0f; yy -= 0.8f)
+            {
+                if (-0.2f < yy && yy < 0.0f ) continue;
+
+                pos.y = yy;
+
+                doubleShoot = Instantiate(bulletPrefab);
+                doubleShoot.transform.SetParent(bulletPool);
+                BulletCtrl bulletCtrl = doubleShoot.GetComponent<BulletCtrl>();
+                bulletCtrl.BulletFire(shootPos.transform.position + pos);
+            }
+        }
+        else 
+        {
+            GameObject obj = Instantiate(bulletPrefab);
+            obj.transform.SetParent(bulletPool);
+            BulletCtrl bulletCtrl = obj.GetComponent<BulletCtrl>();
+            bulletCtrl.BulletFire(shootPos.transform.position);
+        }      
+
     }
 
     void Skill1()
@@ -219,7 +284,10 @@ public class HeroCtrl : MonoBehaviour
 
             skill1Count += Time.deltaTime;
 
-            skill1CoolUI.fillAmount = skill1Count / 5;
+            if (isSkill1Possible)
+                skill1CoolUI.fillAmount = 1.0f;
+            else
+                skill1CoolUI.fillAmount = skill1Count / 5;
         }
 
 
@@ -274,7 +342,10 @@ public class HeroCtrl : MonoBehaviour
 
             skill2Count += Time.deltaTime;
 
-            skill2CoolUI.fillAmount = skill2Count / 20;
+            if (isSkill2Possible)
+                skill2CoolUI.fillAmount = 1.0f;
+            else
+                skill2CoolUI.fillAmount = skill2Count / 20;
         }
 
 
@@ -328,7 +399,10 @@ public class HeroCtrl : MonoBehaviour
 
             skill3Count += Time.deltaTime;
 
-            skill3CoolUI.fillAmount = skill3Count / 15;
+            if (isSkill3Possible)
+                skill3CoolUI.fillAmount = 1.0f;
+            else
+                skill3CoolUI.fillAmount = skill3Count / 15;
         }
 
 
@@ -345,6 +419,235 @@ public class HeroCtrl : MonoBehaviour
             }
         }
     }
+
+    void Skill4()
+    {
+        if (isNum4)
+        {
+            if (skill4 != null && isSkill4Possible == true)
+            {
+                Vector3 pos;
+                GameObject cloneObj;
+                for (float yy = 3f; yy > -3.1f; yy -= 1.5f) //캐릭터 뒤쪽에서부터 발사되는 위치 만들기
+                {
+                    if (-0.1f < yy && yy < 0.1f) continue;
+
+                    pos = Vector3.zero;
+                    if (-1.6f < yy && yy < 1.6f)
+                    {
+                        pos.x = 1f;
+                    }
+                    else
+                    {
+                        pos.x = -1f;
+                    }
+                    pos.y = yy;
+                    pos = this.transform.position + pos;
+
+                    cloneObj = Instantiate(skill4);
+                    cloneObj.transform.position = pos;
+                }
+
+
+                skill4Count = skill4Cool;
+
+                skill4CoolUI.fillAmount = 0.0f;
+
+                isSkill4Possible = false;
+
+                if (!isSkill4Possible)
+                    skill4Icon.color = new Color(0.5f, 0.5f, 0.5f);
+            }
+        }
+        else if (!isNum4)
+        {
+            if (skill4Count >= 6.0f)
+            {
+                skill4Count = 6.0f;
+
+                isSkill4Possible = true;
+
+                if (isSkill4Possible)
+                    skill4Icon.color = new Color(1.0f, 1.0f, 1.0f);
+
+                return;
+            }
+
+            skill4Count += Time.deltaTime;
+
+            if (isSkill4Possible)
+                skill4CoolUI.fillAmount = 1.0f;
+            else
+                skill4CoolUI.fillAmount = skill4Count / 6.0f;
+        }
+    }
+
+    void Skill5()
+    {
+        if (isNum5)
+        {
+            if (isSkill5Possible == true)
+            {
+                skill5Count = skill5Cool;
+
+                skill5CoolUI.fillAmount = 0.0f;
+
+                isSkill5Possible = false;
+
+            }
+        }
+        else if (!isNum5)
+        {
+            if (skill5Count <= skill5Duration)
+            {
+                isSkill5On = true;
+                skill5CoolUI.color = Color.yellow;
+                skill5CoolUI.transform.localScale = new Vector3(1.2f, 1.2f);
+            }
+            else
+            {
+                isSkill5On = false;
+
+                if (!isSkill5On)
+                    skill5Icon.color = new Color(0.5f, 0.5f, 0.5f);
+
+                skill5CoolUI.color = Color.white;
+                skill5CoolUI.transform.localScale = new Vector3(1.0f, 1.0f);
+            }
+
+
+            if (skill5Count >= 12.0f)
+            {
+                skill5Count = 12.0f;
+
+                isSkill5Possible = true;
+
+                if (isSkill5Possible)
+                    skill5Icon.color = new Color(1.0f, 1.0f, 1.0f);
+
+                return;
+            }
+
+            skill5Count += Time.deltaTime;
+
+            if (isSkill5Possible)
+                skill5CoolUI.fillAmount = 1.0f;
+            else
+                skill5CoolUI.fillAmount = skill5Count / 12.0f;
+        }
+    }
+
+    void Skill6Position()
+    {
+        Vector3 spawnPos = Vector3.zero;
+        GameObject go = null;
+        Skill6Ctrl skill6Ctrl = null;
+        float radius = 2.0f;
+        for (float angle = 0; angle < 360.0f; angle += 360.0f / subHeroCount)
+        {
+            //spawnPos.x = Mathf.Cos((angle * Mathf.Deg2Rad));
+            //spawnPos.y = Mathf.Sin((angle * Mathf.Deg2Rad));
+            //spawnPos.z = 0.0f;
+            spawnPos = new Vector3(Mathf.Cos(angle * Mathf.Deg2Rad) * radius,
+                                   Mathf.Sin(angle * Mathf.Deg2Rad) * radius, 0.0f);
+            //spawnPos.Normalize();
+
+            go = Instantiate(subHero);
+            go.transform.SetParent(skill6.GetComponent<Transform>());
+            go.transform.position = skill6.transform.position + spawnPos;
+        }
+
+        //for (int i = 0; i < subHeroCount; i++)
+        //{
+        //    GameObject obj = Instantiate(subHero);
+        //    obj.transform.SetParent(skill6.GetComponent<Transform>());
+        //    Skill6Ctrl sub = obj.GetComponent<Skill6Ctrl>();
+        //    if (sub != null)
+        //        sub.SubHeroSpawn((360 / subHeroCount) * i, 12.0f);
+        //}
+    }
+
+    void Skill6()
+    {
+        if (isNum6)
+        {
+            if (isSkill6Possible && skill6 != null)
+            {
+                Skill6Position();
+
+                skill6Count = skill6Cool;
+
+                skill6CoolUI.fillAmount = 0.0f;
+
+                skill6.SetActive(true);
+
+                isSkill6Possible = false;
+            }
+        }
+        else if (!isNum6)
+        {
+            //지속시간동안 강조 표시
+            if (skill6Count <= skill6Duration)
+            {
+                isSkill6On = true;
+                skill6CoolUI.color = Color.yellow;
+                skill6CoolUI.transform.localScale = new Vector3(1.2f, 1.2f);
+            }
+            else
+            {
+                isSkill6On = false;
+                skill6.SetActive(false);
+
+                if (!isSkill6On)
+                    skill6Icon.color = new Color(0.5f, 0.5f, 0.5f);
+
+                skill6CoolUI.color = Color.white;
+                skill6CoolUI.transform.localScale = new Vector3(1.0f, 1.0f);
+            }
+
+
+            if (skill6Count >= 20.0f)
+            {
+                skill6Count = 20.0f;
+
+                isSkill6Possible = true;
+
+                if (isSkill6Possible)
+                    skill6Icon.color = new Color(1.0f, 1.0f, 1.0f);
+
+                return;
+            }
+
+            skill6Count += Time.deltaTime;
+
+            if (isSkill6Possible)
+                skill6CoolUI.fillAmount = 1.0f;
+            else
+                skill6CoolUI.fillAmount = skill6Count / 20.0f;
+        }
+    }
+
+    public void CoolBonus(float cool = 1.0f)
+    {
+        if (!isSkill1Possible)
+            skill1Count += cool;
+        if (!isSkill2Possible)
+            skill2Count += cool;
+        if (!isSkill3Possible)
+            skill3Count += cool;
+        if (!isSkill4Possible)
+            skill4Count += cool;
+
+        if (isSkill5On)
+            skill5Count -= cool;
+        else
+            skill5Count += cool;
+        if (isSkill6On)
+            skill6Count -= cool;
+        else
+            skill6Count += cool;
+    }
+
 
     void LimitMove()
     {
@@ -364,6 +667,7 @@ public class HeroCtrl : MonoBehaviour
 
         transform.position = m_CacCurPos;
     }
+
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -392,7 +696,11 @@ public class HeroCtrl : MonoBehaviour
 
         if (collision.gameObject.name.Contains("Enemy") == true && skill3.activeSelf == false)    //적이 쏜 총알
         {
-            TakeDamage(20.0f);
+            //if (collision.gameObject.GetComponent<MonsterCtrl>().type == MonsterType.Boss)
+            //    TakeDamage(80.0f);
+            //else
+                TakeDamage(50.0f);
+
             Destroy(collision.gameObject);
         }
 
@@ -402,7 +710,10 @@ public class HeroCtrl : MonoBehaviour
                 GameManager.Inst.healValue = maxHp - curHp;
 
             curHp += GameManager.Inst.healValue;
-                        
+
+            CoolBonus(1.5f);
+
+
             if (GameManager.Inst != null)
                 GameManager.Inst.DamageText((int)GameManager.Inst.healValue, this.transform.position, Color.green);
 
