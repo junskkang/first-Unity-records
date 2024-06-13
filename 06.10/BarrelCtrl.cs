@@ -58,7 +58,7 @@ public class BarrelCtrl : MonoBehaviour
         //}
     }
 
-    void ExpBarrel()
+    public void ExpBarrel()
     {
         //폭발 효과 파티클 생성
         GameObject explosion = Instantiate(explosionEffect, transform.position, Quaternion.identity);
@@ -66,7 +66,7 @@ public class BarrelCtrl : MonoBehaviour
         Destroy(explosion, explosion.GetComponentInChildren<ParticleSystem>().main.duration + 3.0f);
 
         //지정한 원점을 중심으로 10.0f 반경 내에 들어와 있는 Collider 객체 추출
-        Collider[] colls = Physics.OverlapSphere(transform.position, 10.0f);
+        Collider[] colls = Physics.OverlapSphere(transform.position, 5.0f);
         BarrelCtrl barrel = null;
         Rigidbody rbody = null;
         //추출한 Collider 객체에 폭발력 전달
@@ -83,10 +83,13 @@ public class BarrelCtrl : MonoBehaviour
                 //폭발력, 발생위치, 반경, 위로 솟구치는 힘
                 rbody.AddExplosionForce(1000.0f, transform.position, 10.0f, 300, 0f);
                 barrel.massTimer = 0.1f;
+
+                //연쇄폭발을 위한 인보크함수
+                barrel.Invoke("ExpBarrel", 1.5f);
             }
         }
 
         //5초 후에 드럼통 제거
-        Destroy(gameObject, 5.0f);
+        Destroy(gameObject, 2.0f);
     }
 }

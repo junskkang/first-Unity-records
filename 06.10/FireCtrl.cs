@@ -72,13 +72,30 @@ public class FireCtrl : MonoBehaviour
     //MuzzleFlash 활성/비활성화를 짧은 시간 동안 반복
     IEnumerator ShowMuzzleFlash()
     {
-        //활성화해서 보이게 함
+        //MuzzleFlash 스케일을 불규칙하게 변경
+        float scale = Random.Range(1.0f, 2.0f);
+        muzzleFlash.transform.localScale = Vector3.one * scale;
+
+        //MuzzleFalsh를 z축 기준으로 불규칙하게 회전시킴
+        Quaternion rot = Quaternion.Euler(0, 0, Random.Range(0, 360.0f));
+        muzzleFlash.transform.localRotation = rot;
+
+        //메시 렌더러를 활성화해서 보이게 함
         muzzleFlash.enabled = true;
 
-        //불규칙적인 시간동안  Delay한 다음 MeshRenderer를 비활성화
-        yield return new WaitForSeconds(Random.Range(0.05f, 0.3f));
+        //불규칙적인 시간동안  Delay시킴
+        yield return new WaitForSeconds(Random.Range(0.01f, 0.03f));
+        //WaitForSeconds동안 return을 다른 쪽에 cpu사용을 양보하겠다(yield)는 의미
+        //리턴을 잠시 미루겠다는 의미
 
         //비활성화해서 보이지 않게 함
         muzzleFlash.enabled = false;
+
+        //for (int i = 0; i < 100; i++)
+        //{
+        //    Debug.Log("포문 주기에도 딜레이 가능?" + i);
+
+        //    yield return new WaitForSeconds(1.0f);
+        //}
     }
 }
