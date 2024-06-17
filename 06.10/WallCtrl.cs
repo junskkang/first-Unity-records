@@ -32,7 +32,10 @@ public class WallCtrl : MonoBehaviour
             Destroy(spark, spark.GetComponent<ParticleSystem>().main.duration + 0.2f);
 
             //충돌한 게임오브젝트 삭제
-            Destroy(coll.gameObject);
+            BulletCtrl bulletCtrl = coll.collider.GetComponent<BulletCtrl>();
+            //충돌한 총알 제거
+            bulletCtrl.StartCoroutine(bulletCtrl.PushObjectPool(0));
+
         }
     }
 }

@@ -21,7 +21,11 @@ public class FollowCam : MonoBehaviour
 
     void Update()
     {
-        if(Input.GetMouseButton(0) == true || Input.GetMouseButton(1) == true)
+        //사망 상태 시 조작 불가능
+        if (GameManager.GameState == GameState.GameEnd) return;
+
+        if (Input.GetMouseButton(0) == true || Input.GetMouseButton(1) == true)
+        if (GameManager.IsPointerOverUIObject() == false)
         {
             //--- 카메라 위 아래 바라보는 각도 조절을 위한 높낮이 변경 코드
             height -= (rotSpeed * Time.deltaTime * Input.GetAxis("Mouse Y"));  
@@ -46,6 +50,8 @@ public class FollowCam : MonoBehaviour
 
         //카메라의 위치를 추적대상의 dist 변수만큼 뒤쪽으로 배치하고
         //height 변수만큼 위로 올림
+        //Lerp함수 한번에 값을 변경하는게 아니라 점차점차 도달하도록 하는 함수
+        //카메라 위치가 급격하게 변했을때 한번에 띵~ 하고변하는게 아니라 이동하는 효과를 볼 수 있음
         transform.position = Vector3.Lerp(transform.position,
                                             targetTr.position
                                             - (targetTr.forward * dist)
