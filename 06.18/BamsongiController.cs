@@ -27,7 +27,14 @@ public class BamsongiController : MonoBehaviour
 
     void OnCollisionEnter(Collision coll)
     {
+        if (coll.gameObject.tag == "EnemyBam") return;
+
         GetComponent<Rigidbody>().isKinematic = true;
         GetComponent<ParticleSystem>().Play();
+        GetComponent<SphereCollider>().enabled = false;
+
+        if (coll.gameObject.name.Contains("Shield") || coll.gameObject.name.Contains("bamsongi"))
+        
+            Destroy(gameObject, 0.7f);
     }
 }

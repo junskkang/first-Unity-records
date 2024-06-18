@@ -15,8 +15,11 @@ public enum MonsterType
 public class MonsterCtrl : MonoBehaviour
 {
     public MonsterType type;
+    public Material[] textures;
+    public GameObject bamsongiPrefab;
+    public PlayerCtrl playerTarget;
 
-    public Transform playerTarget;
+    public GameObject[] eliteMonster;
 
     public Image Hpbar;
     float curHp;
@@ -24,7 +27,7 @@ public class MonsterCtrl : MonoBehaviour
 
     //노말카드 회전 관련
     Quaternion firstRot = Quaternion.identity;
-    Quaternion lastRot = new Quaternion(0, 180, 0, 0);
+    Quaternion lastRot = new Quaternion(0, -180, 0, 0);
     float rotTimer = 0.0f;
 
     Vector3 spawnPos;
@@ -32,6 +35,7 @@ public class MonsterCtrl : MonoBehaviour
     Vector3 eliteMoveY = Vector3.zero;
     bool isUp = true;
     float eliteMoveSpeed = 2.0f;
+    int attackCount = 0;
 
     //보스카드 움직임 관련
     Vector3 bossMaxX = Vector3.zero;
@@ -39,18 +43,28 @@ public class MonsterCtrl : MonoBehaviour
     bool isBossMove = true;
     float bossMoveSpeed = 3.0f;
 
+
+    //공격관련 변수
+    float attackTime = 2.0f;
     // Start is called before the first frame update
     void Start()
     {
+        playerTarget = GameObject.FindObjectOfType<PlayerCtrl>();
+
         if (type == MonsterType.Normal)
         {
+            Destroy(gameObject, 7.0f);
+            int idx = Random.Range(0, textures.Length);
+            GetComponentInChildren<MeshRenderer>().material = textures[idx];
+
             maxHp = 100.0f;
             curHp = maxHp;
+            attackTime = 3.5f;
         }
         else if (type == MonsterType.Elite)
         {
             spawnPos = transform.position;
-            eliteMoveY = new Vector3(transform.position.x, 3.5f, transform.position.z);
+            eliteMoveY = new Vector3(transform.position.x, 12.5f, transform.position.z);
             maxHp = 200.0f;
             curHp = maxHp;
         }
@@ -72,6 +86,10 @@ public class MonsterCtrl : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+
+    }
     // Update is called once per frame
     void Update()
     {
@@ -87,17 +105,70 @@ public class MonsterCtrl : MonoBehaviour
         {
             BossAI();
         }
+
+        Attack();
     }
 
+    void Attack()
+    {
+        attackTime -= Time.deltaTime;
+        if (attackTime < 0)
+        {
+            if (type == MonsterType.Normal)
+            {
+
+                FireBam();
+                attackTime = 2.0f;
+            }            
+            else if (type == MonsterType.Elite)
+            {
+                FireBam();
+                attackCount++;
+                attackTime = 0.5f;
+
+                if (attackCount == 2)
+                {
+                    attackTime = 6.0f;
+                    attackCount = 0;
+                }
+            }
+            else if (type == MonsterType.Boss)
+            {               
+                FireBam();
+                attackTime = 5.0f;
+
+                int ran = Random.Range(0, 4);
+                if (ran < 2)
+                {
+                    for (int i = 0; i < eliteMonster.Length; i++)
+                    {
+                        if (eliteMonster[i].activeSelf == true) continue;
+
+                        if (eliteMonster[i] != null)
+                            eliteMonster[i].SetActive(true);
+                    }                       
+                }
+            }
+        } 
+    }
 
     IEnumerator NormalAI()
     {
-        Destroy(gameObject, 7.0f);
+        
 
         yield return new WaitForSeconds(1.5f);
 
+
         rotTimer += Time.deltaTime;
+
         transform.rotation = Quaternion.Lerp(firstRot, lastRot, rotTimer / 10);
+
+        if (rotTimer >= 10.0f)
+        {
+            rotTimer = 10.0f;
+        }
+
+
     }
 
     void EliteAI()
@@ -136,6 +207,46 @@ public class MonsterCtrl : MonoBehaviour
         }
     }
 
+    void FireBam()
+    {        
+        if (type == MonsterType.Boss)
+        {
+            
+            Vector3 pos = new Vector3 (0.0f, transform.position.y + 5.0f, transform.position.z -1.0f);
+            for (float xx = -10; xx <= 10; xx += 5)
+            {                
+                pos.x = xx;
+                
+                GameObject bamsongi = Instantiate (bamsongiPrefab);
+                bamsongi.transform.position = pos;
+
+                Vector3 toPlayerDir = playerTarget.transform.position - bamsongi.transform.position;
+                toPlayerDir.y += 5.0f;
+                toPlayerDir.Normalize();
+                bamsongi.GetComponent<BamsongiController>().Shoot(toPlayerDir * 2000);
+            }
+        }
+        else
+        {
+            GameObject bamsongi = Instantiate(bamsongiPrefab);
+            bamsongi.transform.position = new Vector3(transform.position.x, transform.position.y + 3.5f, transform.position.z - 1.0f);
+            Vector3 toPlayerDir = playerTarget.transform.position - transform.position;
+            toPlayerDir.y += 5.0f;
+            toPlayerDir.Normalize();
+
+            if (type == MonsterType.Normal)
+            {
+                bamsongi.GetComponent<BamsongiController>().Shoot(toPlayerDir * 1000);
+            }
+            else if (type == MonsterType.Elite)
+            {
+                bamsongi.GetComponent<BamsongiController>().Shoot(toPlayerDir * 1500);
+            }
+        }       
+
+    }
+
+
     private void OnCollisionEnter(Collision coll)
     {
         if (coll.gameObject.tag == "AllyBam")
@@ -165,15 +276,37 @@ public class MonsterCtrl : MonoBehaviour
             {
                 GameManager.inst.AddScore(20);
                 MonsterGenerator.inst.killCount += 1;
+                Destroy(gameObject);
             }                
             else if (type == MonsterType.Elite)
+            {
                 GameManager.inst.AddScore(50);
+                
+                gameObject.SetActive(false);
+                
+            }
             else if (type == MonsterType.Boss)
+            {
                 GameManager.inst.AddScore(300);
-
-            //몬스터 제거
-            Destroy(gameObject);
+                
+                gameObject.SetActive(false);
+                
+            }             
+            
         }
 
+    }
+
+    private void OnDisable()
+    {
+        if (type == MonsterType.Elite || type == MonsterType.Boss)
+        {
+            curHp = maxHp;
+
+            if (Hpbar != null)
+                Hpbar.fillAmount = curHp / maxHp;
+
+            attackTime = 2.0f;
+        }
     }
 }

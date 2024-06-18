@@ -86,7 +86,7 @@ public class MonsterGenerator : MonoBehaviour
             bossMonster.SetActive(true);
 
         float ranX = Random.Range(-20.0f, 20.0f);
-        bossMonster.transform.position = new Vector3(ranX, 0, 15);
+        bossMonster.transform.position = new Vector3(ranX, 9, 15);
     }
 
 }
