@@ -36,6 +36,7 @@ public class MonsterCtrl : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
+        traceDist = 30.0f;
         attackDist = 1.7f;
 
         //몬스터의 Transform 할당
@@ -173,7 +174,7 @@ public class MonsterCtrl : MonoBehaviour
             //Bullet 삭제
             BulletCtrl bulletCtrl = coll.gameObject.GetComponent<BulletCtrl>();
             //충돌한 총알 제거
-            bulletCtrl.StartCoroutine(bulletCtrl.PushObjectPool(0));
+            bulletCtrl.PushObjectPool(); //StartCoroutine(bulletCtrl.PushObjectPool(0));
 
 
             //IsHit Trigger를 발생시키면 Any State에서 gothit로 전이됨

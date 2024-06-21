@@ -10,6 +10,9 @@ public class FireCtrl : MonoBehaviour
     public GameObject bullet;
     //총알 발사좌표
     public Transform firePos;
+    //총알 오브젝트 풀 위치
+    public Transform bulletPool;
+
     //총알을 오브젝트풀링으로 관리할 리스트
     public List<GameObject> bulletPoolList = new List<GameObject>();
 
@@ -43,12 +46,14 @@ public class FireCtrl : MonoBehaviour
             //생성한 총알의 이름 설정
             bullet.name = "Bullet_" + i.ToString();
             //생성한 총알 firePos child로 저장
-            bullet.transform.SetParent(firePos);
+            bullet.transform.SetParent(bulletPool);
             //생성한 총알 비활성화 저장
             bullet.SetActive(false);
             //생성한 총알을 오브젝트 풀 리스트에 추가
             bulletPoolList.Add(bullet);
         }
+
+        //Debug.Log(bulletPoolList.Count);
     }
     // Update is called once per frame
     void Update()
@@ -80,9 +85,12 @@ public class FireCtrl : MonoBehaviour
             //비활성화 여부로 사용 가능한 몬스터 판단
             if (bullet.activeSelf == false)
             {
-                //오브젝트 풀링에 저장된 몬스터 활성화
+                //각종 변수 초기화
+                bullet.transform.position = firePos.position;
+                bullet.transform.rotation = firePos.rotation; //Quaternion.LookRotation(Vector3.forward, firePos.position);
+                //오브젝트 풀링에 저장된 총알 활성화
                 bullet.SetActive(true);
-                //오브젝트 풀에서 몬스터 프리팹 하나를 활성화한 후 for 루프를 빠져나감
+                //오브젝트 풀에서 총알 프리팹 하나를 활성화한 후 for 루프를 빠져나감
                 break;
             }
         }

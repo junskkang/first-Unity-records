@@ -43,7 +43,7 @@ public class BarrelCtrl : MonoBehaviour
         {
             BulletCtrl bulletCtrl = coll.collider.GetComponent<BulletCtrl>();
             //충돌한 총알 제거
-            bulletCtrl.StartCoroutine(bulletCtrl.PushObjectPool(0));
+            bulletCtrl.PushObjectPool(); //StartCoroutine(bulletCtrl.PushObjectPool(0));
 
             //총알 맞은 횟수를 증가시키고 3회 이상이면 폭발 처리
             if (++hitCount >= 3)
@@ -59,7 +59,7 @@ public class BarrelCtrl : MonoBehaviour
         Destroy(explosion, explosion.GetComponentInChildren<ParticleSystem>().main.duration + 2.0f);
 
         //지정한 원점을 중심으로 10.0f 반경 내에 들어와 있는 Collider객체 추출
-        Collider[] colls = Physics.OverlapSphere(transform.position, 10.0f);
+        Collider[] colls = Physics.OverlapSphere(transform.position, 5.0f);
         BarrelCtrl a_Barrel = null;
         Rigidbody rbody = null;
         //추출한 Collider 객체에 폭발력 전달
@@ -73,9 +73,11 @@ public class BarrelCtrl : MonoBehaviour
             if(rbody != null)
             {
                 rbody.mass = 1.0f;
-                rbody.AddExplosionForce(1000.0f, transform.position, 10.0f, 300.0f);
+                rbody.AddExplosionForce(1000.0f, transform.position, 5.0f, 300.0f);
                 a_Barrel.timer = 0.1f;
             }
+
+            a_Barrel.Invoke("ExpBarrel", 1.5f); 
         }
 
         //5초 후에 드럼통 제거
