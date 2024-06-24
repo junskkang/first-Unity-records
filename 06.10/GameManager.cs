@@ -12,9 +12,16 @@ public enum GameState
     GameEnd
 }
 
+public enum PlayerCharacter
+{
+    Player1,
+    Player2
+}
+
 public class GameManager : MonoBehaviour
 {
     public static GameState GameState = GameState.GameIng;
+    public static PlayerCharacter playerCharacter = PlayerCharacter.Player1;
 
     [Header("UI")]
     //Text UI 항목 연결을 위한 변수
@@ -39,6 +46,11 @@ public class GameManager : MonoBehaviour
 
 
     public bool isGameOver = false;
+
+    //캐릭터 스왑
+    bool swapChar = true;
+    public GameObject player1;
+    public GameObject player2;
 
     public static GameManager inst;
 
@@ -77,6 +89,7 @@ public class GameManager : MonoBehaviour
         }
 
 
+
         if (SpawnPoints.Length > 0)
             StartCoroutine(this.CreateMonster());   //몬스터 생성 코루틴 함수 호출
 
@@ -86,9 +99,43 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        //캐릭터 사망 상태 시 조작 불가능
+        if (GameManager.GameState == GameState.GameEnd) return;
+
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            swapChar = !swapChar;
+            ChangeCharacter(swapChar);            
+        }
     }
 
+    void ChangeCharacter(bool swap)
+    {
+        switch (swap)
+        {
+            case true:
+                {
+                    playerCharacter = PlayerCharacter.Player1;
+
+                    player1.transform.position = player2.transform.position;
+                    player1.transform.rotation = player2.transform.rotation;
+                    player1.GetComponent<PlayerCtrl>().CharacterChange();
+                    player1.SetActive(true);
+                    player2.SetActive(false);
+                }
+                break;
+            case false:
+                {
+                    playerCharacter = PlayerCharacter.Player2;
+                    player2.transform.position = player1.transform.position;
+                    player2.transform.rotation = player1.transform.rotation;
+                    player2.GetComponent<PlayerCtrl>().CharacterChange();
+                    player2.SetActive(true);
+                    player1.SetActive(false);                   
+                }
+                break;
+        }                      
+    }
 
     IEnumerator CreateMonster()
     {

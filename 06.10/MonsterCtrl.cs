@@ -42,7 +42,18 @@ public class MonsterCtrl : MonoBehaviour
         //몬스터의 Transform 할당
         monsterTr = this.gameObject.GetComponent<Transform>();
         //추적 대상인 Player의 Transform 할당
-        playerTr = GameObject.FindWithTag("Player").GetComponent<Transform>();
+        //playerTr = GameObject.FindWithTag("Player").GetComponent<Transform>();
+
+        switch (GameManager.playerCharacter)
+        {
+            case PlayerCharacter.Player1:
+                playerTr = GameManager.inst.player1.transform;
+                break;
+            case PlayerCharacter.Player2:
+                playerTr = GameManager.inst.player2.transform;
+                break;
+        }
+
         //NavMeshAgent 컴포넌트 할당
         nvAgent = this.gameObject.GetComponent<NavMeshAgent>();
 
@@ -67,7 +78,15 @@ public class MonsterCtrl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        switch (GameManager.playerCharacter)
+        {
+            case PlayerCharacter.Player1:
+                playerTr = GameManager.inst.player1.transform;
+                break;
+            case PlayerCharacter.Player2:
+                playerTr = GameManager.inst.player2.transform;
+                break;
+        }
     }
 
     //일정한 간격으로 몬스터의 행동 상태를 체크하고 monsterState 값 변경

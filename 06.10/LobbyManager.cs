@@ -29,7 +29,8 @@ public class LobbyManager : MonoBehaviour
 
     void StartBtnClick()
     {
-        SceneManager.LoadScene("scPlay");
+        SceneManager.LoadScene("scLevel01");
+        SceneManager.LoadScene("scPlay", LoadSceneMode.Additive);
     }
 
     public void BtnEnter(Button button)

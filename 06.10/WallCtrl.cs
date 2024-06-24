@@ -7,16 +7,21 @@ public class WallCtrl : MonoBehaviour
     //스파크 파티클 프리팹 연결할 변수
     public GameObject sparkEffect;
 
+    public Material materials;
+
+    FollowCam refCam;
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        refCam = GameObject.FindObjectOfType<FollowCam>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if (!refCam.isBorder)
+            gameObject.GetComponent<MeshRenderer>().material = materials;
     }
 
     //충돌이 시작할 때 발생하는 이벤트

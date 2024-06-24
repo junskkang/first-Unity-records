@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 //클래스에 System.Serializable 이라는 어트리뷰트(Attribute)를 명시해야
 //Inspector 뷰에 노출됨
@@ -108,7 +109,7 @@ public class PlayerCtrl : MonoBehaviour
         else
         { //정지 idle 애니메이션
             _animation.CrossFade(anim.idle.name, 0.3f);
-        }
+        }        
     }
 
     //충돌한 Collider의 IsTrigger 옵션이 체크됐을 때 발생
@@ -161,5 +162,35 @@ public class PlayerCtrl : MonoBehaviour
 
         GameManager.GameState = GameState.GameEnd;
         GameManager.inst.isGameOver = true;
+    }
+
+    public void CharacterChange()
+    {
+        switch (GameManager.playerCharacter)
+        {
+            case PlayerCharacter.Player1:
+                {
+                    GameManager.inst.player1.GetComponent<PlayerCtrl>().hp = 
+                        GameManager.inst.player2.GetComponent<PlayerCtrl>().hp;
+                    //체력 UI이미지 갱신
+                    imgHpbar.fillAmount = (float)hp / (float)initHp;
+
+                    //hp 텍스트 갱신
+                    hpText.text = $"{hp} / {initHp}";
+                }
+                break;
+            case PlayerCharacter.Player2:
+                {
+                    GameManager.inst.player2.GetComponent<PlayerCtrl>().hp = 
+                        GameManager.inst.player1.GetComponent<PlayerCtrl>().hp;
+                    //체력 UI이미지 갱신
+                    imgHpbar.fillAmount = (float)hp / (float)initHp;
+
+                    //hp 텍스트 갱신
+                    hpText.text = $"{hp} / {initHp}";
+                }
+
+                break;
+        }
     }
 }
