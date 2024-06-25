@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 //클래스에 System.Serializable 이라는 어트리뷰트(Attribute)를 명시해야
 //Inspector 뷰에 노출됨

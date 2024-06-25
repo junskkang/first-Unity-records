@@ -14,11 +14,28 @@ public class FollowCam : MonoBehaviour
 
     public bool isBorder = false;
     public Material materials;
+
+    //벽투명화 쌤 풀이
+    LayerMask wallMask = -1;
+    List<WallCtrl> wallList = new List<WallCtrl>();
     // Start is called before the first frame update
     void Start()
     {
         dist = 3.4f;
         height = 2.8f;
+
+        ////Wall 리스트 만들기
+        //wallMask = 1 << LayerMask.NameToLayer("SideWall");
+        ////SideWall 레이어만 lay체크하기 위한 마스크 변수 생성
+
+        //GameObject[] sideWalls = GameObject.FindGameObjectsWithTag("SideWall");
+        //for (int i = 0; i < sideWalls.Length; i++)
+        //{
+        //    WallCtrl wallCtrl = sideWalls[i].GetComponent<WallCtrl>();
+        //    wallCtrl.isColl = false;
+        //    wallCtrl.WallAlphaOnOff(false); //불투명화로 시작
+        //    wallList.Add(wallCtrl);
+        //}
     }
 
     void Update()
@@ -40,7 +57,7 @@ public class FollowCam : MonoBehaviour
             //--- 카메라 위 아래 바라보는 각도 조절을 위한 높낮이 변경 코드
         }
 
-        StopToWall();
+        //StopToWall();
 
     }//void Update()
 
@@ -77,15 +94,32 @@ public class FollowCam : MonoBehaviour
 
         //카메라가 타깃 게임오브젝트를 바라보게 설정
         transform.LookAt(m_PlayerVec);
+
+        StopToWall();
     }
 
     void StopToWall()
     {
-        Debug.DrawRay(transform.position, transform.forward * 3.2f, Color.green);  //시작 위치, 방향 * 길이, 색
+        float dist = (transform.position - m_PlayerVec).magnitude;
+
+        Vector3 toCamera = transform.position - m_PlayerVec;
+        toCamera.Normalize();
+
+        Debug.DrawRay(m_PlayerVec, toCamera * dist, Color.green);  //시작 위치, 방향 * 길이, 색
         RaycastHit hit;
         
-        isBorder = Physics.Raycast(transform.position, transform.forward, 
-                  out hit, 3.2f, LayerMask.GetMask("Wall"));
+
+        //레이캐스트를 쏠 때 팁!
+        //카메라에서 캐릭터를 향해 쏘는 것보다 캐릭터에서 카메라를 향해 쏘는 것이 감도가 좋음
+        //왜? 벽의 두께가 존재하고 벽의 내부는 비어있음 고로 raycast가 hit되지 않아
+        //카메라 위치가 벽의 내부에 존재할 때는 감지하지 못한다는 의미
+        //카메라의 위치가 온전히 벽을 벗어나야 그때부터 hit가 되기 시작하기 때문에
+        //벽의 두께가 얇다면 크게 차이는 없겠지만 벽이 두꺼워지면 두꺼워질수록
+        //그 차이가 분명할 것. 따라서 캐릭터에서부터 카메라를 향해 쏘면
+        //어떠한 오브젝트를 대상으로 한다해도 확실하게 처리할 수 있음
+
+        isBorder = Physics.Raycast(m_PlayerVec, toCamera, 
+                  out hit, dist, LayerMask.GetMask("Wall"));
         //Raycast(시작위치, 방향, 길이, 레이어마스크)
         //해당 레이캐스트가 wall이라는 레이어마스크에 닿으면 true값을 반환
 

@@ -43,4 +43,34 @@ public class WallCtrl : MonoBehaviour
 
         }
     }
+
+    public void WallAlphaOnOff(bool isOn = true)
+    {
+        if (materials == null) return;
+
+        if (isOn) //투명화
+        {
+            materials.SetFloat("_Mode", 3); //Transparent
+            materials.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            materials.SetInt("_DstBlend", (int)(UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha));
+            materials.SetInt("_ZWrite", 0);
+            materials.DisableKeyword("_ALPHATEXT_ON");
+            materials.DisableKeyword("_ALPHABLEND_ON");
+            materials.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+            materials.renderQueue = 3000;
+            materials.color = new Color(1, 1, 1, 0.3f);
+        }
+        else //불투명화
+        {
+            materials.SetFloat("_Mode", 0); //Opaque
+            materials.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            materials.SetInt("_DstBlend", (int)(UnityEngine.Rendering.BlendMode.Zero));
+            materials.SetInt("_ZWrite", 1);
+            materials.DisableKeyword("_ALPHATEXT_ON");
+            materials.DisableKeyword("_ALPHABLEND_ON");
+            materials.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            materials.renderQueue = -1;
+            materials.color = new Color(1, 1, 1, 1);
+        }
+    }
 }

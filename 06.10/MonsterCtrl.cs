@@ -87,6 +87,11 @@ public class MonsterCtrl : MonoBehaviour
                 playerTr = GameManager.inst.player2.transform;
                 break;
         }
+
+        //선생님 방법
+        //if (playerTr.gameObject.activeSelf == false)
+        //    playerTr = GameObject.FindWithTag("Player").GetComponent<Transform>();
+        //FindWithTag() 함수의 특징은 SetActive가 true 대상만 찾는다.
     }
 
     //일정한 간격으로 몬스터의 행동 상태를 체크하고 monsterState 값 변경
