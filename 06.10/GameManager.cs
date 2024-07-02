@@ -29,6 +29,10 @@ public class GameManager : MonoBehaviour
     //누적 점수를 기록하기 위한 변수
     private int totalScore = 0;
 
+    //누적 골드값을 기록하기 위한 변수
+    public Text txtGold;
+    private int totalGold = 0;
+
     public Button backBtn;
 
 
@@ -190,6 +194,12 @@ public class GameManager : MonoBehaviour
     {
         totalScore += score;
         txtScore.text = "score <color=#ff0000>" + totalScore.ToString() + "</color>";
+    }
+
+    public void DispGold(int gold)
+    {
+        totalGold += gold;
+        txtGold.text = "gold <color=#ff0000>" + totalGold.ToString("N0") + "</color>";
     }
 
     public static bool IsPointerOverUIObject() //UGUI의 UI들이 먼저 피킹되는지 확인하는 함수

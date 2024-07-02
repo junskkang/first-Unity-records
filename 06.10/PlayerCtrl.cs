@@ -21,7 +21,7 @@ public class PlayerCtrl : MonoBehaviour
     private float v = 0.0f;
 
     //이동 속도 변수
-    public float moveSpeed = 10.0f;
+    public float moveSpeed = 0.07f;
 
     //회전 속도 변수
     public float rotSpeed = 100.0f;
@@ -32,6 +32,13 @@ public class PlayerCtrl : MonoBehaviour
 
     //아래에 있는 3D 모델의 Animation 컴포넌트에 접근하기 위한 변수
     public Animation _animation;
+
+    //캐릭터 컨트롤러를 이용한 이동, 점프 변수
+    CharacterController _characterController;   //캐릭터가 가지고 있는 컴포넌트에 접근하기 위한 변수
+    float jumpHeight = 10.0f;
+    float yVelocity = 0.0f;
+    float gravity = 0.4f;
+    bool isJump = false;
 
     //Player의 생명 변수
     public int hp = 100;
@@ -45,6 +52,8 @@ public class PlayerCtrl : MonoBehaviour
         Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 0;
 
+        moveSpeed = 6.0f;
+
         //생명력 초기값 설정
         initHp = hp;
 
@@ -53,6 +62,8 @@ public class PlayerCtrl : MonoBehaviour
 
         //자신의 하위에 있는 Animation 컴포넌트를 찾아와 변수에 할당
         _animation = GetComponentInChildren<Animation>();
+
+        _characterController = GetComponent<CharacterController>();
 
         //Animation 컴포넌트의 애니메이션 클립을 지정하고 실행
         _animation.clip = anim.idle;
@@ -74,8 +85,21 @@ public class PlayerCtrl : MonoBehaviour
             moveDir.Normalize();
 
         //Translate(이동방향 * Time.deltaTime * 변위값 * 속도, 기준좌표)
-        transform.Translate(moveDir * Time.deltaTime * moveSpeed, Space.Self);
+        //transform.Translate(moveDir * Time.deltaTime * moveSpeed, Space.Self);
         //기준좌표 옵션의 기본값은 Space relativeTo = Space.Self
+
+
+        if (_characterController != null)
+        {
+            //벡터를 로컬 좌표계 기준에서 월드 좌표계 기준으로 변환한다.
+            moveDir = transform.TransformDirection(moveDir);
+
+            //캐릭터에 중력이 적용되는 이동함수
+            _characterController.SimpleMove(moveDir * moveSpeed);
+
+            //Debug.Log(_characterController.isGrounded);
+            Jump();
+        }
 
         if (Input.GetMouseButton(0) == true || Input.GetMouseButton(1) == true)
         if (GameManager.IsPointerOverUIObject() == false)
@@ -111,6 +135,32 @@ public class PlayerCtrl : MonoBehaviour
         }        
     }
 
+    void Jump()
+    {
+        if (_characterController.isGrounded)
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                
+                yVelocity = jumpHeight;
+                isJump = true;
+            }
+        }
+        else
+        {
+            if (Input.GetKeyDown(KeyCode.Space) && isJump)
+            {
+                yVelocity += jumpHeight;
+                isJump = false;
+            }
+
+            yVelocity -= gravity;
+        }
+
+        _characterController.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
+
+    }
+
     //충돌한 Collider의 IsTrigger 옵션이 체크됐을 때 발생
     void OnTriggerEnter(Collider coll)
     {
@@ -132,6 +182,15 @@ public class PlayerCtrl : MonoBehaviour
             {
                 PlayerDie();
             }
+        }
+
+        if (coll.name.Contains("Coin"))
+        {
+            //점수 획득
+            GameManager.inst.DispGold(10);
+
+            //오브젝트 삭제
+            Destroy(coll.gameObject);
         }
     }
 
