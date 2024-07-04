@@ -105,12 +105,8 @@ public class FollowCam : MonoBehaviour
         {
             dist -= zoomSpeed;
             saveDist = this.dist;
-        }
-        
-        if (!isBorder)
-        {
-            this.dist = Mathf.Lerp(this.dist, saveDist, Time.deltaTime * zoomSpeed * 2);
-        }
+        }       
+
     }//void Update()
 
     //Update 함수 호출 이후 한 번씩 호출되는 함수인 LateUpdate 사용
@@ -186,8 +182,9 @@ public class FollowCam : MonoBehaviour
         //카메라가 바라보는 방향을 cacRFPos(forward전방벡터)에다가 곱해주어 
         //카메라가 바라보는 방향으로 riffleDir를 구해줌
         //초기의 카메라와 firePos의 각도를 유지한 채 회전시키기 위해 margin각도를 빼줌
-        
-        
+
+
+
         StopToWall();
     }
 
@@ -220,16 +217,17 @@ public class FollowCam : MonoBehaviour
 
         if (isBorder)
         {
-
             transform.position = hit.point;
-
 
             //float collDist = (transform.position - m_PlayerVec).magnitude;
             ////Debug.Log(hit.collider.name);
             ////hit.collider.gameObject.GetComponent<MeshRenderer>().material = materials;
             //if (collDist > 0.85f)
-            //    this.dist = collDist - 0.3f;
-            
+            //    this.dist = collDist - 0.3f;            
+        }
+        else if (!isBorder)
+        {
+            this.dist = Mathf.Lerp(this.dist, saveDist, Time.deltaTime * zoomSpeed * 2);
         }
     }
 }

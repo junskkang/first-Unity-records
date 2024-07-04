@@ -57,6 +57,13 @@ public class PlayerCtrl : MonoBehaviour
     public Image imgHpbar;
     public Text hpText;
 
+    //스킬 사용을 위한 컴포넌트 추가
+    public FireCtrl fireCtrl;
+
+    //피격 이펙트 변수
+    public GameObject bloodEffect;
+    public GameObject bloodDecal;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -76,6 +83,9 @@ public class PlayerCtrl : MonoBehaviour
         _animation = GetComponentInChildren<Animation>();
         
         _characterController = GetComponent<CharacterController>();
+
+        if (fireCtrl == null)
+            fireCtrl = GetComponent<FireCtrl>();
 
         //Animation 컴포넌트의 애니메이션 클립을 지정하고 실행
         _animation.clip = anim.idle;
@@ -176,7 +186,8 @@ public class PlayerCtrl : MonoBehaviour
         else
         { //정지 idle 애니메이션
             _animation.CrossFade(anim.idle.name, 0.3f);
-        }        
+        }       
+
     }
 
     void Jump()
@@ -211,21 +222,7 @@ public class PlayerCtrl : MonoBehaviour
         //충돌한 Collider가 몬스터의 PUNCH이면 Player의 HP 차감
         if(coll.gameObject.tag == "PUNCH")
         {
-            hp -= 10;
-
-            //체력 UI이미지 갱신
-            imgHpbar.fillAmount = (float)hp / (float)initHp;
-
-            //hp 텍스트 갱신
-            hpText.text = $"{hp} / {initHp}";
-
-            //Debug.Log("Player HP = " + hp.ToString());
-
-            //Player의 생명이 0이하이면 사망 처리
-            if(hp <= 0)
-            {
-                PlayerDie();
-            }
+            TakeDamage(10);
         }
 
         if (coll.name.Contains("Coin"))
@@ -242,7 +239,61 @@ public class PlayerCtrl : MonoBehaviour
             Destroy(coll.gameObject);
         }
     }
+    void OnCollisionEnter(Collision coll)
+    {
+        if (coll.gameObject.tag == "E_BULLET")
+        {
 
+            TakeDamage(coll.gameObject.GetComponent<BulletCtrl>().damage/2);
+            //Bullet 삭제
+            Destroy(coll.gameObject);
+
+        }
+    }
+
+    void TakeDamage(int damage = 10)
+    {
+        hp -= damage;
+
+        CreateBloodEffect(transform.position);
+
+        //체력 UI이미지 갱신
+        imgHpbar.fillAmount = (float)hp / (float)initHp;
+
+        //hp 텍스트 갱신
+        hpText.text = $"{hp} / {initHp}";
+
+        //Debug.Log("Player HP = " + hp.ToString());
+
+        //Player의 생명이 0이하이면 사망 처리
+        if (hp <= 0)
+        {
+            PlayerDie();
+        }
+    }
+
+    void CreateBloodEffect(Vector3 pos)
+    {
+        //혈흔 효과 생성
+        GameObject blood1 = (GameObject)Instantiate(bloodEffect, pos, Quaternion.identity);
+        blood1.GetComponent<ParticleSystem>().Play();
+        Destroy(blood1, 3.0f);
+
+        //데칼 생성 위치 - 바닥에서 조금 올린 위치 산출
+        Vector3 decalPos = transform.position + (Vector3.up * 0.05f);
+        //데칼의 회전값을 무작위로 설정
+        Quaternion decalRot = Quaternion.Euler(90, 0, Random.Range(0, 360));
+
+        //데칼 프리팹 생성
+        GameObject blood2 = (GameObject)Instantiate(bloodDecal, decalPos, decalRot);
+        //데칼의 크기도 불규칙적으로 나타나게끔 스케일 조정
+        float scale = Random.Range(1.5f, 3.5f);
+        blood2.transform.localScale = Vector3.one * scale;
+
+        //5초 후에 혈흔효과 프리팹을 삭제
+        Destroy(blood2, 5.0f);
+
+    }//void CreateBloodEffect(Vector3 pos)
     //Player의 사망 처리 루틴
     void PlayerDie()
     {
@@ -299,5 +350,25 @@ public class PlayerCtrl : MonoBehaviour
 
                 break;
         }
+    }
+
+    public void UseSkill_Item(SkillType skillType)
+    {
+        if (GameManager.GameState == GameState.GameEnd) return; 
+        
+        if (skillType == SkillType.Skill_0)     //체력 회복 스킬
+        {
+
+        }
+        else if (skillType == SkillType.Skill_1)    //수류탄 투척 스킬
+        {
+            fireCtrl.FireGrenade();
+        }
+        else if (skillType == SkillType.Skill_2)    //쉴드 생성 스킬
+        {
+
+        }
+
+
     }
 }

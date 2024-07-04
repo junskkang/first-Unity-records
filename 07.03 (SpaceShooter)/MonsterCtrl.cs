@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UIElements;
 
 public class MonsterCtrl : MonoBehaviour
 {
     //몬스터의 상태 정보가 있는 Enumerable 변수 선언
-    public enum MonsterState { idle, trace, attack, die };
+    public enum MonsterState { idle, trace, attack, rangeAttack, die };
 
     //몬스터의 현재 상태 정보를 저장할 Enum 변수
     public MonsterState monsterState = MonsterState.idle;
@@ -20,7 +21,7 @@ public class MonsterCtrl : MonoBehaviour
     private Rigidbody rigid;
 
     //추적 사정거리
-    public float traceDist = 10.0f;
+    public float traceDist = 8.0f;
     //공격 사정거리
     public float attackDist = 1.0f; //2.0f;
 
@@ -38,6 +39,13 @@ public class MonsterCtrl : MonoBehaviour
     //몬스터 사망 시 코인 스폰
     public GameObject coinPrefab;
 
+    //원거리 공격에 대한 변수
+    bool seePlayer = false;
+    public GameObject bulletPrefab;
+    float shotSpeed = 3.0f;
+    public Transform firePos;
+        
+
     // Start is called before the first frame update
     void Awake()
     {
@@ -47,6 +55,7 @@ public class MonsterCtrl : MonoBehaviour
         //몬스터의 Transform 할당
         monsterTr = this.gameObject.GetComponent<Transform>();
         rigid = this.gameObject.GetComponent<Rigidbody>();
+        //FireCtrl fireCtrl = 
         //coinPrefab = Resources.Load("CoinItem/CoinPrefab") as GameObject;
 
         //추적 대상인 Player의 Transform 할당
@@ -125,17 +134,38 @@ public class MonsterCtrl : MonoBehaviour
         //몬스터와 플레이어 사이의 거리 측정
         float dist = Vector3.Distance(playerTr.position, monsterTr.position);
         //플레이어가 2층에 있을 때 1층의 몬스터가 뽈뽈 거리지 않도록 y값 따로 측정
-        float yDist = Mathf.Abs(playerTr.position.y - monsterTr.position.y); 
+        float yDist = Mathf.Abs(playerTr.position.y - monsterTr.position.y);
 
-        Vector3 dir = playerTr.position - monsterTr.position;
-        
+        Vector3 dir = playerTr.position - monsterTr.position; // - playerTr.position;
+        dir.y += 1.0f;
+
+
         if (dir.magnitude <= attackDist) //공격 범위 안으로 들어왔는지 확인
         {
             monsterState = MonsterState.attack;
         }
-        else if (dir.magnitude <= traceDist && dir.y <= 5.0f) //추적 범위 안으로 들어왔는지 확인
+        else if (dir.magnitude <= traceDist && Mathf.Abs(dir.y) <= 5.0f) //추적 범위 안으로 들어왔는지 확인
         {
             monsterState = MonsterState.trace;
+        }
+        else if (traceDist < dir.magnitude && Mathf.Abs(dir.y) <= 5.0f)
+        {
+            //Debug.DrawRay(transform.position, dir.normalized * 60, Color.blue);
+            RaycastHit hit;
+            seePlayer = Physics.Raycast(transform.position, dir.normalized, out hit, 60.0f);
+            if (seePlayer)
+            {
+                if (!hit.collider.tag.Contains("Player"))
+                {
+                    monsterState = MonsterState.idle;
+                    return;
+                }
+                if (hit.collider.tag.Contains("Player"))
+                {                    
+                    monsterState = MonsterState.rangeAttack;
+                }
+         
+            }
         }
         else
         {
@@ -198,6 +228,25 @@ public class MonsterCtrl : MonoBehaviour
 
                         Quaternion targetRot = Quaternion.LookRotation(cacDir.normalized);
                         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotSpeed);
+                    }
+                }
+                break;
+            case MonsterState.rangeAttack:
+                {
+                    float rotSpeed = 6.0f;
+                    Vector3 cacDir = playerTr.position - transform.position;
+                    cacDir.y = 0.0f;
+                    if (0.0f < cacDir.magnitude)
+                    {
+                        Quaternion targetRot = Quaternion.LookRotation(cacDir.normalized);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotSpeed);
+                    }
+
+                    shotSpeed -= Time.deltaTime;
+                    if (shotSpeed < 0.0f)
+                    {
+                        Fire(BulletType.E_BULLET, playerTr);
+                        shotSpeed = 3.0f;
                     }
                 }
                 break;
@@ -300,16 +349,15 @@ public class MonsterCtrl : MonoBehaviour
     {
         if(coll.gameObject.tag == "BULLET")
         {
-            //혈흔 효과 함수 호출
-            CreateBloodEffect(coll.transform.position);
 
-            //맞은 총알의 Damage를 추출해 몬스터 hp 차감
-            hp -= coll.gameObject.GetComponent<BulletCtrl>().damage;
-            if(hp <= 0)
-            {
-                MonsterDie();
-            }
+            ////맞은 총알의 Damage를 추출해 몬스터 hp 차감
+            //hp -= coll.gameObject.GetComponent<BulletCtrl>().damage;
+            //if(hp <= 0)
+            //{
+            //    MonsterDie();
+            //}
 
+            TakeDamage(coll.gameObject.GetComponent<BulletCtrl>().damage);
             //Bullet 삭제
             BulletCtrl bulletCtrl = coll.gameObject.GetComponent<BulletCtrl>();
             //충돌한 총알 제거
@@ -317,10 +365,40 @@ public class MonsterCtrl : MonoBehaviour
 
 
             //IsHit Trigger를 발생시키면 Any State에서 gothit로 전이됨
-            animator.SetTrigger("IsHit");
+            //animator.SetTrigger("IsHit");
         }
     }
 
+    void Fire(BulletType type, Transform target)
+    {    
+        Vector3 dir = target.position - firePos.transform.position;
+        dir.y += 1.0f;
+        dir.Normalize();
+        
+        firePos.forward = dir;
+        
+        GameObject go = Instantiate(bulletPrefab, firePos.position, firePos.rotation);
+        go.gameObject.tag = type.ToString();
+        //go.transform.forward = firePos.forward;
+    }
+    public void TakeDamage(int damage = 0)
+    {
+        if (hp <= 0.0f) return;     //몬스터 사망시 리턴
+
+        //혈흔 효과 함수 호출
+        CreateBloodEffect(transform.position);
+
+        hp -= damage;
+        if (hp <= 0) 
+        {
+            hp = 0;
+            MonsterDie();
+            return;
+        }
+
+        //IsHit Trigger를 발생시키면 Any State에서 gothit로 전이됨
+        animator.SetTrigger("IsHit");
+    }
     //몬스터 사망시 처리 루틴
     void MonsterDie()
     {

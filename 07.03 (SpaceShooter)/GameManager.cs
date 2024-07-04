@@ -58,6 +58,8 @@ public class GameManager : MonoBehaviour
 
     public static GameManager inst;
 
+    PlayerCtrl playerCtrl;
+
     private void Awake()
     {
         inst = this;
@@ -79,6 +81,8 @@ public class GameManager : MonoBehaviour
         
         //스폰위치 배열로 담아옴
         SpawnPoints = GameObject.Find("SpawnPoint").GetComponentsInChildren<Transform>();
+
+        playerCtrl = GameObject.FindObjectOfType<PlayerCtrl>();
 
         //몬스터를 생성해 오브젝트 풀에 저장
         for (int i = 0; i < maxMonster; i++)
@@ -112,7 +116,15 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.C))
         {
             swapChar = !swapChar;
-            ChangeCharacter(swapChar);            
+            ChangeCharacter(swapChar);
+        }
+        else if (Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            UseSkill_Key(SkillType.Skill_0);    //힐
+        }
+        else if (Input.GetKeyDown(KeyCode.F) || Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            UseSkill_Key(SkillType.Skill_1);    //수류탄
         }
     }
 
@@ -235,6 +247,12 @@ public class GameManager : MonoBehaviour
     {
         if (txtGold != null)
             txtGold.text = "gold <color=#ffff00>" + GlobalValue.g_UserGold.ToString("N0") + "</color>";
+    }
+
+    public void UseSkill_Key(SkillType type)
+    {
+        if (playerCtrl != null)
+            playerCtrl.UseSkill_Item(type);
     }
 
     public static bool IsPointerOverUIObject() //UGUI의 UI들이 먼저 피킹되는지 확인하는 함수

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 //반드시 필요한 컴포넌트를 명시해 해당 컴포넌트가 삭제되는 것을 방지하는 Attribute
 [RequireComponent(typeof(AudioSource))]
 public class FireCtrl : MonoBehaviour
-{
+{    
     //총알 프리팹
     public GameObject bullet;
     //총알 발사좌표
@@ -28,7 +28,11 @@ public class FireCtrl : MonoBehaviour
     public MeshRenderer muzzleFlash;
 
     //조준점 관련 변수
-    public SpriteRenderer AimImg;
+    public GameObject laserDot;
+    LayerMask laserMask = -1;
+
+    //수류탄 연결
+    public GameObject grenadePrefab;
     // Start is called before the first frame update
     void Start()
     {
@@ -38,6 +42,10 @@ public class FireCtrl : MonoBehaviour
         muzzleFlash.enabled = false;
 
         ObjectPoolBullet();
+
+        laserMask = 1 << LayerMask.NameToLayer("BULLET");
+        laserMask |= 1 << LayerMask.NameToLayer("E_BULLET");
+        laserMask = ~laserMask;     //~의 의미는 반전의 의미. 위에 설정한 레이어만 제외시키는 뜻이 됨.
     }
 
     void ObjectPoolBullet()
@@ -74,7 +82,7 @@ public class FireCtrl : MonoBehaviour
             if (Input.GetMouseButton(0))
             {
                 if(GameManager.IsPointerOverUIObject() == false)
-                    Fire();
+                    Fire(BulletType.BULLET, firePos);
 
                 fireTimer = 0.11f;
             }
@@ -82,21 +90,26 @@ public class FireCtrl : MonoBehaviour
          //카메라가 바라보고 있는 방향으로 총구를 틀어서 그쪽 방향으로 총알이 날아가도록 함
         firePos.transform.forward = FollowCam.riffleDir.normalized;
 
-        Aiml();
+        //if (Input.GetKeyDown(KeyCode.F))
+        //{
+        //    FireGrenade();
+        //}
+
+        LaserAim();
     }
 
-    void Fire()
+    public void Fire(BulletType type, Transform typeVector)
     {
         //오브젝트 풀 리스트의 처음부터 끝까지 순회
         foreach (GameObject bullet in bulletPoolList)
         {
-            //비활성화 여부로 사용 가능한 몬스터 판단
+            //비활성화 여부로 사용 가능한 총알 판단
             if (bullet.activeSelf == false)
             {
-                
+                bullet.gameObject.tag = type.ToString();               
                 //각종 변수 초기화
-                bullet.transform.position = firePos.position;
-                bullet.transform.rotation = firePos.rotation; //Quaternion.LookRotation(Vector3.forward, firePos.position);
+                bullet.transform.position = typeVector.position;
+                bullet.transform.rotation = typeVector.rotation; //Quaternion.LookRotation(Vector3.forward, firePos.position);
                 //오브젝트 풀링에 저장된 총알 활성화
                 bullet.SetActive(true);
                 //오브젝트 풀에서 총알 프리팹 하나를 활성화한 후 for 루프를 빠져나감
@@ -139,40 +152,60 @@ public class FireCtrl : MonoBehaviour
 
     }//IEnumerator ShowMuzzleFlash()
 
-    void Aiml()
+    void LaserAim()
     {
         Debug.DrawRay(firePos.position, firePos.transform.forward * 15.0f, Color.green);  //시작 위치, 방향 * 길이, 색
         RaycastHit hit;
 
-        if (Physics.Raycast(firePos.position, firePos.transform.forward, out hit, Mathf.Infinity))
+        if (Physics.Raycast(firePos.position, firePos.transform.forward, out hit, 60.0f, laserMask))
         {
             if (hit.collider.tag == "BULLET") return;
 
-            if (AimImg != null)
+            if (laserDot != null)
             {                
-                Vector3 forHere = hit.point;
-                forHere.z -= 1.0f;
-                AimImg.transform.position = forHere;
+                //Vector3 forHere = hit.point;
+                //forHere.z -= 0.5f;
+                //laserDot.transform.position = forHere;
 
-                float dist = Vector3.Distance(firePos.position, forHere);
-                Vector3 maxSize = new Vector3(0.5f, 0.5f);
-                Vector3 middleSize = new Vector3(0.3f, 0.3f);
-                Vector3 minSize = new Vector3(0.1f, 0.1f);
-                if (dist > 10.0f)
-                {
-                    AimImg.transform.localScale = Vector3.Lerp(maxSize, minSize, Time.deltaTime * 0.001f);
-                }
-                else //if (5.0f < dist && dist < 10.0f )
-                {
-                    AimImg.transform.localScale = Vector3.Lerp(minSize, maxSize, Time.deltaTime * 0.001f);
-                }
-                
-                AimImg.transform.LookAt(Camera.main.transform.position);
-            }
-                
+                float dist = Vector3.Distance(firePos.position, hit.point);
+                //Vector3 maxSize = new Vector3(0.5f, 0.5f);
+                //Vector3 middleSize = new Vector3(0.3f, 0.3f);
+                //Vector3 minSize = new Vector3(0.1f, 0.1f);
 
-            
+                float cacScale = dist * 0.3f;   //사거리를 60으로 제한해둬서 최대 18
+                if (cacScale < 1.5f)
+                    cacScale = 1.5f;
+                if (5.0f < cacScale)
+                    cacScale = 5.0f;    //거리에 따라 레이저 도트 크기 계산
+
+                float cacOffset = dist / 30.0f; //사거리를 60으로 제한해둬서 최대 2
+                if (cacOffset < 0.1f)
+                    cacOffset = 0.1f;
+                if (0.5f < cacOffset)
+                    cacOffset = 0.5f;   //거리에 따라 벽에서 떨어트려 줄 거리 계산
+
+                laserDot.transform.position = hit.point - (firePos.transform.forward * cacOffset);
+                laserDot.transform.localScale = new Vector3(cacScale, cacScale, cacScale);
+
+                //if (dist > 10.0f)
+                //{
+                //    laserDot.transform.localScale = Vector3.Lerp(maxSize, minSize, Time.deltaTime * 0.001f);
+                //}
+                //else //if (5.0f < dist && dist < 10.0f )
+                //{
+                //    laserDot.transform.localScale = Vector3.Lerp(minSize, maxSize, Time.deltaTime * 0.001f);
+                //}
+                
+                laserDot.transform.LookAt(Camera.main.transform.position);
+            }                           
         }
+        else //60미터 이상 벗어날 때
+        {
+            laserDot.transform.position = firePos.position + firePos.transform.forward * 59.0f;
+            laserDot.transform.localScale = new Vector3(5.0f, 5.0f, 5.0f);
+            laserDot.transform.LookAt(Camera.main.transform.position);  //빌보드 처리
+        }
+
 
         //레이캐스트를 쏠 때 팁!
         //카메라에서 캐릭터를 향해 쏘는 것보다 캐릭터에서 카메라를 향해 쏘는 것이 감도가 좋음
@@ -187,21 +220,16 @@ public class FireCtrl : MonoBehaviour
         //          out hit, dist, LayerMask.GetMask("Wall"));
         //Raycast(시작위치, 방향, 길이, 레이어마스크)
         //해당 레이캐스트가 wall이라는 레이어마스크에 닿으면 true값을 반환
+    }
 
+    public void FireGrenade()
+    {
+        GameObject go = Instantiate(grenadePrefab);
+        if (go != null)
+        {
+            go.transform.position = firePos.transform.position;
+            go.GetComponent<GrenadeCtrl>().SetForwardDir(firePos.transform.forward);
+        }
 
-
-        //if (isBorder)
-        //{
-
-        //    transform.position = hit.point;
-
-
-        //    //float collDist = (transform.position - m_PlayerVec).magnitude;
-        //    ////Debug.Log(hit.collider.name);
-        //    ////hit.collider.gameObject.GetComponent<MeshRenderer>().material = materials;
-        //    //if (collDist > 0.85f)
-        //    //    this.dist = collDist - 0.3f;
-
-        //}
     }
 }

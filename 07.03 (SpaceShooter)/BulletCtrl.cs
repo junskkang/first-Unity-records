@@ -2,8 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
-using static MonsterCtrl;
 
+public enum BulletType
+{
+    BULLET,
+    E_BULLET
+}
 public class BulletCtrl : MonoBehaviour
 {
     //총알의 파괴력
@@ -42,7 +46,15 @@ public class BulletCtrl : MonoBehaviour
     {
         //Destroy(gameObject, 4.0f);
 
-        Invoke("PushObjectPool", 4.0f);
+        if (gameObject.tag == "E_BULLET")
+        {
+            Destroy(gameObject, 4.0f);
+            return;
+        }
+        else
+        {
+            Invoke("PushObjectPool", 4.0f);
+        }       
         
     }
 
@@ -81,6 +93,7 @@ public class BulletCtrl : MonoBehaviour
 
     private void OnCollisionEnter(Collision coll)
     {
+
         //아래의 제외사항은 각 컨트롤에서 별도로 하고 있기 때문에 중복을 피하기 위해서
         if (coll.gameObject.name.Contains("Player") == true) return;
 

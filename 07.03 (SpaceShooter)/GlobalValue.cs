@@ -2,6 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum SkillType
+{
+    Skill_0 = 0,    //30% 체력 힐링
+    Skill_1,        //수류탄
+    Skill_2,        //보호막
+    SkCount
+}
+
 public class GlobalValue
 {
     public static string g_UniqueID = "";   //유저의 고유번호
