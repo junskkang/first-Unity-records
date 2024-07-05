@@ -33,6 +33,23 @@ public class GameManager : MonoBehaviour
     public Text txtGold;
     private int curGold = 0;
 
+    //머리 위에 힐텍스트 표시
+    [Header("HealText")]
+    public Transform healCanvas = null;
+    public GameObject healPrefab;
+
+    //게임오버 판넬
+    public RectTransform gameOverPanel;
+    public Text gameOverText;
+    public Text nickText;
+    public Text playerNickText;
+    public Text scoreText;
+    public Text playerScoreText;
+    public Text goldText;
+    public Text playerGoldText;
+    public Button retryBtn;
+    public Button lobbyBtn;
+
     public Button backBtn;
 
 
@@ -72,6 +89,20 @@ public class GameManager : MonoBehaviour
         GameState = GameState.GameIng;
         GlobalValue.LoadGameDate();
         RefreshGameUI();
+        
+        
+        if (retryBtn != null)
+            retryBtn.onClick.AddListener(() =>
+            {
+                SceneManager.LoadScene("scLevel01");
+                SceneManager.LoadScene("scPlay", LoadSceneMode.Additive);
+            });
+
+        if (lobbyBtn != null)
+            lobbyBtn.onClick.AddListener(() =>
+            {
+                SceneManager.LoadScene("Lobby");
+            });
 
         if (backBtn != null)
             backBtn.onClick.AddListener(() =>
@@ -255,6 +286,57 @@ public class GameManager : MonoBehaviour
             playerCtrl.UseSkill_Item(type);
     }
 
+    public void SpawnText(int cont, Vector3 spawnPos, Color color)
+    {
+        if (healCanvas == null && healPrefab == null) return;
+
+        GameObject healObj = Instantiate(healPrefab);
+        HealTextCtrl healTextCtrl = healObj.GetComponent<HealTextCtrl>();
+        if (healTextCtrl != null)
+            healTextCtrl.InitState(cont, spawnPos, healCanvas, color);
+    }
+
+    public IEnumerator GameOver()
+    {
+        gameOverPanel.gameObject.SetActive(true);
+
+        char[] chars = { 'g', 'a', 'm', 'e', ' ', 'o', 'v', 'e', 'r' };
+        for (int i = 0; i < chars.Length; i++)
+        {
+            if (gameOverText != null)
+            {
+                gameOverText.text += chars[i].ToString();
+
+                yield return new WaitForSecondsRealtime(0.15f);
+            }
+        }
+
+        yield return new WaitForSecondsRealtime(0.7f);
+
+        nickText.gameObject.SetActive(true);
+        yield return new WaitForSecondsRealtime(0.5f);
+        playerNickText.text = GlobalValue.g_NickName;
+
+        yield return new WaitForSecondsRealtime(0.7f);
+
+        scoreText.gameObject.SetActive(true);
+        yield return new WaitForSecondsRealtime(0.5f);
+        playerScoreText.text = totalScore.ToString();
+
+        yield return new WaitForSecondsRealtime(0.7f);
+
+        goldText.gameObject.SetActive(true);
+        yield return new WaitForSecondsRealtime(0.5f);
+        playerGoldText.text = curGold.ToString();
+
+
+        yield return new WaitForSecondsRealtime(0.7f);
+
+        retryBtn.gameObject.SetActive(true);
+        lobbyBtn.gameObject.SetActive(true);
+
+
+    }
     public static bool IsPointerOverUIObject() //UGUI의 UI들이 먼저 피킹되는지 확인하는 함수
     {
         PointerEventData a_EDCurPos = new PointerEventData(EventSystem.current);

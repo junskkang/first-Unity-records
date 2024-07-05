@@ -44,6 +44,9 @@ public class MonsterCtrl : MonoBehaviour
     public GameObject bulletPrefab;
     float shotSpeed = 3.0f;
     public Transform firePos;
+    //선생님 풀이
+    LayerMask layerMask = -1;
+
         
 
     // Start is called before the first frame update
@@ -92,7 +95,12 @@ public class MonsterCtrl : MonoBehaviour
     //    StartCoroutine(this.MonsterAction());
     //}
 
-    
+    private void Start()
+    {
+        layerMask = 1 << LayerMask.NameToLayer("Default");  //건물 벽 레이어 체크
+    }
+
+
     void FixedUpdate() //물리연산 속도와 동일한 속도로 호출되는 함수. 캐릭터 떨림 현상을 보완할 수 있음
     {
         switch (GameManager.playerCharacter)
@@ -137,7 +145,7 @@ public class MonsterCtrl : MonoBehaviour
         float yDist = Mathf.Abs(playerTr.position.y - monsterTr.position.y);
 
         Vector3 dir = playerTr.position - monsterTr.position; // - playerTr.position;
-        dir.y += 1.0f;
+        
 
 
         if (dir.magnitude <= attackDist) //공격 범위 안으로 들어왔는지 확인
@@ -148,25 +156,25 @@ public class MonsterCtrl : MonoBehaviour
         {
             monsterState = MonsterState.trace;
         }
-        else if (traceDist < dir.magnitude && Mathf.Abs(dir.y) <= 5.0f)
-        {
-            //Debug.DrawRay(transform.position, dir.normalized * 60, Color.blue);
-            RaycastHit hit;
-            seePlayer = Physics.Raycast(transform.position, dir.normalized, out hit, 60.0f);
-            if (seePlayer)
-            {
-                if (!hit.collider.tag.Contains("Player"))
-                {
-                    monsterState = MonsterState.idle;
-                    return;
-                }
-                if (hit.collider.tag.Contains("Player"))
-                {                    
-                    monsterState = MonsterState.rangeAttack;
-                }
+        //else if (traceDist < dir.magnitude && Mathf.Abs(dir.y) <= 3.0f)
+        //{
+        //    //Debug.DrawRay(transform.position, dir.normalized * 60, Color.blue);
+        //    RaycastHit hit;
+        //    seePlayer = Physics.Raycast(transform.position, dir.normalized, out hit, 60.0f);
+        //    if (seePlayer)
+        //    {
+        //        if (!hit.collider.tag.Contains("Player"))
+        //        {
+        //            monsterState = MonsterState.idle;
+        //            return;
+        //        }
+        //        if (hit.collider.tag.Contains("Player"))
+        //        {                    
+        //            monsterState = MonsterState.rangeAttack;
+        //        }
          
-            }
-        }
+        //    }
+        //}
         else
         {
             monsterState = MonsterState.idle;   //둘다 아니면 대기상태
@@ -242,17 +250,19 @@ public class MonsterCtrl : MonoBehaviour
                         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotSpeed);
                     }
 
-                    shotSpeed -= Time.deltaTime;
-                    if (shotSpeed < 0.0f)
-                    {
-                        Fire(BulletType.E_BULLET, playerTr);
-                        shotSpeed = 3.0f;
-                    }
+                    //shotSpeed -= Time.deltaTime;
+                    //if (shotSpeed < 0.0f)
+                    //{
+                    //    //Fire(BulletType.E_BULLET, playerTr);
+                    //    shotSpeed = 3.0f;
+                    //}
                 }
                 break;
 
 
         }
+
+        FireUpdate();
     }
 
     #endregion
@@ -369,6 +379,59 @@ public class MonsterCtrl : MonoBehaviour
         }
     }
 
+    void FireUpdate()   //주기적으로 총알을 발사하는 함수 선생님 풀이
+    {
+        Vector3 playerPos = playerTr.position;
+        playerPos.y += 1.5f;
+        Vector3 monsterPos = transform.position;
+        monsterPos.y += 1.5f;
+        Vector3 cacDir = playerPos - monsterPos;
+        float rayUpDownLimit = 3.0f;
+
+        shotSpeed -= Time.deltaTime;
+        if (shotSpeed <= 0.0f) 
+        {
+            shotSpeed = 0.0f;
+        }
+
+        if (cacDir.magnitude <= traceDist) return; //추격거리 안쪽이면 리턴
+
+        if (!(-rayUpDownLimit <= cacDir.y && cacDir.y < rayUpDownLimit)) return; // -3~ +3까지만 체크
+
+        bool isRay = false;
+        if (Physics.Raycast(monsterPos, cacDir.normalized, out RaycastHit hit, 100.0f, layerMask))
+        {
+            if (hit.collider.gameObject.tag == "Player")
+            {
+                isRay = true;
+                //Debug.Log(gameObject.name + "너를 감지");
+            }
+        }
+
+        //몬스터에서 주인공까지의 직선 시야에 주인공이 들어오지 않으면 제외
+        if (!isRay) return;
+
+        //몬스터가 주인공을 향해 바라보도록
+        Vector3 lookPlayer = playerTr.position - transform.position;
+        lookPlayer.y = 0.0f;    //몬스터를 수평으로만 회전시키기 위해서 
+        Quaternion targetRot = Quaternion.LookRotation(lookPlayer.normalized);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 6.0f);
+        //Debug.Log(gameObject.name + "회전완료");
+        //총알 발사 가능 시점
+        if (shotSpeed <= 0.0f)
+        {
+            Vector3 startPos = cacDir.normalized;
+            firePos.forward = startPos;
+            //startPos.y += 1f;
+            GameObject go = Instantiate(bulletPrefab, firePos.transform.position, firePos.rotation);
+            go.layer = LayerMask.NameToLayer("E_BULLET");
+            go.tag = "E_BULLET";
+            go.transform.forward = firePos.forward;
+            //go.gameObject.SetActive(true);
+            shotSpeed = 3.0f;
+        }
+
+    }
     void Fire(BulletType type, Transform target)
     {    
         Vector3 dir = target.position - firePos.transform.position;

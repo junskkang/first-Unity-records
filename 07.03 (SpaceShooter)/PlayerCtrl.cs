@@ -253,6 +253,8 @@ public class PlayerCtrl : MonoBehaviour
 
     void TakeDamage(int damage = 10)
     {
+        if (hp <= 0.0f) return;
+
         hp -= damage;
 
         CreateBloodEffect(transform.position);
@@ -275,23 +277,24 @@ public class PlayerCtrl : MonoBehaviour
     void CreateBloodEffect(Vector3 pos)
     {
         //혈흔 효과 생성
+        pos.y += 1.5f;
         GameObject blood1 = (GameObject)Instantiate(bloodEffect, pos, Quaternion.identity);
         blood1.GetComponent<ParticleSystem>().Play();
         Destroy(blood1, 3.0f);
 
-        //데칼 생성 위치 - 바닥에서 조금 올린 위치 산출
-        Vector3 decalPos = transform.position + (Vector3.up * 0.05f);
-        //데칼의 회전값을 무작위로 설정
-        Quaternion decalRot = Quaternion.Euler(90, 0, Random.Range(0, 360));
+        ////데칼 생성 위치 - 바닥에서 조금 올린 위치 산출
+        //Vector3 decalPos = transform.position + (Vector3.up * 0.05f);
+        ////데칼의 회전값을 무작위로 설정
+        //Quaternion decalRot = Quaternion.Euler(90, 0, Random.Range(0, 360));
 
-        //데칼 프리팹 생성
-        GameObject blood2 = (GameObject)Instantiate(bloodDecal, decalPos, decalRot);
-        //데칼의 크기도 불규칙적으로 나타나게끔 스케일 조정
-        float scale = Random.Range(1.5f, 3.5f);
-        blood2.transform.localScale = Vector3.one * scale;
+        ////데칼 프리팹 생성
+        //GameObject blood2 = (GameObject)Instantiate(bloodDecal, decalPos, decalRot);
+        ////데칼의 크기도 불규칙적으로 나타나게끔 스케일 조정
+        //float scale = Random.Range(1.5f, 3.5f);
+        //blood2.transform.localScale = Vector3.one * scale;
 
-        //5초 후에 혈흔효과 프리팹을 삭제
-        Destroy(blood2, 5.0f);
+        ////5초 후에 혈흔효과 프리팹을 삭제
+        //Destroy(blood2, 5.0f);
 
     }//void CreateBloodEffect(Vector3 pos)
     //Player의 사망 처리 루틴
@@ -320,6 +323,8 @@ public class PlayerCtrl : MonoBehaviour
 
         GameManager.GameState = GameState.GameEnd;
         GameManager.inst.isGameOver = true;
+
+        StartCoroutine(GameManager.inst.GameOver());
     }
 
     public void CharacterChange()
@@ -358,7 +363,18 @@ public class PlayerCtrl : MonoBehaviour
         
         if (skillType == SkillType.Skill_0)     //체력 회복 스킬
         {
+            GameManager.inst.SpawnText((int)(initHp * 0.3f), transform.position, Color.cyan);
 
+            hp += (int)(initHp * 0.3f);
+
+            if (initHp < hp)
+                hp = initHp;
+
+            if (imgHpbar != null)
+                imgHpbar.fillAmount = hp / (float)initHp;
+
+            //hp 텍스트 갱신
+            hpText.text = $"{hp} / {initHp}";
         }
         else if (skillType == SkillType.Skill_1)    //수류탄 투척 스킬
         {

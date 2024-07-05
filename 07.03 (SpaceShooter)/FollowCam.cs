@@ -209,7 +209,7 @@ public class FollowCam : MonoBehaviour
         //어떠한 오브젝트를 대상으로 한다해도 확실하게 처리할 수 있음
 
         isBorder = Physics.Raycast(m_PlayerVec, toCamera, 
-                  out hit, dist, LayerMask.GetMask("Wall"));
+                  out hit, dist, LayerMask.GetMask("Default"));
         //Raycast(시작위치, 방향, 길이, 레이어마스크)
         //해당 레이캐스트가 wall이라는 레이어마스크에 닿으면 true값을 반환
 

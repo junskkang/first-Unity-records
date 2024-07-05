@@ -36,8 +36,8 @@ public class BulletCtrl : MonoBehaviour
     {
 
         //GetComponent<TrailRenderer>().time = 0.3f;
-
-        GetComponent<Rigidbody>().AddForce(transform.forward * speed);
+        if (gameObject.tag == "BULLET")
+            GetComponent<Rigidbody>().AddForce(transform.forward * speed);
         //오브젝트 풀에 다시 환원
         //StartCoroutine(PushObjectPool2());
     }
@@ -48,6 +48,9 @@ public class BulletCtrl : MonoBehaviour
 
         if (gameObject.tag == "E_BULLET")
         {
+            speed = 800.0f;
+            GetComponent<Rigidbody>().AddForce(transform.forward * speed);
+            
             Destroy(gameObject, 4.0f);
             return;
         }
@@ -117,6 +120,15 @@ public class BulletCtrl : MonoBehaviour
         //충돌한 게임오브젝트 삭제
         //BulletCtrl bulletCtrl = coll.collider.GetComponent<BulletCtrl>();
         //충돌한 총알 제거
-        PushObjectPool();
+        
+
+        if (gameObject.tag == "E_BULLET")
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            PushObjectPool();
+        }
     }
 }
