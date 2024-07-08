@@ -59,6 +59,9 @@ public class PlayerCtrl : MonoBehaviour
 
     //스킬 사용을 위한 컴포넌트 추가
     public FireCtrl fireCtrl;
+    float shieldDuration = 20.0f;
+    float shieldOnTime = 0.0f;
+    public GameObject shieldObj = null;
 
     //피격 이펙트 변수
     public GameObject bloodEffect;
@@ -186,7 +189,9 @@ public class PlayerCtrl : MonoBehaviour
         else
         { //정지 idle 애니메이션
             _animation.CrossFade(anim.idle.name, 0.3f);
-        }       
+        }
+
+        SkillUpdate();
 
     }
 
@@ -222,6 +227,9 @@ public class PlayerCtrl : MonoBehaviour
         //충돌한 Collider가 몬스터의 PUNCH이면 Player의 HP 차감
         if(coll.gameObject.tag == "PUNCH")
         {
+            if (0.0f < shieldOnTime) return; //쉴드 발동 중이면 리턴
+
+            if (hp <= 0.0f) return;     //이미 사망중
             TakeDamage(10);
         }
 
@@ -357,6 +365,21 @@ public class PlayerCtrl : MonoBehaviour
         }
     }
 
+    void SkillUpdate()
+    {
+        //쉴드 상태 업데이트
+        if (0.0f < shieldOnTime)
+        {
+            shieldOnTime -= Time.deltaTime;
+            if (shieldObj != null && !shieldObj.activeSelf)
+                shieldObj.SetActive(true);
+        }
+        else
+        {
+            if (shieldObj != null && shieldObj.activeSelf)
+                shieldObj.SetActive(false);
+        }
+    }
     public void UseSkill_Item(SkillType skillType)
     {
         if (GameManager.GameState == GameState.GameEnd) return; 
@@ -382,9 +405,17 @@ public class PlayerCtrl : MonoBehaviour
         }
         else if (skillType == SkillType.Skill_2)    //쉴드 생성 스킬
         {
+            if (0.0f < shieldOnTime) return; //발동 중이면 리턴
 
+            shieldOnTime = shieldDuration;
+
+            //쿨타임 발동
+            GameManager.inst.SkillTimeMethod(shieldOnTime, shieldDuration);
         }
 
-
+        int skillIdx = (int)skillType;
+        GlobalValue.g_SkillCount[skillIdx]--;
+        string a_MkKey = "SkItem_" + skillIdx.ToString();
+        PlayerPrefs.SetInt(a_MkKey, GlobalValue.g_SkillCount[skillIdx]);
     }
 }

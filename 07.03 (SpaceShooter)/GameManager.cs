@@ -73,6 +73,10 @@ public class GameManager : MonoBehaviour
     public GameObject player1;
     public GameObject player2;
 
+    [Header("스킬 쿨타임 타이머")]
+    public GameObject skillCoolPrefab = null;
+    public Transform skillCoolRoot = null;
+    public SkillInvenNode[] skillIvenNode;
     public static GameManager inst;
 
     PlayerCtrl playerCtrl;
@@ -157,6 +161,11 @@ public class GameManager : MonoBehaviour
         {
             UseSkill_Key(SkillType.Skill_1);    //수류탄
         }
+        else if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            UseSkill_Key(SkillType.Skill_2);    //보호막
+        }
+
     }
 
     void ChangeCharacter(bool swap)
@@ -278,12 +287,25 @@ public class GameManager : MonoBehaviour
     {
         if (txtGold != null)
             txtGold.text = "gold <color=#ffff00>" + GlobalValue.g_UserGold.ToString("N0") + "</color>";
+
+        for (int i = 0; i < GlobalValue.g_SkillCount.Length; i++)
+        {
+            if (skillIvenNode.Length <= i) continue;
+
+            skillIvenNode[i].InitState((SkillType)i);
+        }
     }
 
     public void UseSkill_Key(SkillType type)
     {
+        if (GlobalValue.g_SkillCount[(int)type] <= 0) return;   //스킬사용갯수가 없으면 리턴
+
         if (playerCtrl != null)
             playerCtrl.UseSkill_Item(type);
+
+        if ((int)type < skillIvenNode.Length)
+            skillIvenNode[(int)type].skCountText.text =
+                GlobalValue.g_SkillCount[(int)type].ToString();
     }
 
     public void SpawnText(int cont, Vector3 spawnPos, Color color)
@@ -294,6 +316,14 @@ public class GameManager : MonoBehaviour
         HealTextCtrl healTextCtrl = healObj.GetComponent<HealTextCtrl>();
         if (healTextCtrl != null)
             healTextCtrl.InitState(cont, spawnPos, healCanvas, color);
+    }
+
+    public void SkillTimeMethod(float time, float dur)
+    {
+        GameObject obj = Instantiate(skillCoolPrefab);
+        obj.transform.SetParent(skillCoolRoot, false);
+        SkillCoolNodeCtrl node = obj.GetComponent<SkillCoolNodeCtrl>();
+        node.InitState(time, dur);
     }
 
     public IEnumerator GameOver()

@@ -359,6 +359,9 @@ public class MonsterCtrl : MonoBehaviour
     {
         if(coll.gameObject.tag == "BULLET")
         {
+            //머리 위 텍스트 띄우기
+            GameManager.inst.SpawnText(-(int)(coll.gameObject.GetComponent<BulletCtrl>().damage), 
+                                            transform.position, Color.red);
 
             ////맞은 총알의 Damage를 추출해 몬스터 hp 차감
             //hp -= coll.gameObject.GetComponent<BulletCtrl>().damage;
