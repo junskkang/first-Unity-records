@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
@@ -32,7 +33,13 @@ public class GameManager : MonoBehaviour
 
     public Slider alphaSlider = null;
     float alphaVal = 1.0f;
-    
+
+    //Post Process 관련 변수
+    public Button postProcessBtn = null;
+    public Slider postProcessSlider = null;
+
+    bool isPostProcess = false;
+    float intensityValue;
 
     void Start()
     {
@@ -72,9 +79,28 @@ public class GameManager : MonoBehaviour
         {
             alphaSlider.onValueChanged.AddListener(OnAlphaSlider);
             alphaSlider.value = alphaVal;
-        }            
-    }
+        }
 
+        //화면 Post - Process 
+        if (postProcessBtn != null)
+            postProcessBtn.onClick.AddListener(PostProcessClick);
+
+        if (isPostProcess)  //start에서 초기화 해놓고 시작
+            Camera.main.GetComponent<PostProcessVolume>().enabled = true;
+        else
+            Camera.main.GetComponent<PostProcessVolume>().enabled = false;
+
+        if (postProcessSlider != null)
+        {
+            Bloom bloomLayer = null;
+            PostProcessVolume volume = Camera.main.GetComponent<PostProcessVolume>();
+            volume.profile.TryGetSettings(out bloomLayer);
+            postProcessSlider.onValueChanged.AddListener(PostProcessSlider);
+            postProcessSlider.value = bloomLayer.dirtIntensity.value / 30.0f;   
+            //최대치를 30으로 두기 위해
+        }
+
+    }
 
 
     // Update is called once per frame
@@ -208,5 +234,29 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void PostProcessClick()
+    {
+        isPostProcess = !isPostProcess;
+        if (isPostProcess)
+        {
+            Camera.main.GetComponent<PostProcessVolume>().enabled = true;
+            //Camera.main.GetComponent<Bloom>().active = true;
+        }
+        else
+        {
+            Camera.main.GetComponent<PostProcessVolume>().enabled = false;
+            //Camera.main.GetComponent<Bloom>().active = false;
+        }
+    }
+
+
+    private void PostProcessSlider(float value)
+    {
+        Bloom bloomLayer = null;
+        PostProcessVolume volume = Camera.main.GetComponent<PostProcessVolume>();
+        volume.profile.TryGetSettings(out bloomLayer);
+        bloomLayer.intensity.value = value * 30.0f;
     }
 }
