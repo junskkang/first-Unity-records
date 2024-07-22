@@ -2,14 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class Enemy : MonoBehaviour
 {
     public int maxHealth;
     public int curHealth;
+    public Transform target;
+    public bool isChase;
 
     Rigidbody rigid;
     BoxCollider boxCollider;
+
+    NavMeshAgent nav;
+    Animator anim;
 
     Material material; //피격효과를 위해 
     bool isDamaged; //폭탄에 한 번만 공격당하기 위한 변수
@@ -18,9 +24,38 @@ public class Enemy : MonoBehaviour
     {
         rigid = GetComponent<Rigidbody>();
         boxCollider = GetComponent<BoxCollider>();
-        material = GetComponent<MeshRenderer>().material;
+        material = GetComponentInChildren<MeshRenderer>().material;
+        nav = GetComponent<NavMeshAgent>();
+        anim = GetComponentInChildren<Animator>();
+
+        Invoke("ChaseStart", 2.0f);
     }
 
+    void ChaseStart()
+    {
+        isChase = true;
+        anim.SetBool("isWalk", true);
+    }
+    void Update()
+    {
+        if (isChase)
+            nav.SetDestination(target.position);
+
+    }
+
+    private void FixedUpdate()
+    {
+        FreezeVelocity();
+    }
+
+    void FreezeVelocity() //의도치 않은 충돌로 인한 추적을 지속하기 위한 함수
+    {
+        if (isChase)
+        {
+            rigid.velocity = Vector3.zero;
+            rigid.angularVelocity = Vector3.zero;   //AugularVelocity : 물리 회전 속도
+        }
+    }
     void OnTriggerEnter(Collider other)
     {
         if (other.tag == "Melee")
@@ -72,6 +107,9 @@ public class Enemy : MonoBehaviour
             //사망
             material.color = Color.gray;    //색 전환
             gameObject.layer = 12;          //EnemyDead 레이어로 변경
+            anim.SetTrigger("doDie");
+            isChase = false;
+            nav.enabled = false;
 
             if (isGrenade) //폭탄으로 죽으면 더 과하게 사망하는 연출
             {

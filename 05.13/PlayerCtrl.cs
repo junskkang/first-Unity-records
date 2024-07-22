@@ -30,6 +30,7 @@ public class PlayerCtrl : MonoBehaviour
     bool isFireReady =true;
     bool isReload;
     bool isBorder;      //벽 관통 방지용
+    bool isDamaged;     //피격시 잠깐 무적
 
     Vector3 moveVec;
     Vector3 dodgeVec;
@@ -37,6 +38,7 @@ public class PlayerCtrl : MonoBehaviour
     Rigidbody rigid;
     //애니메이션 관련 변수
     Animator anim;
+    MeshRenderer[] meshRenderers;
 
     //접근 장비 오브젝트
     GameObject nearObject;
@@ -66,6 +68,7 @@ public class PlayerCtrl : MonoBehaviour
     {
         rigid = GetComponent<Rigidbody>();
         anim = GetComponentInChildren<Animator>();
+        meshRenderers = GetComponentsInChildren<MeshRenderer>();
     }
 
     void Start()
@@ -347,8 +350,34 @@ public class PlayerCtrl : MonoBehaviour
             }
             Destroy(item.gameObject);
         }
+        else if (other.tag == "EnemyBullet")
+        {
+            if (!isDamaged)
+            {
+                BulletCtrl enemyBullet = other.GetComponent<BulletCtrl>();
+                health -= enemyBullet.damage;
+                StartCoroutine(OnDamage());
+            }
+
+        }
     }
 
+    IEnumerator OnDamage()
+    {
+        isDamaged = true;
+
+        foreach (MeshRenderer mesh in meshRenderers)    //피격 이펙트
+        {
+            mesh.material.color = Color.yellow;
+        }
+        yield return new WaitForSeconds(1.0f);
+
+        foreach (MeshRenderer mesh in meshRenderers)
+        {
+            mesh.material.color = Color.white;
+        }
+        isDamaged = false;
+    }
     void OnTriggerStay(Collider other)
     {
         if(other.gameObject.tag == "Weapon")
