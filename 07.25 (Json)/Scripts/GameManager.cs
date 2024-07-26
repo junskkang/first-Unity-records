@@ -1,4 +1,5 @@
 using SimpleJSON;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,16 +7,29 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-
+    //외부에서 Json파일을 만들고 불러오기 위한 UI 
     public Text printText = null;
     public Button jsonFileLoadBtn = null;
+
+    //직접 Json파일을 만들고 불러오기 위한 UI
+    public Button myJsonMakeBtn;
+    public Button myJsonLoadBtn;
+    string strJson = "";
 
     // Start is called before the first frame update
     void Start()
     {
         if (jsonFileLoadBtn != null)
             jsonFileLoadBtn.onClick.AddListener(JsonFileLoadClick);
+
+        if (myJsonMakeBtn != null)
+            myJsonMakeBtn.onClick.AddListener(MyJsonMakeClick);
+
+        if (myJsonLoadBtn != null)
+            myJsonLoadBtn.onClick.AddListener(MyJsonLoadClick);
     }
+
+
 
     // Update is called once per frame
     void Update()
@@ -117,5 +131,101 @@ public class GameManager : MonoBehaviour
             printText.text = strOutput;
 
         }
+    }
+
+    private void MyJsonMakeClick()
+    {
+        //유니티에서 Json 개체 생성
+        JSONObject makeJson = new JSONObject();
+        makeJson["StrData"] = "SBS코딩";
+        //같은 키값이 이미 존재하면 덮어씌우기 된다.
+        makeJson["Level"] = 777;
+        makeJson["BoolTest"] = true;
+        makeJson["X_Position"] = 123123.8143;
+        makeJson["FValue"] = 3.14f;
+
+        //Json 배열 만들기 RkList = 랭킹리스트
+        makeJson["RkList"][0] = "AAA";      //아이디
+        makeJson["RkList"][1] = "너구리";   //닉네임
+        makeJson["RkList"][2] = 111;        //점수
+        makeJson["RkList"][3] = "BBB";
+        makeJson["RkList"][4] = "고양이";
+        makeJson["RkList"][5] = 222;
+        makeJson["RkList"][6] = "CCC";
+        makeJson["RkList"][7] = "팔라독";
+        makeJson["RkList"][8] = 333;
+
+        strJson = makeJson.ToString();
+        Debug.Log(strJson);
+    }
+
+    private void MyJsonLoadClick()
+    {
+        string strOutput = "";
+
+        //Json Parsing
+        if (string.IsNullOrEmpty(strJson)) return;
+
+        JSONNode parseJs = JSON.Parse(strJson);
+
+        if (parseJs["StrData"] != null)
+        {
+            string strDt = parseJs["StrData"];
+            strOutput += "문자열Data : " + strDt + "\n";
+        }
+
+        if (parseJs["BoolTest"] != null)
+        {
+            bool value = parseJs["BoolTest"].AsBool;
+            strOutput += "BoolTest : " + value + "\n";
+        }
+
+        if (parseJs["X_Position"] != null)
+        {
+            double xPos = parseJs["X_Position"].AsDouble;
+            strOutput += "X_Position : " + xPos + "\n";
+        }
+
+        if (parseJs["FValue"] != null)
+        {
+            float fValue = parseJs["FValue"].AsFloat;
+            strOutput += "FValue : " + fValue + "\n";
+        }
+
+        if (parseJs["Level"] != null)
+        {
+            int value = parseJs["Level"].AsInt;
+            strOutput += "Level : " + value + "\n";
+        }
+
+        strOutput += "\n";
+
+        //배열 추출하기
+        int ranking = 0;
+        if (parseJs["RkList"] != null)
+            for (int i = 0; i < parseJs["RkList"].Count; i++)
+            { 
+                if ((i % 3) == 0)   //한 사람당 사용하는 배열이 3개이므로 3으로 나눠서 사용
+                {
+                    ranking = (i / 3) + 1;
+                    strOutput += ranking + " 등 : ";
+                    
+                    int add = i;
+                    string userId = parseJs["RkList"][add];
+                    strOutput += "UserId (" + userId + "), ";
+                    add++;
+
+                    string userName = parseJs["RkList"][add];
+                    strOutput += "UserName (" + userName + "), ";
+                    add++;
+
+                    int bestScore = parseJs["RkList"][add].AsInt;
+                    strOutput += "BestScore (" + bestScore + ")\n";
+                }
+            }
+
+
+        printText.text = strOutput;
+
     }
 }
