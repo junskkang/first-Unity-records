@@ -106,6 +106,8 @@ public class Skill_Info  //각 Item 정보
 
 public class GlobalValue 
 {
+    public static string g_Unique_ID = "";  //유저의 고유 번호
+
     //소환수 스킬 아이템 데이터 리스트
     public static List<Skill_Info> g_SkDataList = new List<Skill_Info>(); //스킬 아이템 설정 리스트
     public static List<int> g_CurSkillCount = new List<int>(); //스킬 아이템 보유 수
@@ -130,8 +132,8 @@ public class GlobalValue
         //--- 설정 데이터 로딩
 
         //g_NickName = PlayerPrefs.GetString("NickName", "SBS영웅");
-        g_BestScore = PlayerPrefs.GetInt("BestScore", 0);
-        g_UserGold  = PlayerPrefs.GetInt("UserGold", 0);
+        //g_BestScore = PlayerPrefs.GetInt("BestScore", 0);
+        //g_UserGold  = PlayerPrefs.GetInt("UserGold", 0);
 
         //--- 서버나 로컬에 저장된 보유 상태 로딩
         if (g_CurSkillCount.Count <= 0) 

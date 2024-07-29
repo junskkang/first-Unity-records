@@ -117,6 +117,7 @@ public class Title_Mgr : MonoBehaviour
         }
 
         //로그인 성공시 어떤 유저 정보를 가져올지를 설정하는 옵션 객체 생성
+        //요청한 것만 넘겨줌
         var option = new GetPlayerCombinedInfoRequestParams()
         {
             //DisplayName(닉네임)을 가져오기 위한 옵션
@@ -124,7 +125,11 @@ public class Title_Mgr : MonoBehaviour
             ProfileConstraints = new PlayerProfileViewConstraints()
             {
                 ShowDisplayName = true,     //DisplayName(닉네임)
-            }
+            },
+
+            GetUserData = true,  //플레이어 데이터(타이틀)에 저장한 옵션을 가져오기 위한 설정
+
+            GetPlayerStatistics = true  //플레이어 통계에 저장한 옵션을 가져오기 위한 설정
         };
 
         var request = new LoginWithEmailAddressRequest()
@@ -141,12 +146,36 @@ public class Title_Mgr : MonoBehaviour
     {
         ShowMessage("로그인 성공");
 
-        //GlobalValue.g_Unique_ID = result.PlayFabId;
+        GlobalValue.g_Unique_ID = result.PlayFabId;
+
+        Debug.Log(GlobalValue.g_Unique_ID);
 
         if (result.InfoResultPayload != null)
         {
             GlobalValue.g_NickName = result.InfoResultPayload.PlayerProfile.DisplayName;
             //닉네임 가져오기
+
+            //플레이어 데이터(타이틀) 값 받아오기
+            int getValue = 0;
+            int idx = 0;
+            foreach(var eachData in result.InfoResultPayload.UserData)
+            {
+                if (eachData.Key == "UserGold")
+                {
+                    if (int.TryParse(eachData.Value.Value, out getValue))
+                        GlobalValue.g_UserGold = getValue;
+                }
+            }
+
+            //통계값 가져오기
+            //옵션 설정에 의해 LoginWithEmailAdress()만으로도 유저 통계값(순위)를 불러올 수 있다.
+            foreach (var eachStat in result.InfoResultPayload.PlayerStatistics)
+            {
+                if (eachStat.StatisticName == "BestScore")
+                {
+                    GlobalValue.g_BestScore = eachStat.Value;
+                }
+            }
         }
 
         //Debug.Log("버튼을 클릭 했어요.");
@@ -216,9 +245,9 @@ public class Title_Mgr : MonoBehaviour
             ShowMessage("비밀번호는 8글자 이상 14글자 이하로 작성해 주세요.");
             return;
         }
-        if (!(2 <= strNick.Length && strNick.Length <= 8))   //Nick 2 ~ 8 범위가 아닐 경우
+        if (!(3 <= strNick.Length && strNick.Length <= 8))   //Nick 2 ~ 8 범위가 아닐 경우
         {
-            ShowMessage("닉네임은 2글자 이상 8글자 이하로 작성해 주세요.");
+            ShowMessage("닉네임은 3글자 이상 8글자 이하로 작성해 주세요.");
             return;
         }
 
@@ -273,7 +302,7 @@ public class Title_Mgr : MonoBehaviour
         }        
     }
 
-    void ShowMessage(string message)
+    void ShowMessage(string message = "")
     {
         showMsgTimer = 3.0f;
 
