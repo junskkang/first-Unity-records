@@ -1,5 +1,9 @@
+using PlayFab;
+using PlayFab.ClientModels;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -17,12 +21,22 @@ public class Lobby_Mgr : MonoBehaviour
     public Text m_GoldText;
     public Text m_UserInfoText;
 
+    
+
     //--- 환경설정 Dlg 관련 변수
     [Header("--- ConfigBox ---")]
     public Button m_CfgBtn = null;
     public GameObject Canvas_Dialog = null;
     GameObject m_ConfigBoxObj = null;
     //--- 환경설정 Dlg 관련 변수
+
+    [Header("--- Ranking ---")]
+    public Text rankingText;
+    public Button restoreRankBtn;
+    int myRank = 0;
+    float restoreTimer = 0.0f;  //랭킹 갱신 타이머
+    float delayGetLB = 3.0f;    //로비 진입후 3초 뒤에 랭킹 한번 더 로딩하기
+        
 
     // Start is called before the first frame update
     void Start()
@@ -57,8 +71,8 @@ public class Lobby_Mgr : MonoBehaviour
 
         if(m_UserInfoText != null)
         {
-            m_UserInfoText.text = "내정보 : 별명(" + GlobalValue.g_NickName + ") : 점수("
-                                  + GlobalValue.g_BestScore + ")";
+            m_UserInfoText.text = "내정보 : 별명(" + GlobalValue.g_NickName + ") : 순위(" + myRank +
+                                  "등) : 점수(" + GlobalValue.g_BestScore + "점)";
         }
 
         //--- 환경설정 Dlg 관련 구현 부분
@@ -77,7 +91,14 @@ public class Lobby_Mgr : MonoBehaviour
         //--- 환경설정 Dlg 관련 구현 부분
 
         Sound_Mgr.Inst.PlayBGM("sound_bgm_title_001", 0.5f);
+
+        Invoke("GetRankingList", delayGetLB);
+
+        if (restoreRankBtn != null)
+            restoreRankBtn.onClick.AddListener(RestoreRank);
     }
+
+
 
     void ClearSvData()
     {
@@ -90,8 +111,8 @@ public class Lobby_Mgr : MonoBehaviour
             m_GoldText.text = GlobalValue.g_UserGold.ToString("N0");
 
         if (m_UserInfoText != null)
-            m_UserInfoText.text = "내정보 : 별명(" + GlobalValue.g_NickName + ") : 점수("
-                                  + GlobalValue.g_BestScore + ")";
+            m_UserInfoText.text = "내정보 : 별명(" + GlobalValue.g_NickName + ") : 순위(" + myRank +
+                                  "등) : 점수(" + GlobalValue.g_BestScore + "점)";
 
         Sound_Mgr.Inst.PlayGUISound("Pop", 1.0f);
     }
@@ -137,7 +158,114 @@ public class Lobby_Mgr : MonoBehaviour
     void CfgResponse() //환경설정 박스 Ok 후 호출되게 하기 위한 함수
     {
         if (m_UserInfoText != null)
-            m_UserInfoText.text = "내정보 : 별명(" + GlobalValue.g_NickName + ") : 점수("
-                                  + GlobalValue.g_BestScore + ")";
+            m_UserInfoText.text = "내정보 : 별명(" + GlobalValue.g_NickName + ") : 순위(" + myRank +
+                                  "등) : 점수(" + GlobalValue.g_BestScore + "점)";
+    }
+
+    private void RestoreRank()  //순위 수동리셋 버튼
+    {
+        if (0.0f < restoreTimer)
+        {
+            Debug.Log("갱신이 너무 잦습니다. 잠시 후 버튼을 다시 눌러주세요.");
+            return;
+        }
+
+        GetRankingList();
+
+        restoreTimer = 5.0f;
+    }
+
+    void GetRankingList()
+    {
+        if (GlobalValue.g_Unique_ID == "") return;  //정상적인 로그인 상태에서만 진행되도록
+
+        var request = new GetLeaderboardRequest()
+        {
+            StartPosition = 0,    //0번 인덱스부터 순서대로, 즉 1등부터
+            StatisticName = "BestScore",
+            //관리자 페이지의 순위표 변수 중 BestScore 기준
+            MaxResultsCount = 10,  //10명까지
+            ProfileConstraints = new PlayerProfileViewConstraints()
+            {
+                ShowDisplayName = true,     //닉네임 요청
+                ShowAvatarUrl = true,       //아바타 URL 요청               
+
+            }
+        };
+
+        PlayFabClientAPI.GetLeaderboard(
+                request,
+                (result) =>
+                {
+                    //랭킹 받아오기 성공
+                    if (rankingText == null) return;
+
+                    string strBuff = "";
+
+                    for (int i = 0; i < result.Leaderboard.Count; i++)
+                    {
+                        var curBoard = result.Leaderboard[i];
+
+                        //등수 안에 내가 있다면 색 표시
+                        if (curBoard.PlayFabId == GlobalValue.g_Unique_ID)
+                            strBuff += "<color=#00ff00>";
+
+                        strBuff += (i + 1).ToString() + "등 : " 
+                                + curBoard.DisplayName + " : "
+                                + curBoard.StatValue + "점 \n";
+
+                        //등수 안에 내가 있다면 색 표시 마감
+                        if (curBoard.PlayFabId == GlobalValue.g_Unique_ID)
+                            strBuff += "</color>";
+                    }
+
+                    if (strBuff != "")
+                        rankingText.text = strBuff;
+
+                    //리더보드 등수를 불러온 직 후 내 등수 가져옴.
+                    GetMyRanking();
+
+                },
+                (error) =>
+                {
+                    //랭킹 받아오기 실패
+                    Debug.Log("리더보드불러오기 실패");
+                }
+                );
+    }
+
+    void GetMyRanking()
+    {
+        //GetLeaderboardAroundPlayer() : 특정 PlayFabID를 기준으로 주변으로 리스트를 불러오는 함수
+
+        var request = new GetLeaderboardAroundPlayerRequest()
+        {
+            //PlayFabId = GlobalValue.g_Unique_ID,  //디폴트값으로 로그인 한 아이디로 설정이 됨
+            StatisticName = "BestScore",
+            MaxResultsCount = 1,    //한명의 정보만 가져온다는 뜻
+            //ProfileConstraints = new PlayerProfileViewConstraints()
+            //{
+            //    ShowDisplayName = true,
+            //}
+        };
+
+        PlayFabClientAPI.GetLeaderboardAroundPlayer(
+                request,
+                (result) =>
+                {
+                    if (0 < result.Leaderboard.Count)
+                    {
+                        var curBoard = result.Leaderboard[0];
+                        myRank = curBoard.Position + 1;     //내 등수 가져오기
+                        GlobalValue.g_BestScore = curBoard.StatValue; //내 최고 점수 갱신
+
+                        CfgResponse();      //상단 UI 갱신
+                    }
+                },
+                (error)=>
+                {
+                    Debug.Log("내 등수 불러오기 실패");
+                }
+                );
     }
 }
