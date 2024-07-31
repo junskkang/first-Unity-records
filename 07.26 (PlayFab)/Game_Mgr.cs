@@ -4,8 +4,18 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+public enum GameState
+{
+    GameIng,            //게임 진행 중인 상태
+    GameEnd,            //게임오버 상태
+    GameExit,           //로비로 직접 나가려할 때
+    GameReplay          //게임오버에서 다시 시작 눌렀을 경우
+}
+
 public class Game_Mgr : MonoBehaviour
 {
+    public GameState State = GameState.GameIng;     //게임 진행 중 상태로 시작
+
     public Text m_BestScoreText = null; //최대점수 표시 UI
     public Text m_CurScoreText = null;  //현재점수 표시 UI
     public Text m_GoldText = null;      //보유골드 표시 UI
@@ -73,6 +83,7 @@ public class Game_Mgr : MonoBehaviour
     void Start()
     {
         Time.timeScale = 1.0f; //원래 속도로...
+        State = GameState.GameIng;
         GlobalValue.LoadGameData();
         InitRefreshUI();
         RefreshSkillList();
@@ -80,7 +91,8 @@ public class Game_Mgr : MonoBehaviour
         if (GoLobbyBtn != null)
             GoLobbyBtn.onClick.AddListener(() =>
             {
-                SceneManager.LoadScene("LobbyScene");
+                //SceneManager.LoadScene("LobbyScene");  //패킷처리를 마무리 시키고 나가기 위해 잠시 머무르도록
+                State = GameState.GameExit;
             });
 
         m_CoinItem = Resources.Load("CoinPrefab") as GameObject;
@@ -353,13 +365,15 @@ public class Game_Mgr : MonoBehaviour
         if (Replay_Btn != null)
             Replay_Btn.onClick.AddListener(() =>
             {
-                SceneManager.LoadScene("GameScene");
+                //SceneManager.LoadScene("GameScene");
+                State = GameState.GameReplay;
             });
 
         if (RstLobby_Btn != null)
             RstLobby_Btn.onClick.AddListener(() =>
             {
-                SceneManager.LoadScene("LobbyScene");
+                //SceneManager.LoadScene("LobbyScene");
+                State = GameState.GameExit;
             });
     }
 

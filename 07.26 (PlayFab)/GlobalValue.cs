@@ -141,7 +141,8 @@ public class GlobalValue
             int a_SkCount = 0;
             for(int i = 0; i < (int)SkillType.SkCount; i++)
             {
-                a_SkCount = PlayerPrefs.GetInt($"Skill_Item_{i}", 1);
+                //a_SkCount = PlayerPrefs.GetInt($"Skill_Item_{i}", 1);
+                a_SkCount = 0;
                 g_CurSkillCount.Add(a_SkCount);
             }
         }

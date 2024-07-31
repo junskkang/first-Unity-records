@@ -350,9 +350,9 @@ public class HeroCtrl : MonoBehaviour
 
         GlobalValue.g_CurSkillCount[(int)a_SkType]--;   //스킬 카운트 하나 소진
         //--- 로컬에 저장하기
-        PlayerPrefs.SetInt($"Skill_Item_{(int)a_SkType}", 
-                           GlobalValue.g_CurSkillCount[(int)a_SkType]);
-        //--- 로컬에 저장하기
+        //PlayerPrefs.SetInt($"Skill_Item_{(int)a_SkType}", 
+        //                   GlobalValue.g_CurSkillCount[(int)a_SkType]);
+        ////--- 로컬에 저장하기
 
     }//public void UseSkill(SkillType a_SkType)
 }

@@ -1,3 +1,5 @@
+//#define AutoRestore
+
 using PlayFab;
 using PlayFab.ClientModels;
 using System;
@@ -20,7 +22,8 @@ public class Lobby_Mgr : MonoBehaviour
 
     public Text m_GoldText;
     public Text m_UserInfoText;
-
+    public Text messageText;
+    float messageTimer = 0.0f;
     
 
     //--- 환경설정 Dlg 관련 변수
@@ -33,10 +36,17 @@ public class Lobby_Mgr : MonoBehaviour
     [Header("--- Ranking ---")]
     public Text rankingText;
     public Button restoreRankBtn;
-    int myRank = 0;
-    float restoreTimer = 0.0f;  //랭킹 갱신 타이머
-    float delayGetLB = 3.0f;    //로비 진입후 3초 뒤에 랭킹 한번 더 로딩하기
-        
+    [HideInInspector] public int myRank = 0;
+    float restoreTimer = 3.0f;  //랭킹 갱신 타이머
+    //float delayGetLB = 3.0f;    //로비 진입후 3초 뒤에 랭킹 한번 더 로딩하기
+
+    public static Lobby_Mgr inst;
+
+    private void Awake()
+    {
+        inst = this;
+    }
+
 
     // Start is called before the first frame update
     void Start()
@@ -92,10 +102,17 @@ public class Lobby_Mgr : MonoBehaviour
 
         Sound_Mgr.Inst.PlayBGM("sound_bgm_title_001", 0.5f);
 
-        Invoke("GetRankingList", delayGetLB);
+        //Invoke("GetRankingList", delayGetLB);
+        LobbyNetwork_Mgr.inst.PushPacket(LobbyNetwork_Mgr.PacketType.GetRankingList);
 
+#if AutoRestore     //이 때는 일정 주기마다 자동으로 랭킹 업데이트 해줌
+        restoreTimer = 3.0f;        //자동 타이머 3초 충전
+        if (restoreRankBtn != null)
+            restoreRankBtn.gameObject.SetActive(false);
+#else               //수동으로 눌러야 갱신 해줌
         if (restoreRankBtn != null)
             restoreRankBtn.onClick.AddListener(RestoreRank);
+#endif
     }
 
 
@@ -141,7 +158,27 @@ public class Lobby_Mgr : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+#if AutoRestore
+        restoreTimer -= Time.deltaTime;
+        if (restoreTimer <= 0)
+        {
+            LobbyNetwork_Mgr.inst.PushPacket(LobbyNetwork_Mgr.PacketType.GetRankingList);
+            restoreTimer = 5.0f;
+        }
+
+#else
+        if (0.0f < restoreTimer)
+            restoreTimer -= Time.deltaTime;
+#endif
+
+        if (0.0f < messageTimer)
+        {
+            messageTimer -= Time.deltaTime;
+            if (messageTimer <= 0.0f)
+            {
+                MessageOnOff("", false);    //메세지 끄기
+            }
+        }
     }
 
     void MyLoadScene(string a_ScName)
@@ -155,7 +192,7 @@ public class Lobby_Mgr : MonoBehaviour
         Sound_Mgr.Inst.PlayGUISound("Pop", 1.0f);
     }
 
-    void CfgResponse() //환경설정 박스 Ok 후 호출되게 하기 위한 함수
+    public void CfgResponse() //환경설정 박스 Ok 후 호출되게 하기 위한 함수
     {
         if (m_UserInfoText != null)
             m_UserInfoText.text = "내정보 : 별명(" + GlobalValue.g_NickName + ") : 순위(" + myRank +
@@ -166,106 +203,28 @@ public class Lobby_Mgr : MonoBehaviour
     {
         if (0.0f < restoreTimer)
         {
-            Debug.Log("갱신이 너무 잦습니다. 잠시 후 버튼을 다시 눌러주세요.");
+            MessageOnOff("갱신이 너무 잦습니다. 잠시 후 버튼을 다시 눌러주세요.");
             return;
         }
 
-        GetRankingList();
+        LobbyNetwork_Mgr.inst.PushPacket(LobbyNetwork_Mgr.PacketType.GetRankingList);
 
         restoreTimer = 5.0f;
     }
 
-    void GetRankingList()
+    void MessageOnOff(string a_Message = "", bool isOn = true)
     {
-        if (GlobalValue.g_Unique_ID == "") return;  //정상적인 로그인 상태에서만 진행되도록
-
-        var request = new GetLeaderboardRequest()
+        if (isOn)
         {
-            StartPosition = 0,    //0번 인덱스부터 순서대로, 즉 1등부터
-            StatisticName = "BestScore",
-            //관리자 페이지의 순위표 변수 중 BestScore 기준
-            MaxResultsCount = 10,  //10명까지
-            ProfileConstraints = new PlayerProfileViewConstraints()
-            {
-                ShowDisplayName = true,     //닉네임 요청
-                ShowAvatarUrl = true,       //아바타 URL 요청               
-
-            }
-        };
-
-        PlayFabClientAPI.GetLeaderboard(
-                request,
-                (result) =>
-                {
-                    //랭킹 받아오기 성공
-                    if (rankingText == null) return;
-
-                    string strBuff = "";
-
-                    for (int i = 0; i < result.Leaderboard.Count; i++)
-                    {
-                        var curBoard = result.Leaderboard[i];
-
-                        //등수 안에 내가 있다면 색 표시
-                        if (curBoard.PlayFabId == GlobalValue.g_Unique_ID)
-                            strBuff += "<color=#00ff00>";
-
-                        strBuff += (i + 1).ToString() + "등 : " 
-                                + curBoard.DisplayName + " : "
-                                + curBoard.StatValue + "점 \n";
-
-                        //등수 안에 내가 있다면 색 표시 마감
-                        if (curBoard.PlayFabId == GlobalValue.g_Unique_ID)
-                            strBuff += "</color>";
-                    }
-
-                    if (strBuff != "")
-                        rankingText.text = strBuff;
-
-                    //리더보드 등수를 불러온 직 후 내 등수 가져옴.
-                    GetMyRanking();
-
-                },
-                (error) =>
-                {
-                    //랭킹 받아오기 실패
-                    Debug.Log("리더보드불러오기 실패");
-                }
-                );
-    }
-
-    void GetMyRanking()
-    {
-        //GetLeaderboardAroundPlayer() : 특정 PlayFabID를 기준으로 주변으로 리스트를 불러오는 함수
-
-        var request = new GetLeaderboardAroundPlayerRequest()
+            messageText.text = a_Message;
+            messageText.gameObject.SetActive(true);
+            messageTimer = 3.0f;
+        }
+        else
         {
-            //PlayFabId = GlobalValue.g_Unique_ID,  //디폴트값으로 로그인 한 아이디로 설정이 됨
-            StatisticName = "BestScore",
-            MaxResultsCount = 1,    //한명의 정보만 가져온다는 뜻
-            //ProfileConstraints = new PlayerProfileViewConstraints()
-            //{
-            //    ShowDisplayName = true,
-            //}
-        };
-
-        PlayFabClientAPI.GetLeaderboardAroundPlayer(
-                request,
-                (result) =>
-                {
-                    if (0 < result.Leaderboard.Count)
-                    {
-                        var curBoard = result.Leaderboard[0];
-                        myRank = curBoard.Position + 1;     //내 등수 가져오기
-                        GlobalValue.g_BestScore = curBoard.StatValue; //내 최고 점수 갱신
-
-                        CfgResponse();      //상단 UI 갱신
-                    }
-                },
-                (error)=>
-                {
-                    Debug.Log("내 등수 불러오기 실패");
-                }
-                );
+            messageText.text = "";
+            messageText.gameObject.SetActive(false);
+        }
     }
+    
 }

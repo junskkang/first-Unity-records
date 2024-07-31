@@ -4,6 +4,7 @@ using UnityEngine;
 using PlayFab;
 using PlayFab.ClientModels;
 using System;
+using UnityEngine.SceneManagement;
 
 public enum PacketType
 {
@@ -50,6 +51,11 @@ public class Network_Mgr : MonoBehaviour
             {
                 Req_Network();      //패킷 처리 함수 실행
             }
+            else    //처리할 패킷이 하나도 없다면    packetBuff.Count < 0
+            {
+                //매번 처리할 패킷이 하나도 없을 때만 종료처리 되도록
+                Exe_GameEnd();
+            }
         }
     }
 
@@ -64,6 +70,21 @@ public class Network_Mgr : MonoBehaviour
 
 
         packetBuff.RemoveAt(0); //처리한 패킷 제거
+    }
+
+    void Exe_GameEnd()      //Execute 실행하다의 약자
+    {
+        //처리할 패킷이 하나도 없는 경우(packetBuff.Count == 0)에만 종료 처리
+        if (Game_Mgr.Inst.State == GameState.GameExit)
+        {
+            //로비로 이동 버튼이 눌려진 상태라면
+            SceneManager.LoadScene("LobbyScene");
+        }
+        else if (Game_Mgr.Inst.State == GameState.GameReplay)
+        {
+            //다시 하기 버튼이 눌려진 상태라면
+            SceneManager.LoadScene("GameScene");
+        }
     }
 
     void UpdateGoldCo()     //원래 게임플레이에 지장 없도록 코루틴 함수로 만들어야함

@@ -40,6 +40,7 @@ public class Title_Mgr : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        GlobalValue.LoadGameData();
         StartBtn.onClick.AddListener(StartClick);
 
         //Login Account
@@ -157,13 +158,44 @@ public class Title_Mgr : MonoBehaviour
 
             //플레이어 데이터(타이틀) 값 받아오기
             int getValue = 0;
-            int idx = 0;
+            int Idx = 0;
             foreach(var eachData in result.InfoResultPayload.UserData)
             {
                 if (eachData.Key == "UserGold")
                 {
                     if (int.TryParse(eachData.Value.Value, out getValue))
                         GlobalValue.g_UserGold = getValue;
+                }
+                else if (eachData.Key.Contains("Skill_Item_") == true)
+                {
+                    bool a_IsDifferent = false;
+                    Idx = 0;
+                    string[] strArr = eachData.Key.Split('_');      // _를 기준으로 나누어 저장
+                    if (3 <= strArr.Length)         //Skill_Item_1 이런식으로 되어있기에 3덩어리로 나올것
+                    {
+                        //2번째 인덱스에 있는 것은 아이템 넘버인데 트라이파세가 실패했다? 비정상          
+                        if (int.TryParse(strArr[2], out Idx) == false)
+                            a_IsDifferent = true;
+                    }
+                    else
+                        a_IsDifferent = true;
+
+                    if (GlobalValue.g_CurSkillCount.Count <= Idx)
+                        a_IsDifferent = true;
+
+                    if (int.TryParse(eachData.Value.Value, out getValue) == false)
+                        a_IsDifferent = true;
+
+                    if (a_IsDifferent == true)
+                    {
+                        ShowMessage("아이템 정보 파싱 실패");
+                        continue;
+                    }
+
+                    Debug.Log("idx : " + Idx + ", getValue : " + getValue);
+                    GlobalValue.g_CurSkillCount[Idx] = getValue;
+
+                    //GlobalValue.g_CurSkillCount[Idx] = getValue;
                 }
             }
 

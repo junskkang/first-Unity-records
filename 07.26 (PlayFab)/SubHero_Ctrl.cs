@@ -19,7 +19,7 @@ public class SubHero_Ctrl : MonoBehaviour
     float m_AttSpeed = 0.5f;        //공격 속도(공속)
     float m_ShootCool = 0.0f;       //총알 발사 주기 계산용 변수
 
-    GameObject m_CloneObj = null;
+    //GameObject m_CloneObj = null;
     bool IsDouble = false;
     //--- 공격 관련 변수
 

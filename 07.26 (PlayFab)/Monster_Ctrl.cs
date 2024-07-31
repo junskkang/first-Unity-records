@@ -229,7 +229,7 @@ public class Monster_Ctrl : MonoBehaviour
                 //±Ã±Ø±â °ø°Ý
                 float Radius = 1.0f;
                 Vector3 a_TargetV = Vector3.zero;
-                GameObject a_NewObj = null;
+                //GameObject a_NewObj = null;
                 Bullet_Ctrl a_BulletSc = null;
                 //float a_CacAngle = 0.0f;
                 for(float Angle = 0.0f; Angle < 360.0f; Angle += 15.0f)

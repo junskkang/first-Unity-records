@@ -1,3 +1,5 @@
+using PlayFab;
+using PlayFab.ClientModels;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -72,15 +74,109 @@ public class Store_Mgr : MonoBehaviour
             m_SkNodeList[i].RefreshState();
         }
     }//void RefreshSkItemList()
-
     public void BuySkillItem(SkillType a_SkType)
     {  //리스트 뷰에 있는 캐릭터 가격 버튼을 눌러 구입 시도를 한 경우
+        m_BuySkType = a_SkType;     //구매하려는 아이 지역변수로 저장
+        BuyBeforeJobCo();
+    }
+
+    void BuyBeforeJobCo()   //구매 1단계 함수
+    {
+        //서버로부터 골드, 아이템 상태 받아와서 클라이언트와 동기화 시켜주기
+
+        if (GlobalValue.g_Unique_ID == "") return;  //로그인 되어있는 상태에서만 동작하도록
+
+
+        //플레이어 데이터(타이틀) 값 요청하기
+        var request = new GetUserDataRequest()
+        {
+            PlayFabId = GlobalValue.g_Unique_ID
+        };
+
+        PlayFabClientAPI.GetUserData(
+            request,
+            (result) =>
+            {
+                //유저 정보 받아오기 성공 했을 때
+                PlayerDataParse(result);
+            },
+            (error) =>
+            {
+                //유저 정보 받아오기 실패 했을 때
+            }
+            );
+    }
+
+    void PlayerDataParse(GetUserDataResult result)
+    {
+        bool a_IsDifferent = false;
+
+        int getValue = 0;
+        int Idx = 0;
+        //서버에 존재하는 값과 로컬에 존재하는 값을 비교하는 것
+        foreach (var eachData in result.Data)  //아래의 케이스는 받아온 데이터에 이상이 있는 경우
+        {
+            if (eachData.Key == "UserGold") 
+            {
+                //혹시나 int가 아닌 다른 데이터형의 값으로 장난질이 들어올 경우를 대비
+                //정상적이라면 이미 앞에 if문에서 Key를 UserGold로 거르고 들어왔기 때문에
+                //해당 if에 걸릴 일은 없음
+                if (int.TryParse(eachData.Value.Value, out getValue) == false)
+                {
+                    a_IsDifferent = true;
+                    break;
+                }                    
+                if (getValue != GlobalValue.g_UserGold)
+                {
+                    a_IsDifferent = true;
+                    break;
+                }
+
+                //GlobalValue.g_UserGold = getValue;
+            }
+            else if (eachData.Key.Contains("Skill_Item_") == true)
+            {
+                Idx = 0;
+                string[] strArr = eachData.Key.Split('_');      // _를 기준으로 나누어 저장
+                if (3 <= strArr.Length)         //Skill_Item_1 이런식으로 되어있기에 3덩어리로 나올것
+                {
+                    //2번째 인덱스에 있는 것은 아이템 넘버인데 트라이파세가 실패했다? 비정상          
+                    if (int.TryParse(strArr[2], out Idx) == false)
+                    {
+                        a_IsDifferent = true;
+                        break;
+                    }                        
+                }                
+
+                if (GlobalValue.g_CurSkillCount.Count <= Idx)
+                {
+                    a_IsDifferent = true;
+                    break;
+                }
+
+                if (int.TryParse(eachData.Value.Value, out getValue) == false)
+                {
+                    a_IsDifferent = true;
+                    break;
+                }
+
+                if (getValue != GlobalValue.g_CurSkillCount[Idx])
+                {
+                    a_IsDifferent = true;
+                    break;
+                }
+
+                //GlobalValue.g_CurSkillCount[Idx] = getValue;
+            }
+        }
 
         string a_Mess = "";
         bool a_NeedDelegate = false;
-        Skill_Info a_SkInfo = GlobalValue.g_SkDataList[(int)a_SkType];
+        Skill_Info a_SkInfo = GlobalValue.g_SkDataList[(int)m_BuySkType];
 
-        if(5 <= GlobalValue.g_CurSkillCount[(int)a_SkType])
+        if (a_IsDifferent)
+            a_Mess = "서버의 골드와 스킬 아이템 정보가 정상적이지 않습니다.\n운영진에 문의해 주세요.";
+        else if (5 <= GlobalValue.g_CurSkillCount[(int)m_BuySkType])
         {
             a_Mess = "하나의 아이템은 5개까지만 구매할 수 있습니다.";
         }
@@ -94,10 +190,14 @@ public class Store_Mgr : MonoBehaviour
             a_NeedDelegate = true;      //<-- 이 조건일 때 구매
         }
 
-        m_BuySkType = a_SkType;
+
+        
+        //m_BuySkType = a_SkType;
+
+        //구매를 했을 경우에 적용시켜줄 용도로 백업해놓는 변수
         m_SvMyGold = GlobalValue.g_UserGold;
-        m_SvMyGold -= a_SkInfo.m_Price;
-        m_SvMyCount = GlobalValue.g_CurSkillCount[(int)a_SkType];
+        m_SvMyGold -= a_SkInfo.m_Price; //해당 아이템 구매 성공시 갖게 될 골드값 미리 저장
+        m_SvMyCount = GlobalValue.g_CurSkillCount[(int)m_BuySkType];
         m_SvMyCount++;  //스킬 보유수 증가 백업해 놓기
 
         GameObject a_DlgRsc = Resources.Load("DialogBox") as GameObject;
@@ -115,23 +215,53 @@ public class Store_Mgr : MonoBehaviour
 
     }//public void BuySkillItem(SkillType a_SkType)
 
-    void TryBuySkItem()  //구매 확정 함수
+    void TryBuySkItem() //구매 2단계 확정 함수 (서버에 데이터 값 전달하기)
     {
-        if (m_BuySkType < SkillType.Skill_0 || SkillType.SkCount <= m_BuySkType)
-            return;
+        if (GlobalValue.g_Unique_ID == "") return;  //로그인 되어 있을 경우만 동작하도록
 
-        GlobalValue.g_UserGold = m_SvMyGold;    //골드값 조정
-        GlobalValue.g_CurSkillCount[(int)m_BuySkType] = m_SvMyCount;    //스킬 보유수 증가 조정
+        Dictionary<string, string> itemList = new Dictionary<string, string>();
+        itemList.Add("UserGold", m_SvMyGold.ToString());
+        itemList.Add($"Skill_Item_{(int)m_BuySkType}", m_SvMyCount.ToString());
 
-        RefreshSkItemList();
+        var request = new UpdateUserDataRequest()
+        {
+            Data = itemList
+        };
+        PlayFabClientAPI.UpdateUserData(request,
+                        (result) =>
+                        {
+                            //메뉴 상태 갱신
+                            GlobalValue.g_UserGold = m_SvMyGold;    //골드값 조정
+                            GlobalValue.g_CurSkillCount[(int)m_BuySkType] = m_SvMyCount;    //스킬 보유수 증가 조정
 
-        m_UserInfoText.text = "별명(" + GlobalValue.g_NickName +
-                                ") : 보유골드(" + GlobalValue.g_UserGold + ")";
+                            RefreshSkItemList();
 
-        //--- 로컬에 저장
-        PlayerPrefs.SetInt("UserGold", GlobalValue.g_UserGold);
-        PlayerPrefs.SetInt($"Skill_Item_{(int)m_BuySkType}", 
-                                        GlobalValue.g_CurSkillCount[(int)m_BuySkType]);
-        //--- 로컬에 저장
+                            m_UserInfoText.text = "별명(" + GlobalValue.g_NickName +
+                                                    ") : 보유골드(" + GlobalValue.g_UserGold + ")";
+                        },
+                        (error) =>
+                        {
+                            Debug.Log("데이터 저장 실패");
+                        }
+                        );
     }
+    //void TryBuySkItem()  //구매 3단계 확정 함수
+    //{
+    //    if (m_BuySkType < SkillType.Skill_0 || SkillType.SkCount <= m_BuySkType)
+    //        return;
+
+    //    GlobalValue.g_UserGold = m_SvMyGold;    //골드값 조정
+    //    GlobalValue.g_CurSkillCount[(int)m_BuySkType] = m_SvMyCount;    //스킬 보유수 증가 조정
+
+    //    RefreshSkItemList();
+
+    //    m_UserInfoText.text = "별명(" + GlobalValue.g_NickName +
+    //                            ") : 보유골드(" + GlobalValue.g_UserGold + ")";
+
+        ////--- 로컬에 저장
+        //PlayerPrefs.SetInt("UserGold", GlobalValue.g_UserGold);
+        //PlayerPrefs.SetInt($"Skill_Item_{(int)m_BuySkType}", 
+        //                                GlobalValue.g_CurSkillCount[(int)m_BuySkType]);
+        ////--- 로컬에 저장
+    //}
 }
