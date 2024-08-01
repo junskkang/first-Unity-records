@@ -13,6 +13,7 @@ public enum PacketType
     //유저의 고유 아이디 등, 시간값, 보안관련 등등...
     BestScore,      //최고점수
     UserGold,       //보유골드
+    UpdateItem,     //아이템 보유 수 갱신
     NickUpdate,     //닉네임갱신
     UpdateExp,      //경험치갱신
 }
@@ -54,7 +55,8 @@ public class Network_Mgr : MonoBehaviour
             else    //처리할 패킷이 하나도 없다면    packetBuff.Count < 0
             {
                 //매번 처리할 패킷이 하나도 없을 때만 종료처리 되도록
-                Exe_GameEnd();
+                if (Game_Mgr.Inst.State == GameState.GameExit || Game_Mgr.Inst.State == GameState.GameReplay)
+                    Exe_GameEnd();
             }
         }
     }
@@ -64,7 +66,9 @@ public class Network_Mgr : MonoBehaviour
         if (packetBuff[0] == PacketType.UserGold)
             UpdateGoldCo();     //Playfab 서버에 골드 갱신 요청 함수
         else if (packetBuff[0] == PacketType.BestScore)
-            UpdateScoreCo();
+            UpdateScoreCo();    //Playfab 서버에 최고 기록 갱신 요청
+        else if (packetBuff[0] == PacketType.UpdateItem)
+            UpdateItemCo();     //Playfab 서버에 아이템 보유 수 갱신 요청
         //else if (packetBuff[0] == PacketType.NickUpdate)  //ConfigBox에서 바로 처리하는 걸로 수정
         //    NickChangeCo(tempStrBuff);
 
@@ -72,8 +76,37 @@ public class Network_Mgr : MonoBehaviour
         packetBuff.RemoveAt(0); //처리한 패킷 제거
     }
 
+    private float exitTimer = 0.3f; 
+    //State가 바뀌면 그 때부터 자동으로 카운트가 돌게 되고
+    //State가 넘어갔다는 건 반드시 씬이동이 있다는 것이므로 
+    //변수값 충전할 필요 없이 이대로만 둬도 동작에 이상 없음
+
+    //public void SetExitTime(float value = 0.3f)
+    //{
+    //    exitTimer = value;
+    //}
+
+
     void Exe_GameEnd()      //Execute 실행하다의 약자
     {
+        //아직 처리되지 않은 패킷이 온전히 처리되지 못한채 스크립트가 사라지는 경우를 대비
+        if (isNetworkLock) return;
+
+        if (Game_Mgr.Inst.State == GameState.GameExit || Game_Mgr.Inst.State == GameState.GameReplay)
+        {
+            if (exitTimer > 0.0f)
+            {
+                exitTimer -= Time.unscaledDeltaTime;    //timeScale의 영향을 받지 않는 델타타임
+
+                if(exitTimer <= 0.0f)
+                    Exit_Game();
+            }
+        }            
+    }
+
+    void Exit_Game()
+    {
+        Debug.Log("Exit_Game 호출 완료");
         //처리할 패킷이 하나도 없는 경우(packetBuff.Count == 0)에만 종료 처리
         if (Game_Mgr.Inst.State == GameState.GameExit)
         {
@@ -125,7 +158,7 @@ public class Network_Mgr : MonoBehaviour
         (error) =>
         {
             isNetworkLock = false;
-            Debug.Log(error.GenerateErrorReport());
+            Debug.Log(error.GenerateErrorReport() + " : isNetworkLock : " + isNetworkLock);
         });
     }
     void UpdateScoreCo()
@@ -161,6 +194,36 @@ public class Network_Mgr : MonoBehaviour
                 isNetworkLock = false;
             }
         );
+    }
+
+    void UpdateItemCo()
+    {
+        if (GlobalValue.g_Unique_ID == "") return; //정상적으로 로그인이 되었음을 확인하는 용도
+
+        Dictionary<string, string> itemList = new Dictionary<string, string>();
+        for (int i = 0; i < GlobalValue.g_CurSkillCount.Count; i++)
+        {
+            itemList.Add($"Skill_Item_{i}", GlobalValue.g_CurSkillCount[i].ToString());
+        }
+
+        //<플레이어 데이터(타이틀)> 값 활용 코드
+        var request = new UpdateUserDataRequest()
+        {
+            Data = itemList
+        };
+
+        isNetworkLock = true;
+
+        PlayFabClientAPI.UpdateUserData(request,
+            (result) =>
+            {
+                isNetworkLock = false;
+            },
+            (error) =>
+            {
+                isNetworkLock = false;
+            }
+            );
     }
 
     void NickChangeCo(string nickName)

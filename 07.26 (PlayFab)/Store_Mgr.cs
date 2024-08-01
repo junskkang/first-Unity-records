@@ -109,7 +109,8 @@ public class Store_Mgr : MonoBehaviour
 
     void PlayerDataParse(GetUserDataResult result)
     {
-        bool a_IsDifferent = false;
+        bool isParseFail = false; //parse failed  //서버의 정보를 변환 실패
+        bool a_IsDifferent = false; //서버의 값과 갖고있는 값이 다른 경우
 
         int getValue = 0;
         int Idx = 0;
@@ -121,12 +122,12 @@ public class Store_Mgr : MonoBehaviour
                 //혹시나 int가 아닌 다른 데이터형의 값으로 장난질이 들어올 경우를 대비
                 //정상적이라면 이미 앞에 if문에서 Key를 UserGold로 거르고 들어왔기 때문에
                 //해당 if에 걸릴 일은 없음
-                if (int.TryParse(eachData.Value.Value, out getValue) == false)
+                if (int.TryParse(eachData.Value.Value, out getValue) == false)  
                 {
-                    a_IsDifferent = true;
-                    break;
+                    isParseFail = true;
+                    continue;
                 }                    
-                if (getValue != GlobalValue.g_UserGold)
+                if (getValue != GlobalValue.g_UserGold) 
                 {
                     a_IsDifferent = true;
                     break;
@@ -143,22 +144,30 @@ public class Store_Mgr : MonoBehaviour
                     //2번째 인덱스에 있는 것은 아이템 넘버인데 트라이파세가 실패했다? 비정상          
                     if (int.TryParse(strArr[2], out Idx) == false)
                     {
-                        a_IsDifferent = true;
-                        break;
-                    }                        
-                }                
+                        isParseFail = true;
+                        continue;
+                    }
+                }
+                else
+                {
+                    isParseFail = true;
+                    continue;
+                }
 
                 if (GlobalValue.g_CurSkillCount.Count <= Idx)
                 {
-                    a_IsDifferent = true;
-                    break;
+                    isParseFail = true;
+                    continue;
                 }
 
                 if (int.TryParse(eachData.Value.Value, out getValue) == false)
                 {
-                    a_IsDifferent = true;
-                    break;
+                    isParseFail = true;
+                    continue;
                 }
+
+                if ((int)m_BuySkType != Idx) //지금 구매 하려고 하는 상품만 다른지 확인한다.
+                    continue;
 
                 if (getValue != GlobalValue.g_CurSkillCount[Idx])
                 {
@@ -190,6 +199,10 @@ public class Store_Mgr : MonoBehaviour
             a_NeedDelegate = true;      //<-- 이 조건일 때 구매
         }
 
+        if (isParseFail)
+        {
+            a_Mess += "\n(서버에 비정상 정보가 있습니다.)";
+        }
 
         
         //m_BuySkType = a_SkType;

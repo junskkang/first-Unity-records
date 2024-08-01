@@ -354,5 +354,8 @@ public class HeroCtrl : MonoBehaviour
         //                   GlobalValue.g_CurSkillCount[(int)a_SkType]);
         ////--- 로컬에 저장하기
 
+        //아이템 갯수 갱신 서버에 요청하기
+        Network_Mgr.instance.PushPacket(PacketType.UpdateItem);
+
     }//public void UseSkill(SkillType a_SkType)
 }

@@ -9,6 +9,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using PlayFab.ClientModels;
 using PlayFab;
+using UnityEngine.EventSystems;
 
 public class Title_Mgr : MonoBehaviour
 {
@@ -20,6 +21,7 @@ public class Title_Mgr : MonoBehaviour
     public InputField inputPw;
     public Button loginBtn;
     public Button createAccOpenBtn;
+    public Toggle saveIDToggle;
 
     [Header("CreateAccountPanel")]
     public GameObject createAccPanel;
@@ -36,6 +38,20 @@ public class Title_Mgr : MonoBehaviour
     bool invalidEmailType = false; // 이메일 포맷이 올바른지 체크
     bool isValidFormat = false; // 올바른 형식인지 아닌지 체크
 
+    bool isNetworkLock = false;
+
+
+    string saveID;
+    string savePw;
+    string saveNick;
+
+    //탭으로 입력필드 이동
+    EventSystem system;
+    public Selectable firstInput;
+    public Button submitButton;
+
+    bool updown = false;
+
 
     // Start is called before the first frame update
     void Start()
@@ -46,6 +62,17 @@ public class Title_Mgr : MonoBehaviour
         //Login Account
         if (loginBtn != null)
             loginBtn.onClick.AddListener(LoginClick);
+
+        if (saveIDToggle != null)
+            saveIDToggle.onValueChanged.AddListener(SaveIDInput);
+
+        int saveIDOnOff = PlayerPrefs.GetInt("SaveIdCheck", 0);
+        saveIDToggle.isOn = (saveIDOnOff == 1)? true : false;
+
+        if (saveIDToggle.isOn == true && PlayerPrefs.GetString("LoginSaveID") != null)
+        {
+            inputID.text = PlayerPrefs.GetString("LoginSaveID", "");
+        }
 
         if (createAccOpenBtn != null)
             createAccOpenBtn.onClick.AddListener(OpenCreateAccount);          
@@ -59,6 +86,18 @@ public class Title_Mgr : MonoBehaviour
 
         Sound_Mgr.Inst.PlayBGM("sound_bgm_title_001", 1.0f);
         Sound_Mgr.Inst.m_AudioSrc.clip = null;  //배경음 플레이 끄기
+
+        system = EventSystem.current;
+
+        firstInput.Select();
+    }
+
+    private void SaveIDInput(bool isOn)
+    {
+        //isSaveId = isOn;
+        int saveBool = (isOn == true) ? 1: 0;
+        PlayerPrefs.SetInt("SaveIdCheck", saveBool);
+
     }
 
 
@@ -74,8 +113,34 @@ public class Title_Mgr : MonoBehaviour
 
             messageText.gameObject.SetActive(false);
         }
+
+        if (Input.GetKeyDown(KeyCode.Tab) && loginPanel.gameObject.activeSelf)
+        {
+            updown = !updown;
+            ChangeInput(updown);
+        }
+            
     }
 
+    void ChangeInput(bool value)
+    {
+        if (value)
+        {
+            Selectable next = system.currentSelectedGameObject.GetComponent<Selectable>().FindSelectableOnDown();
+            if (next != null)
+            {
+                next.Select();
+            }
+        }
+        else if (!value)
+        {
+            Selectable next = system.currentSelectedGameObject.GetComponent<Selectable>().FindSelectableOnUp();
+            if (next != null)
+            {
+                next.Select();
+            }
+        }
+    }
     void StartClick()
     {
         //Debug.Log("버튼을 클릭 했어요.");
@@ -140,8 +205,16 @@ public class Title_Mgr : MonoBehaviour
             InfoRequestParameters = option
         };
 
-        PlayFabClientAPI.LoginWithEmailAddress(request, OnLoginSuccess, OnLoginFailure);
+        PlayFabClientAPI.LoginWithEmailAddress(request, 
+            (result) => 
+            {
+                OnLoginSuccess(result);
+                PlayerPrefs.SetString("LoginSaveID", strID);
+            }
+            , OnLoginFailure);
     }
+
+
 
     private void OnLoginSuccess(LoginResult result)
     {
@@ -149,7 +222,7 @@ public class Title_Mgr : MonoBehaviour
 
         GlobalValue.g_Unique_ID = result.PlayFabId;
 
-        Debug.Log(GlobalValue.g_Unique_ID);
+        
 
         if (result.InfoResultPayload != null)
         {
@@ -158,7 +231,7 @@ public class Title_Mgr : MonoBehaviour
 
             //플레이어 데이터(타이틀) 값 받아오기
             int getValue = 0;
-            int Idx = 0;
+            int Idx = -1;   
             foreach(var eachData in result.InfoResultPayload.UserData)
             {
                 if (eachData.Key == "UserGold")
@@ -174,13 +247,14 @@ public class Title_Mgr : MonoBehaviour
                     if (3 <= strArr.Length)         //Skill_Item_1 이런식으로 되어있기에 3덩어리로 나올것
                     {
                         //2번째 인덱스에 있는 것은 아이템 넘버인데 트라이파세가 실패했다? 비정상          
-                        if (int.TryParse(strArr[2], out Idx) == false)
+                        if (int.TryParse(strArr[2], out Idx) == false)  
+                            //TryParse() 실패했을 경우 out 변수의 값은 0이 저장됨
                             a_IsDifferent = true;
                     }
                     else
                         a_IsDifferent = true;
 
-                    if (GlobalValue.g_CurSkillCount.Count <= Idx)
+                    if (Idx < 0 || GlobalValue.g_CurSkillCount.Count <= Idx)
                         a_IsDifferent = true;
 
                     if (int.TryParse(eachData.Value.Value, out getValue) == false)
@@ -247,10 +321,23 @@ public class Title_Mgr : MonoBehaviour
     private void CancelClick()
     {
         if (createAccPanel != null)
+        {
+            inputNewID.text = "";
+            inputNewPw.text = "";
+            inputNewNick.text = "";
             createAccPanel.SetActive(false);
+        }
+            
 
         if (loginPanel != null)
             loginPanel.SetActive(true);
+
+        if (saveID != null && savePw != null)
+        {
+            inputID.text = saveID.ToString();
+            inputPw.text = savePw.ToString();
+        }
+
     }
 
     private void CreateAccount()
@@ -270,22 +357,26 @@ public class Title_Mgr : MonoBehaviour
         if (!(6 <= strID.Length && strID.Length <= 20))   //ID 6 ~ 20 범위가 아닐 경우
         {
             ShowMessage("id는 6글자 이상 20글자 이하로 작성해 주세요.");
+            inputNewID.text = "";
             return;
         }
         if (!(8 <= strPw.Length && strPw.Length <= 14))   //Pw 8 ~ 14 범위가 아닐 경우
         {
             ShowMessage("비밀번호는 8글자 이상 14글자 이하로 작성해 주세요.");
+            inputNewPw.text = "";
             return;
         }
         if (!(3 <= strNick.Length && strNick.Length <= 8))   //Nick 2 ~ 8 범위가 아닐 경우
         {
             ShowMessage("닉네임은 3글자 이상 8글자 이하로 작성해 주세요.");
+            inputNewNick.text = "";
             return;
         }
 
         if (!CheckEmailAddress(strID))
         {
             ShowMessage("ID는 이메일형식으로 작성해 주세요.");
+            inputNewID.text = "";
             return;
         }
 
@@ -311,13 +402,51 @@ public class Title_Mgr : MonoBehaviour
         //test.DisplayName = strNick;
         //test.RequireBothUsernameAndEmail = false;
 
-        PlayFabClientAPI.RegisterPlayFabUser(request, RegisterSuccess, RegisterFailure);
-    }
+        PlayFabClientAPI.RegisterPlayFabUser(request, 
+            (result)=>
+            {
+                ShowMessage("가입성공! 취소 버튼을 누르고 로그인하세요.");
+                PresentItem();
+                saveID = strID;
+                savePw = strPw;
+                saveNick = strNick;
+            }, 
+            RegisterFailure);
+            }
 
     private void RegisterSuccess(RegisterPlayFabUserResult result)
     {
         //Debug.Log("가입성공");
-        ShowMessage("가입성공");
+
+    }
+
+    void PresentItem()
+    {
+        Dictionary<string, string> itemList = new Dictionary<string, string>();
+        for (int i = 0; i < GlobalValue.g_CurSkillCount.Count; i++)
+        {
+            GlobalValue.g_CurSkillCount[i] = 1;
+            itemList.Add($"Skill_Item_{i}", GlobalValue.g_CurSkillCount[i].ToString());
+        }
+
+        //<플레이어 데이터(타이틀)> 값 활용 코드
+        var request = new UpdateUserDataRequest()
+        {
+            Data = itemList
+        };
+
+        isNetworkLock = true;
+
+        PlayFabClientAPI.UpdateUserData(request,
+            (result) =>
+            {
+                isNetworkLock = false;
+            },
+            (error) =>
+            {
+                isNetworkLock = false;
+            }
+            );
     }
 
     private void RegisterFailure(PlayFabError error)
@@ -326,12 +455,23 @@ public class Title_Mgr : MonoBehaviour
         {
             ShowMessage("가입실패 :" + "이미 존재하는 이메일입니다.");
             //에러 리포트 스트링은 아래의 디버그를 찍어보아 어떠한 내용으로 뜨는지 체크하고
-            //그에 맞게 분기처리를 해주어 자세하게 설명해주도록 하자            
+            //그에 맞게 분기처리를 해주어 자세하게 설명해주도록 하자
+            inputNewID.text = "";
+        }
+        else if (error.GenerateErrorReport().Contains("The display name entered is not available"))
+        {
+            ShowMessage("가입실패 :" + "이미 존재하는 닉네임입니다.");
+            inputNewNick.text = "";
         }
         else
         {
             Debug.Log(error.GenerateErrorReport());
+            inputNewID.text = "";
+            inputNewPw.text = "";
+            inputNewNick.text = "";
         }        
+
+
     }
 
     void ShowMessage(string message = "")
