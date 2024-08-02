@@ -5,6 +5,7 @@ using PlayFab;
 using PlayFab.ClientModels;
 using System;
 using UnityEngine.SceneManagement;
+using SimpleJSON;
 
 public enum PacketType
 {
@@ -69,6 +70,8 @@ public class Network_Mgr : MonoBehaviour
             UpdateScoreCo();    //Playfab 서버에 최고 기록 갱신 요청
         else if (packetBuff[0] == PacketType.UpdateItem)
             UpdateItemCo();     //Playfab 서버에 아이템 보유 수 갱신 요청
+        else if (packetBuff[0] == PacketType.UpdateExp)
+            UpdateExpCo();
         //else if (packetBuff[0] == PacketType.NickUpdate)  //ConfigBox에서 바로 처리하는 걸로 수정
         //    NickChangeCo(tempStrBuff);
 
@@ -215,6 +218,38 @@ public class Network_Mgr : MonoBehaviour
         isNetworkLock = true;
 
         PlayFabClientAPI.UpdateUserData(request,
+            (result) =>
+            {
+                isNetworkLock = false;
+            },
+            (error) =>
+            {
+                isNetworkLock = false;
+            }
+            );
+    }
+
+    void UpdateExpCo()
+    {
+        if (GlobalValue.g_Unique_ID == "") return; //정상적으로 로그인이 되었음을 확인하는 용도
+
+        //AvatarURL을 이용해서 저장하면
+        //순위표 리스트 받을 때 AvatarURL을 같이 받아올 수 있다. == 프로필 사진
+
+        //AvatarURL을 이용해서 유저의 Level을 저장하도록 활용
+        //Json 형식으로 저장
+        JSONObject makeJson = new JSONObject();
+        makeJson["UserExp"] = GlobalValue.g_Exp;
+        makeJson["UserLevel"] = GlobalValue.g_Level;
+        string strJson = makeJson.ToString();
+
+        var request = new UpdateAvatarUrlRequest()
+        {
+            ImageUrl = strJson
+        };
+
+        isNetworkLock = true;
+        PlayFabClientAPI.UpdateAvatarUrl(request,
             (result) =>
             {
                 isNetworkLock = false;

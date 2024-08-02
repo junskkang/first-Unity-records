@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using PlayFab;
 using PlayFab.ClientModels;
+using SimpleJSON;
 
 public class LobbyNetwork_Mgr : MonoBehaviour
 {
@@ -93,6 +94,7 @@ public class LobbyNetwork_Mgr : MonoBehaviour
                     for (int i = 0; i < result.Leaderboard.Count; i++)
                     {
                         var curBoard = result.Leaderboard[i];
+                        int userLv = LVMyJsonParse(curBoard.Profile.AvatarUrl);
 
                         //등수 안에 내가 있다면 색 표시
                         if (curBoard.PlayFabId == GlobalValue.g_Unique_ID)
@@ -100,7 +102,8 @@ public class LobbyNetwork_Mgr : MonoBehaviour
 
                         strBuff += (i + 1).ToString() + "등 : "
                                 + curBoard.DisplayName + " : "
-                                + curBoard.StatValue + "점 \n";
+                                + curBoard.StatValue + "점 : " 
+                                + (userLv+1) + "레벨 \n";
 
                         //등수 안에 내가 있다면 색 표시 마감
                         if (curBoard.PlayFabId == GlobalValue.g_Unique_ID)
@@ -122,7 +125,25 @@ public class LobbyNetwork_Mgr : MonoBehaviour
                 }
                 );
     }
+    int LVMyJsonParse(string json)
+    {
+        string a_AvatarURL = json;
+        int result = 0;
+        //Json파싱
+        if (string.IsNullOrEmpty(a_AvatarURL) == false &&
+            a_AvatarURL.Contains("{\"") == true)
+        {
+            JSONNode parseJson = JSON.Parse(a_AvatarURL);
+            
+            if (parseJson["UserLevel"] != null)
+            {
+                result = parseJson["UserLevel"].AsInt;
 
+                return result;
+            }
+        }
+        return result;
+    }
     void GetMyRanking()
     {
         //GetLeaderboardAroundPlayer() : 특정 PlayFabID를 기준으로 주변으로 리스트를 불러오는 함수

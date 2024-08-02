@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using PlayFab.ClientModels;
 using PlayFab;
 using UnityEngine.EventSystems;
+using SimpleJSON;
 
 public class Title_Mgr : MonoBehaviour
 {
@@ -38,7 +39,7 @@ public class Title_Mgr : MonoBehaviour
     bool invalidEmailType = false; // 이메일 포맷이 올바른지 체크
     bool isValidFormat = false; // 올바른 형식인지 아닌지 체크
 
-    bool isNetworkLock = false;
+    bool isNetworkLock = false; 
 
 
     string saveID;
@@ -73,6 +74,8 @@ public class Title_Mgr : MonoBehaviour
         {
             inputID.text = PlayerPrefs.GetString("LoginSaveID", "");
         }
+        else if(!saveIDToggle.isOn && PlayerPrefs.GetString("LoginSaveID") != null)
+            PlayerPrefs.DeleteKey("LoginSaveID");
 
         if (createAccOpenBtn != null)
             createAccOpenBtn.onClick.AddListener(OpenCreateAccount);          
@@ -191,6 +194,7 @@ public class Title_Mgr : MonoBehaviour
             ProfileConstraints = new PlayerProfileViewConstraints()
             {
                 ShowDisplayName = true,     //DisplayName(닉네임)
+                ShowAvatarUrl = true,       //AvatarURL을 가져오기 위한 설정
             },
 
             GetUserData = true,  //플레이어 데이터(타이틀)에 저장한 옵션을 가져오기 위한 설정
@@ -229,6 +233,25 @@ public class Title_Mgr : MonoBehaviour
             GlobalValue.g_NickName = result.InfoResultPayload.PlayerProfile.DisplayName;
             //닉네임 가져오기
 
+            //경험치 가져오기
+            string a_AvatarURL = result.InfoResultPayload.PlayerProfile.AvatarUrl;
+            //Json파싱
+            if (string.IsNullOrEmpty(a_AvatarURL) == false &&
+                a_AvatarURL.Contains("{\"") == true)
+            {
+                JSONNode parseJson = JSON.Parse(a_AvatarURL);
+                if (parseJson["UserExp"] != null)
+                {
+                    GlobalValue.g_Exp = parseJson["UserExp"].AsInt;                    
+                }
+                if (parseJson["UserLevel"] != null)
+                {
+                    GlobalValue.g_Level = parseJson["UserLevel"].AsInt;
+                }
+
+                //Debug.Log(GlobalValue.g_Exp + " : " + GlobalValue.g_Level);
+
+            }
             //플레이어 데이터(타이틀) 값 받아오기
             int getValue = 0;
             int Idx = -1;   
@@ -266,7 +289,7 @@ public class Title_Mgr : MonoBehaviour
                         continue;
                     }
 
-                    Debug.Log("idx : " + Idx + ", getValue : " + getValue);
+                    //Debug.Log("idx : " + Idx + ", getValue : " + getValue);
                     GlobalValue.g_CurSkillCount[Idx] = getValue;
 
                     //GlobalValue.g_CurSkillCount[Idx] = getValue;
@@ -404,8 +427,7 @@ public class Title_Mgr : MonoBehaviour
 
         PlayFabClientAPI.RegisterPlayFabUser(request, 
             (result)=>
-            {
-                ShowMessage("가입성공! 취소 버튼을 누르고 로그인하세요.");
+            {                
                 PresentItem();
                 saveID = strID;
                 savePw = strPw;
@@ -425,8 +447,14 @@ public class Title_Mgr : MonoBehaviour
         Dictionary<string, string> itemList = new Dictionary<string, string>();
         for (int i = 0; i < GlobalValue.g_CurSkillCount.Count; i++)
         {
-            GlobalValue.g_CurSkillCount[i] = 1;
-            itemList.Add($"Skill_Item_{i}", GlobalValue.g_CurSkillCount[i].ToString());
+            //아직 로그인 하기 전이므로 바로 글로벌 변수에다가 넣어주기 보다는
+            //네트워크 상에서만 넣어주고 
+            //새로 가입한 아이디로 로그인할 때 웹 상 데이터를 불러오는 부분에서
+            //글로벌 데이터로 받아오도록 하는 것이 낫다
+            //GlobalValue.g_CurSkillCount[i] = 1;
+            //itemList.Add($"Skill_Item_{i}", GlobalValue.g_CurSkillCount[i].ToString());
+
+            itemList.Add($"Skill_Item_{i}", (1).ToString());
         }
 
         //<플레이어 데이터(타이틀)> 값 활용 코드
@@ -440,6 +468,7 @@ public class Title_Mgr : MonoBehaviour
         PlayFabClientAPI.UpdateUserData(request,
             (result) =>
             {
+                ShowMessage("가입성공! 취소 버튼을 누르고 로그인하세요.");
                 isNetworkLock = false;
             },
             (error) =>

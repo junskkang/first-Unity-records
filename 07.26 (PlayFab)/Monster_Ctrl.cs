@@ -326,6 +326,12 @@ public class Monster_Ctrl : MonoBehaviour
                 Game_Mgr.Inst.SpawnHeart(transform.position);
             //--- 하트 보상
 
+            //--- 캐릭터 경험치 보상
+            if (m_MonType == MonType.MT_Boss)
+                Game_Mgr.Inst.AddExpLevel(300);
+            else
+                Game_Mgr.Inst.AddExpLevel(20);
+
             //--- 사망한 몬스터가 보스면 다음번 스폰 주기 설정
             if (m_MonType == MonType.MT_Boss)
             {

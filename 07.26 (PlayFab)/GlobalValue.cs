@@ -1,3 +1,4 @@
+using SimpleJSON;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -104,6 +105,12 @@ public class Skill_Info  //각 Item 정보
     }//public void SetType(SkillType a_SkType)
 }
 
+public class LevelTable
+{
+    public int destExp = 0; //다음 레벨로 가기 위한 경험치 Destination Experience
+                            //각 레벨별로 더 필요한 정보가 있다면 추가\
+}
+
 public class GlobalValue 
 {
     public static string g_Unique_ID = "";  //유저의 고유 번호
@@ -111,10 +118,16 @@ public class GlobalValue
     //소환수 스킬 아이템 데이터 리스트
     public static List<Skill_Info> g_SkDataList = new List<Skill_Info>(); //스킬 아이템 설정 리스트
     public static List<int> g_CurSkillCount = new List<int>(); //스킬 아이템 보유 수
+    
 
     public static string g_NickName = "";   //유저의 별명
     public static int g_BestScore = 0;      //최고 점수
     public static int g_UserGold  = 0;      //보유 게임 머니
+
+    //레벨 테이블을 위한 리스트
+    public static List<LevelTable>g_LvTable = new List<LevelTable>();
+    public static int g_Level = 0;      //유저의 레벨
+    public static int g_Exp = 0;     //유저의 경험치
 
     public static void LoadGameData()
     {
@@ -147,6 +160,26 @@ public class GlobalValue
             }
         }
         //--- 서버나 로컬에 저장된 보유 상태 로딩
-    }
 
+        //레벨 테이블 Json 파일 로딩
+        if (g_LvTable.Count <= 0)   //로딩된 정보가 없으면 로딩하겠다는 의미
+        {
+            TextAsset JsonData = Resources.Load<TextAsset>("LevelTable");
+            string strJsonData = JsonData.text;
+            var parseJon = JSON.Parse(strJsonData);
+
+            if (parseJon["LvTable"] != null)
+            {
+                for (int i = 0; i < parseJon["LvTable"].Count; i++)
+                {
+                    int a_DestExp = parseJon["LvTable"][i].AsInt;
+                    LevelTable a_Node = new LevelTable();
+                    a_Node.destExp = a_DestExp;
+                    g_LvTable.Add(a_Node);
+
+                    //Debug.Log(a_Node.destExp);
+                }
+            }
+        }
+    }
 }

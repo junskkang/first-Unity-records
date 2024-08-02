@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Loading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -70,6 +71,16 @@ public class Game_Mgr : MonoBehaviour
     public Button Replay_Btn = null;
     public Button RstLobby_Btn = null;
 
+    [Header("------- ExpLevel -------")]
+    public Text exp_Text;
+    public Text lv_Text;
+    public Image expImg;
+    int monKillcount = 0;
+
+    //로비가기 연출용 변수
+    public GameObject LoadingPanel;
+    public Image loadingCharacter;
+
     //--- 싱글톤 패턴
     public static Game_Mgr Inst = null;
 
@@ -87,12 +98,19 @@ public class Game_Mgr : MonoBehaviour
         GlobalValue.LoadGameData();
         InitRefreshUI();
         RefreshSkillList();
+        RefreshExpLevelUI();
 
         if (GoLobbyBtn != null)
             GoLobbyBtn.onClick.AddListener(() =>
             {
-                //SceneManager.LoadScene("LobbyScene");  //패킷처리를 마무리 시키고 나가기 위해 잠시 머무르도록
-                State = GameState.GameExit;
+                //SceneManager.LoadScene("LobbyScene");  
+                //패킷처리를 마무리 시키고 나가기 위해 잠시 머무르도록
+                //기다리는 연출 추가 필요
+                Time.timeScale = 0.0f;
+                LoadingPanel.gameObject.SetActive(true);
+                StartCoroutine(Loading());
+               
+                //State = GameState.GameExit;
             });
 
         m_CoinItem = Resources.Load("CoinPrefab") as GameObject;
@@ -323,6 +341,54 @@ public class Game_Mgr : MonoBehaviour
         Network_Mgr.instance.PushPacket(PacketType.UserGold);
     }
 
+    public void AddExpLevel(int addExp = 50)
+    {        
+        if (GlobalValue.g_Level < GlobalValue.g_LvTable.Count)  //아직 최고 레벨에 도달하지 않았을 때
+        {
+            GlobalValue.g_Exp += addExp;   //경험치 획득
+
+            //경험치가 필요경험치 이상으로 들어올 경우를 위해
+            for (int i = 0; i < 100; i++)  //최댓값으로 보통 최대레벨을 넣어두면 됨
+            {
+                //위에서 경험치를 증가시킨 결과가 다음레벨을 증가시키기 위한 경험치에 아직 도달하지 않았다면..
+                if (GlobalValue.g_Exp < GlobalValue.g_LvTable[GlobalValue.g_Level].destExp)
+                    break;  //레벨은 증가시키지 않도록 아래의 레벨증가 코드 스킵
+                //고로 GlobalValue.g_Exp에 경험치가 누적되는 것이 됨
+
+                //누적 경험치가 필요경험치를 넘어서는 순간 레벨이 오름
+                GlobalValue.g_Exp -= GlobalValue.g_LvTable[GlobalValue.g_Level].destExp;
+                GlobalValue.g_Level++;
+
+                if (GlobalValue.g_LvTable.Count <= GlobalValue.g_Level) //최고레벨 도달
+                    break;
+            }
+                    
+        }
+
+        Network_Mgr.instance.PushPacket(PacketType.UpdateExp);
+
+        RefreshExpLevelUI();
+    }
+
+    void RefreshExpLevelUI()
+    {
+        //UI 갱신
+
+        string a_strExp = "<color=#ff0000>최고레벨도달</color>";
+        if (GlobalValue.g_Level < GlobalValue.g_LvTable.Count)
+        {
+            a_strExp = $"경험치 ({GlobalValue.g_Exp} / {GlobalValue.g_LvTable[GlobalValue.g_Level].destExp})";
+        }
+
+        if (exp_Text != null)
+            exp_Text.text = a_strExp + $" 레벨({GlobalValue.g_Level + 1})";
+
+        if (lv_Text != null)
+            lv_Text.text = $"Lv.{GlobalValue.g_Level + 1}";
+
+        if (expImg != null)      
+            expImg.fillAmount = ((float)GlobalValue.g_Exp) / ((float)GlobalValue.g_LvTable[GlobalValue.g_Level].destExp);
+    }
     void InitRefreshUI()
     {
         if (m_BestScoreText != null)
@@ -381,6 +447,23 @@ public class Game_Mgr : MonoBehaviour
     {       
         if (m_UserInfoText != null)
             m_UserInfoText.text = "내정보 : 별명(" + GlobalValue.g_NickName + ")";
+    }
+
+    IEnumerator Loading()
+    {
+        yield return new WaitForSecondsRealtime(0.7f);
+
+        if (loadingCharacter != null)
+            loadingCharacter.transform.position = new Vector3(loadingCharacter.transform.position.x + 95.0f, loadingCharacter.transform.position.y);
+
+        yield return new WaitForSecondsRealtime(0.7f);
+
+        if (loadingCharacter != null)
+            loadingCharacter.transform.position = new Vector3(loadingCharacter.transform.position.x + 95.0f, loadingCharacter.transform.position.y);
+
+        yield return new WaitForSecondsRealtime(0.7f);
+
+        State = GameState.GameExit;
     }
 
 }//public class Game_Mgr : MonoBehaviour
