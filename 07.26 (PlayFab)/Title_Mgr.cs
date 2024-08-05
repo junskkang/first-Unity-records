@@ -39,7 +39,7 @@ public class Title_Mgr : MonoBehaviour
     bool invalidEmailType = false; // 이메일 포맷이 올바른지 체크
     bool isValidFormat = false; // 올바른 형식인지 아닌지 체크
 
-    bool isNetworkLock = false; 
+    //bool isNetworkLock = false; 
 
 
     string saveID;
@@ -463,17 +463,17 @@ public class Title_Mgr : MonoBehaviour
             Data = itemList
         };
 
-        isNetworkLock = true;
+        
 
         PlayFabClientAPI.UpdateUserData(request,
             (result) =>
             {
                 ShowMessage("가입성공! 취소 버튼을 누르고 로그인하세요.");
-                isNetworkLock = false;
+                
             },
             (error) =>
             {
-                isNetworkLock = false;
+                
             }
             );
     }

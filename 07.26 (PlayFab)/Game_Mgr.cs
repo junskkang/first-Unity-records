@@ -75,7 +75,7 @@ public class Game_Mgr : MonoBehaviour
     public Text exp_Text;
     public Text lv_Text;
     public Image expImg;
-    int monKillcount = 0;
+    //int monKillcount = 0;
 
     //로비가기 연출용 변수
     public GameObject LoadingPanel;

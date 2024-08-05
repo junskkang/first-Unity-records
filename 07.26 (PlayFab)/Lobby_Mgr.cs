@@ -14,6 +14,10 @@ using static ConfigBox;
 public class Lobby_Mgr : MonoBehaviour
 {
     public Button m_ClearSvDataBtn;
+    float ClearLockTimer = 0.0f;    //데이터 초기화 대기 타이머
+
+    public GameObject LoadingPanel;
+    public Image loadingCharacter;
 
     public Button Store_Btn;
     public Button MyRoom_Btn;
@@ -39,6 +43,7 @@ public class Lobby_Mgr : MonoBehaviour
     [HideInInspector] public int myRank = 0;
     float restoreTimer = 3.0f;  //랭킹 갱신 타이머
     //float delayGetLB = 3.0f;    //로비 진입후 3초 뒤에 랭킹 한번 더 로딩하기
+    
 
     public static Lobby_Mgr inst;
 
@@ -119,10 +124,39 @@ public class Lobby_Mgr : MonoBehaviour
 
     void ClearSvData()
     {
+        if (0.0 < ClearLockTimer)
+        {
+            MessageOnOff(ClearLockTimer.ToString("N0") + "초 후 시도해주시기 바랍니다.");
+            return;
+        }
+        //SceneManager.LoadScene("LobbyScene");  
+        //패킷처리를 마무리 시키고 나가기 위해 잠시 머무르도록
+        //기다리는 연출 추가 필요
+        Time.timeScale = 0.0f;
+        LoadingPanel.gameObject.SetActive(true);
+        StartCoroutine(Loading());
+
+        GlobalValue.g_BestScore = 0;
+        GlobalValue.g_UserGold = 0;
+        GlobalValue.g_Exp = 0;
+        GlobalValue.g_Level = 0;
+        Lobby_Mgr.inst.myRank = 0;
+        for (int i = 0; i < GlobalValue.g_CurSkillCount.Count; i++)
+        {
+            GlobalValue.g_CurSkillCount[i] = 0;
+        }
+
         PlayerPrefs.DeleteAll();    //로컬에 저장되어 있었던 모든 정보를 지워준다.
 
-        GlobalValue.g_CurSkillCount.Clear();
-        GlobalValue.LoadGameData();
+        LobbyNetwork_Mgr.inst.PushPacket(LobbyNetwork_Mgr.PacketType.ClearSave);
+        LobbyNetwork_Mgr.inst.PushPacket(LobbyNetwork_Mgr.PacketType.ClearScore);
+        LobbyNetwork_Mgr.inst.PushPacket(LobbyNetwork_Mgr.PacketType.ClearExp);
+
+        //Network_Mgr.instance.PushPacket(PacketType.UserGold);
+        //Network_Mgr.instance.PushPacket(PacketType.BestScore);
+        //Network_Mgr.instance.PushPacket(PacketType.UpdateExp);
+        //GlobalValue.g_CurSkillCount.Clear();
+        //GlobalValue.LoadGameData();
 
         if (m_GoldText != null)
             m_GoldText.text = GlobalValue.g_UserGold.ToString("N0");
@@ -131,9 +165,32 @@ public class Lobby_Mgr : MonoBehaviour
             m_UserInfoText.text = "내정보 : 별명(" + GlobalValue.g_NickName + ") : 순위(" + myRank +
                                   "등) : 점수(" + GlobalValue.g_BestScore + "점)";
 
-        Sound_Mgr.Inst.PlayGUISound("Pop", 1.0f);
-    }
+        LobbyNetwork_Mgr.inst.PushPacket(LobbyNetwork_Mgr.PacketType.GetRankingList);
 
+        Sound_Mgr.Inst.PlayGUISound("Pop", 1.0f);
+
+        ClearLockTimer = 10.0f;
+
+
+
+    }
+    IEnumerator Loading()
+    {
+        yield return new WaitForSecondsRealtime(0.7f);
+
+        if (loadingCharacter != null)
+            loadingCharacter.transform.position = new Vector3(loadingCharacter.transform.position.x + 95.0f, loadingCharacter.transform.position.y);
+
+        yield return new WaitForSecondsRealtime(0.7f);
+
+        if (loadingCharacter != null)
+            loadingCharacter.transform.position = new Vector3(loadingCharacter.transform.position.x + 95.0f, loadingCharacter.transform.position.y);
+
+        yield return new WaitForSecondsRealtime(0.7f);
+
+        LoadingPanel.gameObject.SetActive(false);
+        Time.timeScale = 1.0f;
+    }
     private void StoreBtnClick()
     {
         //Debug.Log("상점으로 가기 버튼 클릭");
@@ -150,6 +207,18 @@ public class Lobby_Mgr : MonoBehaviour
 
     private void ExitBtnClick()
     {
+        //로그아웃 시 모든 글로벌 변수 초기화
+        GlobalValue.g_Unique_ID = "";
+        GlobalValue.g_NickName = "";
+        GlobalValue.g_BestScore = 0;
+        GlobalValue.g_UserGold = 0;
+        GlobalValue.g_Exp = 0;
+        GlobalValue.g_Level = 0;
+        for (int i = 0; i < GlobalValue.g_CurSkillCount.Count; i++)
+            GlobalValue.g_CurSkillCount[i] = 0;
+
+        PlayFabClientAPI.ForgetAllCredentials();    //Playfab에서 로그아웃 시키는 것
+
         //Debug.Log("타이틀 씬으로 나가기 버튼 클릭");
         //SceneManager.LoadScene("TitleScene");
         MyLoadScene("TitleScene");
@@ -179,6 +248,14 @@ public class Lobby_Mgr : MonoBehaviour
                 MessageOnOff("", false);    //메세지 끄기
             }
         }
+
+        if (0.0f < ClearLockTimer)
+        {
+            ClearLockTimer -= Time.deltaTime;
+            if (ClearLockTimer <= 0.0f)
+                ClearLockTimer = 0.0f;
+        }
+
     }
 
     void MyLoadScene(string a_ScName)

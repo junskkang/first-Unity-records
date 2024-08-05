@@ -22,9 +22,12 @@ public enum PacketType
 public class Network_Mgr : MonoBehaviour
 {
     //서버에 전송할 패킷 처리용 큐 관련 변수
-    bool isNetworkLock = false;     //Network 대기 상태 여부 체크용
+    //bool isNetworkLock = false;     //Network 대기 상태 여부 체크용
     List<PacketType> packetBuff = new List<PacketType>();
     //보낼 패킷 타입 대기 리스트 (큐 역할)
+
+    //서버에 요청한 패킷에 아무런 응답도 없을 경우 (성공도 실패도 돌아오지 않아)
+    float netWaitTime = 0.0f;
 
     //[HideInInspector] public string tempStrBuff = "";
     //public delegate void Net_Response(bool isOk, string message);   //델리게이트 데이터(옵션)형 하나 선언
@@ -47,7 +50,12 @@ public class Network_Mgr : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!isNetworkLock)     //지금 패킷 처리 중인 상태가 아니라면
+        netWaitTime -= Time.unscaledDeltaTime;
+        if(netWaitTime < 0.0f) 
+            netWaitTime = 0.0f;
+
+
+        if (netWaitTime <= 0.0f)     //지금 패킷 처리 중인 상태가 아니라면
         {
             if (0 < packetBuff.Count)       //대기 패킷이 존재한다면
             {
@@ -56,7 +64,8 @@ public class Network_Mgr : MonoBehaviour
             else    //처리할 패킷이 하나도 없다면    packetBuff.Count < 0
             {
                 //매번 처리할 패킷이 하나도 없을 때만 종료처리 되도록
-                if (Game_Mgr.Inst.State == GameState.GameExit || Game_Mgr.Inst.State == GameState.GameReplay)
+                if (this.gameObject.name.Contains("Game") &&(
+                    Game_Mgr.Inst.State == GameState.GameExit || Game_Mgr.Inst.State == GameState.GameReplay))
                     Exe_GameEnd();
             }
         }
@@ -79,7 +88,7 @@ public class Network_Mgr : MonoBehaviour
         packetBuff.RemoveAt(0); //처리한 패킷 제거
     }
 
-    private float exitTimer = 0.3f; 
+    //private float exitTimer = 0.3f; 
     //State가 바뀌면 그 때부터 자동으로 카운트가 돌게 되고
     //State가 넘어갔다는 건 반드시 씬이동이 있다는 것이므로 
     //변수값 충전할 필요 없이 이대로만 둬도 동작에 이상 없음
@@ -93,23 +102,9 @@ public class Network_Mgr : MonoBehaviour
     void Exe_GameEnd()      //Execute 실행하다의 약자
     {
         //아직 처리되지 않은 패킷이 온전히 처리되지 못한채 스크립트가 사라지는 경우를 대비
-        if (isNetworkLock) return;
+        //if (isNetworkLock) return;
 
-        if (Game_Mgr.Inst.State == GameState.GameExit || Game_Mgr.Inst.State == GameState.GameReplay)
-        {
-            if (exitTimer > 0.0f)
-            {
-                exitTimer -= Time.unscaledDeltaTime;    //timeScale의 영향을 받지 않는 델타타임
-
-                if(exitTimer <= 0.0f)
-                    Exit_Game();
-            }
-        }            
-    }
-
-    void Exit_Game()
-    {
-        Debug.Log("Exit_Game 호출 완료");
+        //Debug.Log("Exit_Game 호출 완료");
         //처리할 패킷이 하나도 없는 경우(packetBuff.Count == 0)에만 종료 처리
         if (Game_Mgr.Inst.State == GameState.GameExit)
         {
@@ -149,19 +144,20 @@ public class Network_Mgr : MonoBehaviour
             }            
         };
 
-        isNetworkLock = true;       
+        netWaitTime = 0.5f; 
+        
         //요청을 보낼 때 true로 바꿔 update함수를 잠시 멈추게 함
         PlayFabClientAPI.UpdateUserData(request, 
         (result) =>
         {
             //응답을 받으면 다시 update함수 돌아가도록
-            isNetworkLock = false;
+            //isNetworkLock = false;
             //데이터 저장 성공
         }, 
         (error) =>
         {
-            isNetworkLock = false;
-            Debug.Log(error.GenerateErrorReport() + " : isNetworkLock : " + isNetworkLock);
+            //isNetworkLock = false;
+            Debug.Log(error.GenerateErrorReport());
         });
     }
     void UpdateScoreCo()
@@ -186,15 +182,16 @@ public class Network_Mgr : MonoBehaviour
             }
         };
 
-        isNetworkLock = true;
+        netWaitTime = 0.5f;
+
         PlayFabClientAPI.UpdatePlayerStatistics(request,
             (result) =>
             {
-                isNetworkLock = false;
+                //isNetworkLock = false;
             },
             (error) =>
             {
-                isNetworkLock = false;
+                //isNetworkLock = false;
             }
         );
     }
@@ -215,16 +212,16 @@ public class Network_Mgr : MonoBehaviour
             Data = itemList
         };
 
-        isNetworkLock = true;
+        netWaitTime = 0.5f;
 
         PlayFabClientAPI.UpdateUserData(request,
             (result) =>
             {
-                isNetworkLock = false;
+                //isNetworkLock = false;
             },
             (error) =>
             {
-                isNetworkLock = false;
+                //isNetworkLock = false;
             }
             );
     }
@@ -248,15 +245,16 @@ public class Network_Mgr : MonoBehaviour
             ImageUrl = strJson
         };
 
-        isNetworkLock = true;
+        netWaitTime = 0.5f;
+
         PlayFabClientAPI.UpdateAvatarUrl(request,
             (result) =>
             {
-                isNetworkLock = false;
+                //isNetworkLock = false;
             },
             (error) =>
             {
-                isNetworkLock = false;
+                //isNetworkLock = false;
             }
             );
     }
@@ -265,7 +263,7 @@ public class Network_Mgr : MonoBehaviour
     {
         if (GlobalValue.g_Unique_ID == "" || nickName == "") return;
 
-        isNetworkLock = true;
+        netWaitTime = 0.5f;
 
         //PlayFabClientAPI.UpdateUserTitleDisplayName(
         //    new UpdateUserTitleDisplayNameRequest()
@@ -275,7 +273,7 @@ public class Network_Mgr : MonoBehaviour
         //    (result) =>
         //    { 
         //        GlobalValue.g_NickName = result.DisplayName;
-                
+
         //        if (Game_Mgr.Inst != null)
         //        {
         //            Game_Mgr.Inst.m_UserInfoText.text = "내정보 : 별명(" +
