@@ -1,0 +1,85 @@
+﻿<html>
+	<head>
+	<title>Account Book</title>
+	</head>
+	<body>
+		<form method="post" action="TodayComeinout.html">
+
+			<table border="1" cellspacing="1" cellpadding="10" width="500" align="center">
+				<th colspan="3" bgcolor="blue" span style="color:white">오늘의 수입/지출</th>
+				<tr bgcolor="#00aaff" align="center">
+					<td>내용</td>
+					<td>수입</td>
+					<td>지출</td>
+				</tr>
+				<tr align="center">
+					<td>월급!</td>
+					<td align="center">
+						<input type="text" size="15" maxlength="12" name="pay_earning" value="1000000" style="width:100%; height:100%; text-align:center; padding-right:0px" />
+					</td>
+					<td align="center">
+						<input type="text" size="15" maxlength="12" name="pay_expense" value="0" style="text-align:center; padding-right:1px" />
+					</td>
+				</tr>
+				<tr align="center">
+					<td>점심값</td>
+					<td>
+						<input type="text" size="15" maxlength="12" name="get_lunch" value="0" style="text-align:center; padding-right:1px" />
+					</td>
+					<td>
+						<input type="text" size="15" maxlength="12" name="cost_lunch" value="0" style="text-align:center; padding-right:1px" />
+					</td>
+				</tr>
+				<tr align="center">
+					<td>부모님선물</td>
+					<td>
+						<input type="text" size="15" maxlength="12" name="get_money" value="0" style="text-align:center; padding-right:1px" />
+
+					</td>
+					<td>
+						<input type="text" size="15" maxlength="12" name="cost_present" value="0" style="text-align:center; padding-right:1px" />
+					</td>
+				</tr>
+				<tr>
+					<td rowspan="3" align="center" bgcolor="skyblue"><b>총계</b></td>
+					<td><b>총수입</b></td>
+					<td><b>총지출</b></td>
+				</tr>
+				<tr>
+					<td id="result_sum">1000000</td>
+					<td id="total_expense">0</td>
+				</tr>
+				<tr>
+					<td>남은돈</td>
+					<td id="total_result">1000000</td>
+				</tr>
+			</table>
+
+			<br />
+			<div style="text-align:center">
+				<input type="button" value="확인" onclick="MySend(this.form)" />
+				<input type="reset" value="다시 작성" onclick="MyReset(this.form)" />
+			</div>
+		</form>
+		<script language="javascript">
+			function MySend(form) {
+				result_sum.innerHTML = parseInt(form.pay_earning.value, 10)
+					+ parseInt(form.get_lunch.value, 10) + parseInt(form.get_money.value, 10);
+				total_expense.innerHTML = parseInt(form.pay_expense.value, 10)
+					+ parseInt(form.cost_lunch.value, 10) + parseInt(form.cost_present.value, 10);
+				total_result.innerHTML = result_sum.innerHTML - total_expense.innerHTML;
+			}
+			function MyReset(form) {
+				result_sum.innerHTML = 1000000;
+				total_expense.innerHTML = 0;
+				total_result.innerHTML = 1000000;
+				pay_earning.innerHTML = 1000000;
+				pay_expense.innerHTML = 0;
+				get_lunch.innerHTML = 0;
+				cost_lunch.innerHTML = 0;
+				get_money.innerHTML = 0;
+				cost_present.innerHTML = 0;
+			}
+		</script>
+	</body>
+</html>

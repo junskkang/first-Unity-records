@@ -1,0 +1,100 @@
+﻿<html>
+<head>
+    <title>회원가입 페이지 만들어보기</title>
+</head>
+<body>
+    <h1 align="center">▶ 회원가입</h1>
+    <form method="post" action="AccountCreateResult.php">
+        <input type="hidden" name="Account" value="회원 가입 양식" />
+        <table border="1" align="center">
+            <tr>
+                <td align="right" width="160">* 아이디 : </td>
+                <td align="left" width="560">
+                    <input type="text" maxlength="8" name="input_ID" value="8글자이내 입력"
+                           style="text-align:left" required />
+                </td>
+            </tr>
+            <tr>
+                <td align="right" width="160">* 이름 : </td>
+                <td align="left" width="560">
+                    <input type="text" maxlength="8" name="input_Name" value="본명 기입"
+                           style="text-align:left" required />
+                </td>
+            </tr>
+            <tr>
+                <td align="right" width="160">* 비밀번호 : </td>
+                <td align="left" width="560">
+                    <input type="password" maxlength="10" name="input_Pw" value="****"
+                           style="text-align:left" required />
+                </td>
+            </tr>
+            <tr>
+                <td align="right" width="160">* 비밀번호 확인 : </td>
+                <td align="left" width="560">
+                    <input type="password" maxlength="10" name="input_PwCheck" value="****"
+                           style="text-align:left" required />
+                </td>
+            </tr>
+            <tr>
+                <td align="right" width="160">성 별 : </td>
+                <td align="left" width="560">
+                    남 <input type="radio" name="gender" value="M" />
+                    여 <input type="radio" name="gender" value="F" />
+                </td>
+            </tr>
+            <tr>
+                <td align="right" width="160">휴대전화 : </td>
+                <td align="left" width="560">
+                    <select name="phone_1" size="1" />
+                    <option value="010">010</option>
+                    <option value="011">011</option>
+                    <option value="017">017</option>
+                    </select>
+                    - <input type="tel" name="phone_2" value="" size="5" maxlength="4" />
+                    - <input type="tel" name="phone_3" value="" size="5" maxlength="4"/>
+                </td>
+            </tr>
+            <tr>
+                <td align="right">주 소 : </td>
+                <td align="left">
+                    <input type="text" name="input_Address" style="width:80%" />
+                </td>
+            </tr>
+            <tr>
+                <td align="right">취 미 :</td>
+                <td>
+                    <input type="checkbox" name="check_Movie" value="Yes" />영화감상
+                    <input type="checkbox" name="check_Book" value="Yes" />독서
+                    <input type="checkbox" name="check_Shopping" value="Yes" />쇼핑
+                    <input type="checkbox" name="check_Health" value="Yes" />운동
+                </td>
+            </tr>
+            <tr>
+                <td align="right" height="150"> 자기소개 : </td>
+                <td>
+                    <textarea cols="120" rows="5" name="input_SaySomething" placeholder="자기소개를 적어보아요."></textarea>
+                </td>
+            </tr>
+        </table>
+        <br />
+        <br />
+        <div style="text-align:center">
+            <input type="submit" value="확인" /> &nbsp; &nbsp;
+            <!--"submit은 어딘가에 제출하겠다는 의미, button은 자기 자신의 페이지에서 함수 호출용으로 사용"-->
+            <input type="reset" value="다시 작성" onclick="MyClear(this.form)" />
+        </div>
+    </form>
+</body>
+<script language="javascript">
+    function MyClear(form) {
+        input_ID.innerHTML = "8글자이내 입력";
+        input_Name.innerHTML = "본명 기입";
+        input_Pw.innerHTML = "****";
+        input_PwCheck.innerHTML = "****";
+        phone_2.innerHTML = "";
+        phone_3.innerHTML = "";
+        input_Address.innerHTML = "";
+        input_SaySomething.innerHTML = "자기소개를 적어보아요.";
+    }
+</script>
+</html>
