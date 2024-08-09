@@ -1,0 +1,43 @@
+﻿<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<html>
+<head>
+    <title>아이템 관리 프로그램</title>
+</head>
+<body>
+    <div style="text-align:center">
+        <h2>▶아이템 입력 폼</h2>
+        <form method="post" action="Item_Print.php">
+            <input type="hidden" name="title" value="아이템 입력 양식" /> <!--hidden:눈에보이지 않는 변수-->
+            <table border="1" width="640" cellspacing="1" cellpadding="4"
+                   style="margin-left:auto; margin-right:auto">
+                <tr>
+                    <td align="right"> * 아이템 이름 : </td>
+                    <td><input type="text" maxlength="12" name="ItemName" value="guest" /></td>
+                </tr>
+                <tr>
+                    <td align="right"> * 레벨 (1 ~ 30) : </td>
+                    <td><input type="text" maxlength="12" name="ItemLevel" value="0" /></td>
+                </tr>
+                <tr>
+                    <td align="right"> * 공격상승률 (0.01 ~ 1.0) : </td>
+                    <td><input type="text" maxlength="12" name="ItemAttRate" value="0" /></td>
+                </tr>
+                <tr>
+                    <td align="right"> * 가격 (500 ~ 10000) : </td>
+                    <td><input type="text" maxlength="12" name="ItemPrice" value="0" /></td>
+                </tr>
+            </table>    
+            <br />
+            <br />
+            <table border="0" width="640" style="margin-left:auto; margin-right:auto"> 
+                <tr align="center">
+                    <td>
+                        <input type="submit" value="확인" />&nbsp;&nbsp;
+                        <input type="reset" value="초기화" />
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</body>
+</html>
