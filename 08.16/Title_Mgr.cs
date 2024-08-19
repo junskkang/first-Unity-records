@@ -47,7 +47,7 @@ public class Title_Mgr : MonoBehaviour
         if (m_CreateAccountBtn != null)
             m_CreateAccountBtn.onClick.AddListener(CreateAccountBtn);
 
-        LoginUrl = "http://http://junskk.dothome.co.kr/practice/Login.php";
+        LoginUrl = "http://junskk.dothome.co.kr/practice/Login.php";
         CreateUrl = "http://junskk.dothome.co.kr/practice/CreateAccount.php";
     }
 
@@ -143,7 +143,9 @@ public class Title_Mgr : MonoBehaviour
             GlobalValue.g_Unique_ID = a_IdStr; //유저의 고유번호
 
             string a_GetStr = sz.Substring(sz.IndexOf("{\""));
-            a_GetStr = a_GetStr.Replace("\nLogin_Success!!", "");
+
+            //Debug.Log(a_GetStr);
+            a_GetStr = a_GetStr.Replace("\nLogin_Success!!","");
 
 
             SvRespon response = JsonUtility.FromJson<SvRespon>(a_GetStr); //Json 파싱

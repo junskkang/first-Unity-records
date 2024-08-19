@@ -72,6 +72,8 @@ public class NetworkMgr : MonoBehaviour
             StartCoroutine(UpdateScoreCo());
         else if (m_PacketBuff[0] == PacketType.UserGold)
             StartCoroutine(UpdateGoldCo());
+        else if (m_PacketBuff[0] == PacketType.InfoUpdate)
+            StartCoroutine(UpdateInfoCo());
 
         m_PacketBuff.RemoveAt(0);
     }
@@ -137,6 +139,47 @@ public class NetworkMgr : MonoBehaviour
         isNetworkLock = false;
         m_NetWaitTime = 0.0f;
 
+    }
+
+    IEnumerator UpdateInfoCo()
+    {
+        if (GlobalValue.g_Unique_ID == "") yield break; //로그인 안되어 있으면 정지
+
+        //Json 만들기
+        
+        ItemList itemList = new ItemList();
+        itemList.SkList = new int[GlobalValue.g_SkillCount.Length];
+        for (int i = 0; i < GlobalValue.g_SkillCount.Length; i++)
+        {
+            itemList.SkList[i] = GlobalValue.g_SkillCount[i];
+        }
+        //Json 문자열로 변환 예시 : {"SkList" : [1,1,0]}
+        string strJson = JsonUtility.ToJson(itemList);
+
+        WWWForm form = new WWWForm();
+        //Input_user라는 필드에 유니크ID를 UTF8인코딩으로 입력시키기
+        form.AddField("Input_user", GlobalValue.g_Unique_ID, System.Text.Encoding.UTF8);
+        form.AddField("Item_list", strJson, System.Text.Encoding.UTF8);
+
+        isNetworkLock = true;
+        m_NetWaitTime = 3.0f;
+
+        UnityWebRequest www = UnityWebRequest.Post(InfoUpdateUrl, form);
+        yield return www.SendWebRequest();  //응답이 올 때까지 대기하기
+
+        if (www.error == null)  //에러가 나지 않았다면 == 정상 작동
+        {
+            //Debug.Log("Update Success~");
+        }
+        else
+        {
+            Debug.Log(www.error);
+        }
+
+        www.Dispose();
+
+        isNetworkLock = false;
+        m_NetWaitTime = 3.0f;
     }
 
     public void PushPacket(PacketType a_PType)
