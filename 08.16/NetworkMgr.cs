@@ -39,9 +39,9 @@ public class NetworkMgr : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        BestScoreUrl = "http://http://junskk.dothome.co.kr/practice/UpdateBScore.php";
-        MyGoldUrl = "http://http://junskk.dothome.co.kr/practice/UpdateMyGold.php";
-        InfoUpdateUrl = "http://http://junskk.dothome.co.kr/practice/InfoUpdate.php";
+        BestScoreUrl = "http://junskk.dothome.co.kr/practice/UpdateBScore.php";
+        MyGoldUrl = "http://junskk.dothome.co.kr/practice/UpdateMyGold.php";
+        InfoUpdateUrl = "http://junskk.dothome.co.kr/practice/InfoUpdate.php";
     }
 
     // Update is called once per frame

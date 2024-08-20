@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-[System.Serializable]
+[System.Serializable]   //파싱을 위한 코드
 public class UserInfo
 {
     public string user_id;
@@ -28,6 +28,12 @@ public class LobbyNetworkMgr : MonoBehaviour
 
     [HideInInspector] public float RestoreTimer = 0.0f;
 
+
+    [HideInInspector] public string m_NickStrBuff;
+    [HideInInspector] public ConfigBox m_RefCfgBox;
+    string UpdateNickUrl = "";
+   
+
     //싱글턴 패턴을 위한 인스턴스 변수 선언
     public static LobbyNetworkMgr Inst = null;
 
@@ -40,6 +46,7 @@ public class LobbyNetworkMgr : MonoBehaviour
     void Start()
     {
         GetRankListUrl = "http://junskk.dothome.co.kr/practice/Get_ID_Rank.php";
+        UpdateNickUrl = "http://junskk.dothome.co.kr/practice/UpdateNickname.php";
 
         RestoreTimer = 3.0f;    //랭킹 타이머 갱신
 
@@ -49,10 +56,33 @@ public class LobbyNetworkMgr : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+#if AutoRestore //자동랭킹 갱신
+        RestoreTimer -= Time.deltaTime;
+        if (RestoreTimer <= 0.0f)
+        {
+            GetRankingList();
+            RestoreTimer = 7.0f;    //주기
+        }
+#else   //수동랭킹 갱신
         if (0.0f < RestoreTimer)
         {
             RestoreTimer -= Time.deltaTime;
         }
+#endif
+
+        if (!isNetworkLock) //현재 처리 중인 패킷이 없을 때
+        {
+            if (m_PacketBuff.Count > 0)
+                Req_Network();
+        }
+    }
+
+    void Req_Network()
+    {
+        if (m_PacketBuff[0] == PacketType.NickUpdate)
+            StartCoroutine(NickChangeCo(m_NickStrBuff));
+
+        m_PacketBuff.RemoveAt(0);
     }
 
     public void GetRankingList()
@@ -100,7 +130,7 @@ public class LobbyNetworkMgr : MonoBehaviour
     }
 
     void RecRankList_MyRank(string strJson)
-    {
+    {//Record Ranking List and My Rank
         if (!strJson.Contains("RkList")) return;
 
         //Json 파일 파싱
@@ -118,5 +148,105 @@ public class LobbyNetworkMgr : MonoBehaviour
         //Debug.Log("MyRank : " + m_RkList.my_rank);
 
         LobbyMgr.Inst.RefreshRankUI(m_RkList);
+    }
+
+    IEnumerator NickChangeCo(string a_Nick)
+    {
+        if (GlobalValue.g_Unique_ID == "") yield break;
+
+        if (a_Nick == "") yield break;
+                
+
+        WWWForm form = new WWWForm();
+        form.AddField("Input_user", GlobalValue.g_Unique_ID, System.Text.Encoding.UTF8);
+        form.AddField("Input_nick", GlobalValue.g_NickName, System.Text.Encoding.UTF8);
+
+        UnityWebRequest www = UnityWebRequest.Post(UpdateNickUrl, form);
+
+        //타임아웃 설정(초 단위로 설정)
+        float timeout = 3.0f;
+        bool isTimeout = false;
+        float startTime = Time.unscaledTime;
+
+        isNetworkLock = true;
+
+        //요청 보내기
+        www.SendWebRequest();
+
+        while (!www.isDone && !isTimeout)   //아직 응답이 오지 않았고 타임아웃상태가 아니라면
+        {
+            if (Time.unscaledTime - startTime > timeout)    //흐른시간 > timeout(3초)
+            {
+                isTimeout = true;
+            }
+
+            yield return null;  //다음 프레임까지 대기
+        }
+        
+        //타임아웃 처리
+        if (isTimeout)
+        {
+            www.Abort();    //요청을 중단
+            isNetworkLock = false;
+            if (m_RefCfgBox != null)
+                m_RefCfgBox.ResultOkBtn(true, "Request timed out");
+            yield break;
+        }
+
+        System.Text.Encoding enc = System.Text.Encoding.UTF8;
+        string sz = enc.GetString(www.downloadHandler.data);
+
+        bool isWait = false;
+        string msg = "";
+
+        if (www.error == null)
+        {
+            if (sz.Contains("Update Nick Success."))
+            {
+                GlobalValue.g_NickName = a_Nick;
+                LobbyMgr.Inst.RefreshUserInfo();
+
+                //별명이 바뀌었으므로 랭킹도 다시 받아온다.
+                GetRankingList();
+                RestoreTimer = 7.0f;
+            }
+            else if (sz.Contains("Nickname does exist."))
+            {
+                isWait = true;
+                msg = "중복된 닉네임이 존재합니다.";
+            }
+            else
+            {
+                isWait = true;
+                msg = sz;
+            }
+        }
+        else
+        {
+            isWait = true;
+            msg = sz + " : " + www.error;
+        }
+
+        www.Dispose();
+        isNetworkLock = false;
+
+        if (m_RefCfgBox != null)
+            m_RefCfgBox.ResultOkBtn(isWait, msg);
+
+    }
+
+    public void PushPacket(PacketType a_PType)
+    {
+        bool a_isExist = false;
+        for (int i = 0; i < m_PacketBuff.Count; i++)
+        {
+            if (m_PacketBuff[i] == a_PType) //아직 처리 되지 않은 패킷이 존재하면
+                a_isExist = true;
+            //또 추가하지 않고 기존 버퍼의 패킷으로 업데이트 한다.
+        }
+
+        if (a_isExist == false)
+            m_PacketBuff.Add(a_PType);
+        //대기 중인 이 타입의 패킷이 없으면 새로 추가한다.
     }
 }

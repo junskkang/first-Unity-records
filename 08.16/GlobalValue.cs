@@ -60,7 +60,8 @@ public class GlobalValue
         //PlayerPrefs.SetInt("BestFloorNum", 99);
         //PlayerPrefs.SetInt("CurFloorNum", 99);
 
-        g_BestFloor = PlayerPrefs.GetInt("BestFloorNum", 1);
-        g_CurFloorNum = PlayerPrefs.GetInt("CurFloorNum", 1);
+        //로컬에 층 로딩, 저장 부분 서버로 옮기기 위해 주석처리 (08/20)
+        //g_BestFloor = PlayerPrefs.GetInt("BestFloorNum", 1);
+        //g_CurFloorNum = PlayerPrefs.GetInt("CurFloorNum", 1);
     }//public static void LoadGameData()
 }

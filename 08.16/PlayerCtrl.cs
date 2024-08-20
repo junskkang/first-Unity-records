@@ -265,12 +265,14 @@ public class PlayerCtrl : MonoBehaviour
                 coll.gameObject.name.Contains("Gate_Exit_2") == true)
         {
             GlobalValue.g_CurFloorNum++;
-            PlayerPrefs.SetInt("CurFloorNum", GlobalValue.g_CurFloorNum);
+            //로컬에 층 로딩, 저장 부분 서버로 옮기기 위해 주석처리 (08/20)
+            //PlayerPrefs.SetInt("CurFloorNum", GlobalValue.g_CurFloorNum);
 
             if(GlobalValue.g_BestFloor < GlobalValue.g_CurFloorNum)
             {
                 GlobalValue.g_BestFloor = GlobalValue.g_CurFloorNum;
-                PlayerPrefs.SetInt("BestFloorNum", GlobalValue.g_BestFloor);
+                //로컬에 층 로딩, 저장 부분 서버로 옮기기 위해 주석처리 (08/20)
+                //PlayerPrefs.SetInt("BestFloorNum", GlobalValue.g_BestFloor);
             }
 
             if(GlobalValue.g_CurFloorNum < 100)
@@ -314,7 +316,8 @@ public class PlayerCtrl : MonoBehaviour
             if (GlobalValue.g_CurFloorNum < 1)
                 GlobalValue.g_CurFloorNum = 1;
 
-            PlayerPrefs.SetInt("CurFloorNum", GlobalValue.g_CurFloorNum);
+            //로컬에 층 로딩, 저장 부분 서버로 옮기기 위해 주석처리 (08/20)
+            //PlayerPrefs.SetInt("CurFloorNum", GlobalValue.g_CurFloorNum);
 
             SceneManager.LoadScene("scLevel01");
             SceneManager.LoadScene("scPlay", LoadSceneMode.Additive);

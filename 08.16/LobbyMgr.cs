@@ -21,6 +21,11 @@ public class LobbyMgr : MonoBehaviour
     public Text MessageText;
     float ShowMsTimer = 0.0f;
 
+    [Header("ConfigBox")]
+    public Button ConfigBtn;
+    public GameObject Canvas_Dialog;
+    public GameObject configBoxObj;
+
     public static LobbyMgr Inst = null;
 
     void Awake()
@@ -52,6 +57,8 @@ public class LobbyMgr : MonoBehaviour
         if (m_Clear_Save_Btn != null)
             m_Clear_Save_Btn.onClick.AddListener(Clear_Save_Click);
 
+
+
         //if (RestRk_Btn != null)
         //    RestRk_Btn.onClick.AddListener();
 
@@ -66,6 +73,18 @@ public class LobbyMgr : MonoBehaviour
         if (RestRk_Btn != null)
             RestRk_Btn.onClick.AddListener(RestoreRank);
 #endif
+
+        //환경설정 추가
+        if (ConfigBtn != null)
+            ConfigBtn.onClick.AddListener(() =>
+            {
+                if (configBoxObj == null)
+                    configBoxObj = Resources.Load("ConfigBox") as GameObject;
+
+                GameObject ob = Instantiate(configBoxObj) as GameObject;
+                ob.transform.SetParent(Canvas_Dialog.transform, false);
+                Time.timeScale = 0.0f;
+            });
     }
 
     // Update is called once per frame
@@ -88,7 +107,9 @@ public class LobbyMgr : MonoBehaviour
             //마지막 층에 도달한 상태에서 게임을 시작 했다면...
             //바로 직전 층(99층)에서 시작하게 하기...
             GlobalValue.g_CurFloorNum = 99;
-            PlayerPrefs.SetInt("CurFloorNum", GlobalValue.g_CurFloorNum);
+            
+            //로컬에 층 로딩, 저장 부분 서버로 옮기기 위해 주석처리 (08/20)
+            //PlayerPrefs.SetInt("CurFloorNum", GlobalValue.g_CurFloorNum);
         }
 
         SceneManager.LoadScene("scLevel01");
