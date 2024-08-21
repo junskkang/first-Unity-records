@@ -11,6 +11,7 @@ public class LobbyMgr : MonoBehaviour
     public Button m_Store_Btn;
     public Button m_Logout_Btn;
     public Button m_Clear_Save_Btn;
+    
 
     public Text UserInfoText;
 
@@ -25,6 +26,9 @@ public class LobbyMgr : MonoBehaviour
     public Button ConfigBtn;
     public GameObject Canvas_Dialog;
     public GameObject configBoxObj;
+
+    //저장정보 초기화 관련 변수
+    float ClearLockTimer = 0.0f;
 
     public static LobbyMgr Inst = null;
 
@@ -98,6 +102,11 @@ public class LobbyMgr : MonoBehaviour
                 MessageOnOff("", false);    //메세지 끄기
             }
         }
+
+        if (0.0f < ClearLockTimer)
+        {
+            ClearLockTimer -= Time.deltaTime;   
+        }
     }
 
     void StartBtnClick()
@@ -118,9 +127,42 @@ public class LobbyMgr : MonoBehaviour
 
     void Clear_Save_Click()
     {
+        if (0.0f < ClearLockTimer)
+        {
+            MessageOnOff("저장정보 초기화 중입니다.");
+            return;
+        }
+
         PlayerPrefs.DeleteAll();
         GlobalValue.LoadGameData();
-        RefreshUserInfo();
+        //RefreshUserInfo();
+
+        LobbyNetworkMgr.Inst.DltMethod = Result_Clear_Save;
+        LobbyNetworkMgr.Inst.PushPacket(PacketType.ClearSave);
+
+        ClearLockTimer = 5.0f;
+        //5초간 재시도 제한
+    }
+
+    void Result_Clear_Save(bool isOk)
+    {
+        //서버 초기화 성공 후 모든 변수 초기화 필요
+        if (isOk)
+        {
+            GlobalValue.g_BestScore = 0;    //최고 기록
+            GlobalValue.g_UserGold = 0;     //게임머니
+            GlobalValue.g_Exp = 0;          //경험치
+            GlobalValue.g_Level = 0;        //레벨 초기화
+
+            GlobalValue.g_BestFloor = 1;    //최종 도달 층
+            GlobalValue.g_CurFloorNum = 1;  //현재 층
+
+            for (int i = 0; i < GlobalValue.g_SkillCount.Length; i++)
+            {
+                GlobalValue.g_SkillCount[i] = 1;    //아이템 보유 초기화
+            }
+            RefreshUserInfo();  //점수, 골드값 UI 초기화
+        }
     }
 
     public void RefreshUserInfo()

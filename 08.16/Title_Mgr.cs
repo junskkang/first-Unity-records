@@ -154,19 +154,33 @@ public class Title_Mgr : MonoBehaviour
             GlobalValue.g_BestScore = response.best_score;
             GlobalValue.g_UserGold  = response.game_gold;
 
-            //ItemList 로딩해 오기...
-            ItemList a_ItList = JsonUtility.FromJson<ItemList>(response.info);
-            if(a_ItList != null && a_ItList.SkList != null)
+            //층정보 불러오기
+            if (!string.IsNullOrEmpty(response.floor_info))
             {
-                for(int i = 0; i < a_ItList.SkList.Length; i++)
+                FloorInfo floorInfo = JsonUtility.FromJson<FloorInfo>(response.floor_info);
+                if (floorInfo != null)
                 {
-                    if (GlobalValue.g_SkillCount.Length <= i)
-                        continue;
+                    GlobalValue.g_CurFloorNum = floorInfo.CurFloor;
+                    GlobalValue.g_BestFloor = floorInfo.BestFloor;
+                }
+            }
 
-                    GlobalValue.g_SkillCount[i] = a_ItList.SkList[i];
-                }//for(int i = 0; i < a_ItList.SkList.Length; i++)
-            }//if(a_ItList != null && a_ItList.SkList != null)
             //ItemList 로딩해 오기...
+            if (!string.IsNullOrEmpty(response.info))
+            {
+                ItemList a_ItList = JsonUtility.FromJson<ItemList>(response.info);
+                if (a_ItList != null && a_ItList.SkList != null)
+                {
+                    for (int i = 0; i < a_ItList.SkList.Length; i++)
+                    {
+                        if (GlobalValue.g_SkillCount.Length <= i)
+                            continue;
+
+                        GlobalValue.g_SkillCount[i] = a_ItList.SkList[i];
+                    }//for(int i = 0; i < a_ItList.SkList.Length; i++)
+                }//if(a_ItList != null && a_ItList.SkList != null)
+                 //ItemList 로딩해 오기...
+            }
 
             SceneManager.LoadScene("Lobby");
         }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -28,11 +29,15 @@ public class LobbyNetworkMgr : MonoBehaviour
 
     [HideInInspector] public float RestoreTimer = 0.0f;
 
-
+    //닉네임 변경에 필요한 변수
     [HideInInspector] public string m_NickStrBuff;
     [HideInInspector] public ConfigBox m_RefCfgBox;
     string UpdateNickUrl = "";
-   
+
+    //델리게이트 관련 필요 변수
+    public delegate void DLT_Response(bool isOk);   //델리게이트 데이터(타입)형 하나 선언
+    [HideInInspector] public DLT_Response DltMethod = null; //델리게이트 변수 선언(소켓역할)
+    string ClearDataUrl = "";
 
     //싱글턴 패턴을 위한 인스턴스 변수 선언
     public static LobbyNetworkMgr Inst = null;
@@ -47,6 +52,7 @@ public class LobbyNetworkMgr : MonoBehaviour
     {
         GetRankListUrl = "http://junskk.dothome.co.kr/practice/Get_ID_Rank.php";
         UpdateNickUrl = "http://junskk.dothome.co.kr/practice/UpdateNickname.php";
+        ClearDataUrl = "http://junskk.dothome.co.kr/practice/ClearData.php";
 
         RestoreTimer = 3.0f;    //랭킹 타이머 갱신
 
@@ -81,6 +87,8 @@ public class LobbyNetworkMgr : MonoBehaviour
     {
         if (m_PacketBuff[0] == PacketType.NickUpdate)
             StartCoroutine(NickChangeCo(m_NickStrBuff));
+        else if (m_PacketBuff[0] == PacketType.ClearSave)
+            StartCoroutine(UpdateClearSaveCo());
 
         m_PacketBuff.RemoveAt(0);
     }
@@ -235,6 +243,68 @@ public class LobbyNetworkMgr : MonoBehaviour
 
     }
 
+    IEnumerator UpdateClearSaveCo()
+    {
+        if (GlobalValue.g_Unique_ID == "") yield break;
+
+        WWWForm form = new WWWForm();   
+        form.AddField("Input_user", GlobalValue.g_Unique_ID, System.Text.Encoding.UTF8);
+
+        UnityWebRequest www = UnityWebRequest.Post(ClearDataUrl, form);
+
+        float timeout = 3.0f;
+        bool isTimeout = false;
+        float startTime = Time.unscaledTime;
+
+        isNetworkLock = true;
+
+        www.SendWebRequest(); 
+
+        while (!www.isDone && !isTimeout)
+        {
+            if (Time.unscaledTime - startTime > timeout)
+            {
+                isTimeout = true;
+            }
+            yield return null;  //다음 프레임까지 대기
+        }
+
+        if (isTimeout)
+        {
+            www.Abort();    //요청을 중단
+            isNetworkLock = false;
+
+            if (DltMethod != null)
+                DltMethod(false);
+
+            yield break;
+        }
+
+        if (www.error == null)   //에러가 나지 않았다면
+        {
+            Debug.Log("Clear Data Success");
+
+            if (DltMethod != null)
+                DltMethod(true);
+        }
+        else
+        {
+            Debug.Log(www.error);
+
+            if (DltMethod != null)
+                DltMethod(false);
+        }
+
+        //정보 초기화 했으니 다시 랭킹 받아오기
+        GetRankingList();
+        RestoreTimer = 7.0f;
+
+        DltMethod = null;
+
+        www.Dispose();
+        isNetworkLock = false;
+
+    }
     public void PushPacket(PacketType a_PType)
     {
         bool a_isExist = false;

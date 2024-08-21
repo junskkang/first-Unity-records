@@ -37,8 +37,17 @@
 		die("Nickname does exist.");
 	}
 
-	$Result = mysqli_query($con, "INSERT INTO Practice (user_id, user_pw, nick_name) VALUES 
-				( '{$u_id}', '{$u_pw}', '{$nick}' );" );
+	//-->  {"SkList":[1,1,1]}​ 체험판 스킬 주기
+
+	// 배열 생성 
+	$Jdata = array( "SkList" => array(1, 1, 1) );
+
+	// 배열을 JSON 문자열로 변환
+	$jsonString = json_encode($Jdata);
+
+
+	$Result = mysqli_query($con, "INSERT INTO Practice (user_id, user_pw, nick_name, info) VALUES 
+				( '{$u_id}', '{$u_pw}', '{$nick}', '{$jsonString}' );" );
 
 	if($Result)
 		echo "Create Success.";

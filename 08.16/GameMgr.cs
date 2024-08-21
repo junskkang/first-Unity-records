@@ -120,6 +120,11 @@ public class GameMgr : MonoBehaviour
 
         DispScore(0);
 
+        NetworkMgr.Inst.PushPacket(PacketType.FloorUpdate);
+        //항상 씬에 들어올 때 마다
+        //GlobalValue의 현재 층과 최고층에 변화가 생길 것으로 예상하고
+        //서버에 층 변경을 요청한다
+
         if(BackBtn != null)
             BackBtn.onClick.AddListener(() =>
             {

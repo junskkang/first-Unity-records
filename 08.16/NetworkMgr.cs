@@ -42,6 +42,7 @@ public class NetworkMgr : MonoBehaviour
         BestScoreUrl = "http://junskk.dothome.co.kr/practice/UpdateBScore.php";
         MyGoldUrl = "http://junskk.dothome.co.kr/practice/UpdateMyGold.php";
         InfoUpdateUrl = "http://junskk.dothome.co.kr/practice/InfoUpdate.php";
+        UpdateFloorUrl = "http://junskk.dothome.co.kr/practice/UpdateFloor.php";
     }
 
     // Update is called once per frame
@@ -74,6 +75,8 @@ public class NetworkMgr : MonoBehaviour
             StartCoroutine(UpdateGoldCo());
         else if (m_PacketBuff[0] == PacketType.InfoUpdate)
             StartCoroutine(UpdateInfoCo());
+        else if (m_PacketBuff[0] == PacketType.FloorUpdate)
+            StartCoroutine(UpdateFloorCo());
 
         m_PacketBuff.RemoveAt(0);
     }
@@ -180,6 +183,43 @@ public class NetworkMgr : MonoBehaviour
 
         isNetworkLock = false;
         m_NetWaitTime = 3.0f;
+    }
+
+    IEnumerator UpdateFloorCo()
+    {
+        if (GlobalValue.g_Unique_ID == "") yield break; //로그인 안되어 있으면 정지
+
+        //Json 만들기
+        FloorInfo a_FInfo = new FloorInfo();
+        a_FInfo.CurFloor = GlobalValue.g_CurFloorNum;
+        a_FInfo.BestFloor = GlobalValue.g_BestFloor;
+        string strJson = JsonUtility.ToJson(a_FInfo);
+
+
+        WWWForm form = new WWWForm();
+        form.AddField("Input_user", GlobalValue.g_Unique_ID, System.Text.Encoding.UTF8);
+        form.AddField("Input_floor", strJson, System.Text.Encoding.UTF8);
+
+        isNetworkLock = true;
+
+        m_NetWaitTime = 3.0f;
+
+        UnityWebRequest www = UnityWebRequest.Post(UpdateFloorUrl, form);
+        yield return www.SendWebRequest();
+
+        if (www.error == null)
+        {
+            //Debug.Log("UpdateSuccess~");
+        }
+        else
+        {
+            Debug.Log(www.error);
+        }
+
+        www.Dispose ();
+
+        isNetworkLock = false;
+        m_NetWaitTime = 0.0f;
     }
 
     public void PushPacket(PacketType a_PType)

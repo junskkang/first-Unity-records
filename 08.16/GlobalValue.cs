@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,6 +15,13 @@ public enum SkillType
 public class ItemList
 {
     public int[] SkList;
+}
+
+[System.Serializable]
+public class FloorInfo
+{
+    public int CurFloor;
+    public int BestFloor;
 }
 
 [System.Serializable]
@@ -64,4 +72,22 @@ public class GlobalValue
         //g_BestFloor = PlayerPrefs.GetInt("BestFloorNum", 1);
         //g_CurFloorNum = PlayerPrefs.GetInt("CurFloorNum", 1);
     }//public static void LoadGameData()
+
+    public static void ClearGameData()
+    {
+        g_Unique_ID = "";
+        g_NickName = "";
+        g_BestScore = 0;
+        g_UserGold = 0;
+        g_Exp = 0;
+        g_Level = 0;
+
+        g_BestFloor = 1;
+        g_CurFloorNum = 1;
+
+        for (int i = 0; i < g_SkillCount.Length; i++)
+        {
+            g_SkillCount[i] = 0;
+        }
+    }
 }
