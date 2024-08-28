@@ -55,7 +55,7 @@ public class HitText : MonoBehaviour
             hitText.fontSize = size;
         }
 
-        transform.position = startPos;
+        //transform.position = startPos;
 
         Destroy(gameObject, 1.0f);
     }

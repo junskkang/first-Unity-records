@@ -6,7 +6,8 @@ using UnityEngine;
 public class MarkMgr : MonoBehaviour
 {
     public Transform refAimObj;
-    [HideInInspector] public float downscaleSpeed = 0.5f;
+    float Speed = 0.0f;
+
 
     // Start is called before the first frame update
     void Start()
@@ -14,7 +15,9 @@ public class MarkMgr : MonoBehaviour
         if(refAimObj == null )
             refAimObj.GetComponent<Transform>();
 
-        Invoke("Miss", 2.5f/downscaleSpeed);
+        Speed = GameMgr.inst.downscaleSpeed;
+
+        Invoke("Miss", 6.5f/ Speed);
     }
 
     // Update is called once per frame
@@ -23,8 +26,13 @@ public class MarkMgr : MonoBehaviour
         if (refAimObj != null)
         {
             refAimObj.transform.Rotate(0, 0, 10 * Time.deltaTime);
-            refAimObj.transform.localScale = new Vector3(refAimObj.transform.localScale.x - downscaleSpeed * Time.deltaTime,
-                refAimObj.transform.localScale.y - downscaleSpeed * Time.deltaTime, refAimObj.transform.localScale.z);
+            refAimObj.transform.localScale = new Vector3(refAimObj.transform.localScale.x - Speed * Time.deltaTime,
+                refAimObj.transform.localScale.y - Speed * Time.deltaTime, refAimObj.transform.localScale.z);
+        }
+
+        if (refAimObj.transform.localScale.x <= 0.85f)
+        {
+            refAimObj.GetComponent<SpriteRenderer>().color = Color.black;
         }
     }
 
@@ -36,36 +44,20 @@ public class MarkMgr : MonoBehaviour
 
     public void HitPointerCheck()
     {
-        //Debug.Log("함수 호출 여부");
-        if (1.41f <= refAimObj.transform.localScale.x)
-        {
-            Destroy(this.gameObject);
-            GameMgr.inst.Judge("Miss", gameObject.transform.position);
-            //게임매니저에서 점수 호출
-            //넘겨줄 것 : 마크오브젝트의 위치(해당 오브젝트에 파티클 이펙트 뿌리기)
-            //            스트링이나 점수를 넘겨서 계산 산정하기
-            //            
-        }
-        else if (1.06f <= refAimObj.transform.localScale.x)
-        {
-            Destroy(this.gameObject);
-            GameMgr.inst.Judge("Good", gameObject.transform.position);
-        }
-        else if (0.66f <= refAimObj.transform.localScale.x)
-        {
-            Destroy(this.gameObject);
-            GameMgr.inst.Judge("Great", gameObject.transform.position);
-        }
-        else if (0.28f <= refAimObj.transform.localScale.x)
-        {
-            Destroy(this.gameObject);
-            GameMgr.inst.Judge("Excellent", gameObject.transform.position);
-        }
-        else if (refAimObj.transform.localScale.x <= 0.28f)
-        {
-            Destroy(this.gameObject);
-            GameMgr.inst.Judge("Nice", gameObject.transform.position);
-        }
+        string hit = "";
+        
+        if (4.25f <= refAimObj.transform.localScale.x)
+            hit = "Miss";
+        else if (3.05f <= refAimObj.transform.localScale.x)
+            hit = "Good";
+        else if (1.95f <= refAimObj.transform.localScale.x)
+            hit = "Great";
+        else if (0.85f <= refAimObj.transform.localScale.x)
+            hit = "Excellent";
+        else if (refAimObj.transform.localScale.x <= 0.85f)
+            hit = "Nice";
 
+        Destroy(this.gameObject);
+        GameMgr.inst.Judge(hit, gameObject.transform.position);
     }
 }
