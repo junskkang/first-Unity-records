@@ -14,6 +14,8 @@ public class GameMgr : MonoBehaviour
     int comboCount = 0;
     int bestCombo = 0;
 
+    bool isStop = false;
+
     public int hpCount = 10;
     int maxHp = 10;
 
@@ -59,7 +61,7 @@ public class GameMgr : MonoBehaviour
         if (pauseBtn != null)
             pauseBtn.onClick.AddListener(() =>
             {
-                Time.timeScale = 0.0f;
+                PauseClick();
             });
     }
 
@@ -72,7 +74,7 @@ public class GameMgr : MonoBehaviour
             gameoverImg.gameObject.SetActive(true);
         }
 
-        playTime = Time.time;
+        playTime += Time.deltaTime;
         timeText.text = playTime.ToString("N2");
 
         timer -= Time.deltaTime;
@@ -232,6 +234,16 @@ public class GameMgr : MonoBehaviour
 
         AddScore(addScore);
         
+    }
+
+    void PauseClick()
+    {
+        isStop = !isStop;
+
+        if (isStop)
+            Time.timeScale = 0.0f;
+        else
+            Time.timeScale = 1.0f;
     }
 
 }
