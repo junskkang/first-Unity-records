@@ -11,7 +11,8 @@ public enum PacketType
     CreateAccount,
     Login,
     BestScore,
-    ClearSave    
+    ClearSave,
+    RankingUpdate
 }
 
 public class NetworkManager : G_Singleton<NetworkManager>
@@ -60,6 +61,8 @@ public class NetworkManager : G_Singleton<NetworkManager>
             UpdateScore();
         else if (packetBuff[0] == PacketType.ClearSave)
             ClearSaveDataCo();
+        else if (packetBuff[0] == PacketType.RankingUpdate)
+            RankingUp();
 
         packetBuff.RemoveAt(0);
     }
@@ -286,6 +289,67 @@ public class NetworkManager : G_Singleton<NetworkManager>
 
                         }
                         );
+    }
+
+    public void RankingUp()
+    {
+        if (GlobalUserData.Unique_ID == "")  //로그인 상태에서만...
+            return;
+
+        var request = new GetLeaderboardRequest
+        {
+            StartPosition = 0,              //0번 인덱스 즉 1등부터
+            StatisticName = "BestScore",
+            //관리자 페이지의 순위표 변수 중 "BestScore" 기준
+            MaxResultsCount = 10,           //10명까지
+            ProfileConstraints = new PlayerProfileViewConstraints()
+            {
+                ShowDisplayName = true, //닉네임도 요청
+                //ShowAvatarUrl = true  //유저 사진 썸네일 주소도 요청(이건 경험치로 사용)
+            }
+        };
+
+        netWaitTime = 0.5f;
+
+        PlayFabClientAPI.GetLeaderboard(
+            request,
+
+            (result) =>
+            { //랭킹 리스트 받아오기 성공
+
+                string a_strBuff = "";
+
+                for (int i = 0; i < result.Leaderboard.Count; i++)
+                {
+                    var curBoard = result.Leaderboard[i];
+                    //int a_ULevel = LvMyJsonParser(curBoard.Profile.AvatarUrl);
+
+                    //등수 안에 내가 있다면 색 표시
+                    if (curBoard.PlayFabId == GlobalUserData.Unique_ID)
+                        a_strBuff += "<color=#008800>";
+
+                    a_strBuff += (i + 1).ToString() + "등 : " +
+                                    curBoard.DisplayName + " : " +
+                                    curBoard.StatValue + "점" + "\n";
+
+                    //등수 안에 내가 있다면 색 표시
+                    if (curBoard.PlayFabId == GlobalUserData.Unique_ID)
+                        a_strBuff += "</color>";
+
+                }//for(int i = 0; i < result.Leaderboard.Count; i++)
+
+                if (a_strBuff != "")
+                    GameMgr.inst.rankingText.text = a_strBuff;
+
+                //리더보드 등수를 불러온 직 후 내 등수를 불러 온다.
+                //GetMyRanking();
+            },
+
+            (error) =>
+            { //랭킹 리스트 방오기 실패 했을 때 
+                Debug.Log("리더보드 불러오기 실패");
+                //isNetworkLock = false;
+            });
     }
 
     public void PushPacket(PacketType a_PType, string id = "", string pw = "", string nick = "")

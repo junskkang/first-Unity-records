@@ -1,4 +1,7 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.TextCore.Text;
 using UnityEngine.UI;
 
 public class GameMgr : MonoBehaviour
@@ -29,6 +32,13 @@ public class GameMgr : MonoBehaviour
     public Image hpImage;
     public Text hpText;
     public Image gameoverImg;
+    public GameObject overParent;
+    public Button rankingBtn;
+    public Button exitBtn;
+    public Text recordText;
+    public GameObject rankingBoard;
+    public Text rankingText;
+
 
 
     public GameObject hitTextPrefab;
@@ -70,8 +80,7 @@ public class GameMgr : MonoBehaviour
     {
         if (180.0f <= playTime)
         {
-            Time.timeScale = 0.0f;
-            gameoverImg.gameObject.SetActive(true);
+            GameOver();
         }
 
         playTime += Time.deltaTime;
@@ -117,8 +126,8 @@ public class GameMgr : MonoBehaviour
     {
         curScore += point;
 
-        if (curScore <= bestScore)
-            bestScore = curScore;
+        if (curScore >= bestScore)
+            GlobalUserData.BestScore = curScore;
 
         if (scoreText != null)
             scoreText.text = $"SCORE : {curScore}";
@@ -135,7 +144,7 @@ public class GameMgr : MonoBehaviour
             comboCount = 0;
         }        
 
-        if (comboCount <= bestCombo)
+        if (comboCount >= bestCombo)
             bestCombo = comboCount;
 
         if (comboText != null)
@@ -154,8 +163,7 @@ public class GameMgr : MonoBehaviour
 
         if (hpCount <= 0)
         {
-            Time.timeScale = 0.0f;
-            gameoverImg.gameObject.SetActive(true);
+            GameOver();
         }
     }
 
@@ -244,6 +252,59 @@ public class GameMgr : MonoBehaviour
             Time.timeScale = 0.0f;
         else
             Time.timeScale = 1.0f;
+    }
+
+    public void GameOver()
+    {
+        Time.timeScale = 0.0f;
+        gameoverImg.gameObject.SetActive(true);
+
+        NetworkManager.Inst.PushPacket(PacketType.BestScore);
+
+        StartCoroutine(GameoverMenu());
+    }
+
+    IEnumerator GameoverMenu()
+    {
+        yield return new WaitForSecondsRealtime(1.5f);
+
+        overParent.gameObject.SetActive(true);
+
+        yield return new WaitForSecondsRealtime(0.5f);
+
+        if (recordText != null)
+        {
+            string text = $"이번 기록 : {curScore}\n\n최고 기록 : {GlobalUserData.BestScore}\n\n" +
+                         $"최대 콤보 : {bestCombo}";
+            char[] split = text.ToCharArray();
+            recordText.text = "";
+
+            for (int i = 0; i < split.Length; i++)
+            {
+                recordText.text += split[i];
+                yield return new WaitForSecondsRealtime(0.15f);
+            }
+
+        }
+
+        if (exitBtn != null)
+        {
+            exitBtn.onClick.AddListener(() =>
+            {
+                Time.timeScale = 1.0f;
+                SceneManager.LoadScene("TitleScene");
+            });
+        }
+
+        if (rankingBtn != null)
+        {
+            rankingBtn.onClick.AddListener(() => 
+            {
+                rankingBoard.gameObject.SetActive(true);
+
+                NetworkManager.Inst.PushPacket(PacketType.RankingUpdate);
+            });
+        }
     }
 
 }

@@ -96,8 +96,6 @@ public class TitleManager : MonoBehaviour
         newIdInputField.text = "";
         newPassInputField.text = "";
         newNickInputField.text = "";
-
-
     }
 
     private void CreateAccountBtn()
