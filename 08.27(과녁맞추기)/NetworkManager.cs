@@ -142,6 +142,8 @@ public class NetworkManager : G_Singleton<NetworkManager>
                 {
                     if (int.TryParse(eachData.Value.Value, out a_GetValue) == true)
                         GlobalUserData.BestScore = a_GetValue;
+
+                    Debug.Log(GlobalUserData.BestScore);
                 }
             }//foreach( var eachData in result.InfoResultPayload.UserData)
              //--- < 플레이어 데이터(타이틀) >값 받아오기
@@ -258,13 +260,45 @@ public class NetworkManager : G_Singleton<NetworkManager>
         PlayFabClientAPI.UpdateUserData(request,
             (result) =>
             {
-                //Debug.Log("데이터 저장 성공");
+                UpdateRank();
+                Debug.Log("데이터 저장 성공");
             },
             (error) =>
             {
                 //Debug.Log("데이터 저장 실패 " + error.GenerateErrorReport());
             });
     }
+
+    void UpdateRank()
+    {
+        if (GlobalUserData.Unique_ID == "")
+            return;
+
+        var request = new UpdatePlayerStatisticsRequest()
+        {
+            Statistics = new List<StatisticUpdate>()
+            {
+                new StatisticUpdate()
+                {
+                    StatisticName = "BestScore",
+                    Value = GlobalUserData.BestScore
+                }
+            }
+        };
+
+        netWaitTime = 0.5f;
+        PlayFabClientAPI.UpdatePlayerStatistics(request,
+            (result) =>
+            {
+                Debug.Log("랭킹 업로드 성공");
+            },
+            (error) =>
+            {
+                Debug.Log("랭킹 업로드 실패" + error.ToString());
+            });
+
+    }
+
 
     void ClearSaveDataCo()
     {

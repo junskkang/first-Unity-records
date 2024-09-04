@@ -38,6 +38,7 @@ public class GameMgr : MonoBehaviour
     public Text recordText;
     public GameObject rankingBoard;
     public Text rankingText;
+    public Button closeBtn;
 
 
 
@@ -73,13 +74,22 @@ public class GameMgr : MonoBehaviour
             {
                 PauseClick();
             });
+
+        if (closeBtn != null)
+            closeBtn.onClick.AddListener(() =>
+            {
+                if (rankingBoard.gameObject.activeSelf)
+                {
+                    rankingBoard.gameObject.SetActive(false);   
+                }
+            });
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (180.0f <= playTime)
-        {
+        if (140.0f <= playTime)
+        {            
             GameOver();
         }
 
@@ -104,7 +114,7 @@ public class GameMgr : MonoBehaviour
         
         if (level <= 12)
         {
-            if (playTime >= level * 10)
+            if (playTime >= level * 7)
             {
                 level++;
 
@@ -126,7 +136,7 @@ public class GameMgr : MonoBehaviour
     {
         curScore += point;
 
-        if (curScore >= bestScore)
+        if (curScore >= GlobalUserData.BestScore)
             GlobalUserData.BestScore = curScore;
 
         if (scoreText != null)
@@ -163,6 +173,7 @@ public class GameMgr : MonoBehaviour
 
         if (hpCount <= 0)
         {
+            
             GameOver();
         }
     }
@@ -256,12 +267,15 @@ public class GameMgr : MonoBehaviour
 
     public void GameOver()
     {
-        Time.timeScale = 0.0f;
-        gameoverImg.gameObject.SetActive(true);
+        if (!gameoverImg.gameObject.activeSelf)
+        {
+            Time.timeScale = 0.0f;
+            gameoverImg.gameObject.SetActive(true);
 
-        NetworkManager.Inst.PushPacket(PacketType.BestScore);
+            NetworkManager.Inst.PushPacket(PacketType.BestScore);
 
-        StartCoroutine(GameoverMenu());
+            StartCoroutine(GameoverMenu());
+        }
     }
 
     IEnumerator GameoverMenu()
@@ -305,6 +319,8 @@ public class GameMgr : MonoBehaviour
                 NetworkManager.Inst.PushPacket(PacketType.RankingUpdate);
             });
         }
+
+        yield break;
     }
 
 }
