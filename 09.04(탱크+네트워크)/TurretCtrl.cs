@@ -33,5 +33,30 @@ public class TurretCtrl : MonoBehaviour
             //rotSpeed 변수에 지정된 속도로 Y축 회전
             tr.Rotate(0, angle * Time.deltaTime * rotSpeed, 0);
         }
+        else
+        {
+            //origin : 레이의 시작지점 
+            //direction : 레이의 방향
+            Vector3 orgVec = ray.origin + ray.direction * 2000.0f;
+            //반대방향으로 쏘는 이유 : 구는 바깥에만 그리고 있어서 안에서 쏘면 히트가 되지 않음
+            ray = new Ray(orgVec, -ray.direction);
+
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity, 1 << LayerMask.NameToLayer("TurretPickObject")))
+            {
+                Vector3 cacVec = hit.point - transform.position;
+                Quaternion rotate = Quaternion.LookRotation(cacVec.normalized);
+                rotate.eulerAngles = new Vector3(transform.eulerAngles.x,
+                    rotate.eulerAngles.y, transform.eulerAngles.z);
+                transform.rotation = Quaternion.Slerp(transform.rotation, rotate, Time.deltaTime * 10.0f);
+                transform.localEulerAngles = new Vector3(0.0f, transform.localEulerAngles.y, 0.0f);
+
+                ////Ray에 맞은 위치를 로컬좌표로 변환
+                //Vector3 relative = tr.InverseTransformPoint(hit.point);
+                ////역탄젠트 함수인 Atan2로 두 점 간의 각도를 계산
+                //float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
+                ////rotSpeed 변수에 지정된 속도로 Y축 회전
+                //tr.Rotate(0, angle * Time.deltaTime * rotSpeed, 0);
+            }
+        } 
     }
 }
