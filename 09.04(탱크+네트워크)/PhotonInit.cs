@@ -1,4 +1,5 @@
 using Photon.Pun;
+using Photon.Realtime;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -55,6 +56,42 @@ public class PhotonInit : MonoBehaviourPunCallbacks
         PhotonNetwork.JoinRandomRoom();
     }
 
-   
+    //PhotonNetwork.JoinRandomRoom();함수가 실패하면 호출되는 함수
+    public override void OnJoinRandomFailed(short returnCode, string message)
+    {
+        //base.OnJoinRandomFailed(returnCode, message);
+        Debug.Log("접속할 방이 존재하지 않습니다.");
+
+        //접속할 방이 없다면 방을 생성하면서 들어감
+        //생성할 룸의 조건부터 설정
+        RoomOptions roomOptions = new RoomOptions();    //using Photon.Realtime;
+        roomOptions.IsVisible = true;   //로비에서 룸의 노출 여부
+        roomOptions.MaxPlayers = 8;     //룸에 입장할 수 있는 최대 접속자 수
+
+        //위에서 지정한 조건을 갖는 룸생성 함수
+        PhotonNetwork.CreateRoom("MyRoom", roomOptions);
+    }
+
+
+    //PhotonNetwork.CreateRoom();
+    //PhotonNetwork.JoinRoom();
+    //PhotonNetwork.JoinRandomRoom();
+    //위의 세가지 경우를 통해서 방 입장에 성공하면 호출 되는 함수
+    public override void OnJoinedRoom()
+    {
+        Debug.Log("방 입장에 성공하였습니다.");
+
+        //탱크를 생성하는 함수 호출
+        //플레이어끼리 실시간으로 공유해야할 오브젝트는
+        //포톤에서 제공해주는 함수를 통해서 동적 생성해야지만 
+        //해당룸에 같이 있는 모든 플레이어에게 동시에 적용된다.
+        CreateTank();
+    }
+
+    void CreateTank()
+    {
+        float pos = Random.Range(-100.0f, 100.0f);
+        PhotonNetwork.Instantiate("Tank", new Vector3(pos, 20.0f, pos), Quaternion.identity, 0);
+    }
 }
 

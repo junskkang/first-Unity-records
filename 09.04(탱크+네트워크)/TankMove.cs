@@ -1,8 +1,10 @@
+using Photon.Pun;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityStandardAssets.Utility;
 
-public class TankMove : MonoBehaviour
+public class TankMove : MonoBehaviourPunCallbacks, IPunObservable
 {
     //탱크의 이동 및 회전 속도를 나타내는 변수
     public float moveSpeed = 20.0f;
@@ -14,24 +16,85 @@ public class TankMove : MonoBehaviour
 
     //키보드 입력값 변수
     private float h, v;
+
+    //PhotonView 컴포넌트를 할당할 변수
+    private PhotonView pv = null;
+    //메인카메라가 추적할 CamPivot 게임오브젝트
+    public Transform camPivot;
+
+    //위치 정보를 송수신할 때 사용할 변수 선언 및 초깃값 설정
+    Vector3 currPos = Vector3.zero;
+    Quaternion currRot = Quaternion.identity;
+
     void Start()
     {
         //컴포넌트 할당
         rbody = GetComponent<Rigidbody>();
         tr = GetComponent<Transform>();
+        pv = GetComponent<PhotonView>();
 
         //Rigidbody의 무게중심을 낮게 설정
         rbody.centerOfMass = new Vector3(0.0f, -2.5f, 0.0f);
+
+        //PhotonView가 자신의 탱크일 경우
+        if (pv.IsMine)
+        {
+            //메인 카메라에 추가된 SmoothFollw 스크립트에 추적대상을 연결
+            Camera.main.GetComponent<SmoothFollow>().target = camPivot;
+        }
+        else
+        {
+            //원격 네트워크 플레이어의 탱크는 물리력을 이용하지 않음
+            rbody.isKinematic = true;
+        }
+
+        //원격 탱크의 위치 및 회전값을 처리할 변수의 초기값 설정
+        currPos = transform.position;
+        currRot = transform.rotation;
     }
 
     // Update is called once per frame
     void Update()
     {
-        h = Input.GetAxis("Horizontal");
-        v = Input.GetAxis("Vertical");
+        //자신이 만든 네트워크 게임오브젝트가 아닌 경우 키보드 조작 불가능
+        if (pv.IsMine)
+        {
+            h = Input.GetAxis("Horizontal");
+            v = Input.GetAxis("Vertical");
 
-        //회전과 이동 처리
-        tr.Rotate(Vector3.up * rotSpeed * h * Time.deltaTime);
-        tr.Translate(Vector3.forward * v * moveSpeed * Time.deltaTime);
+            //회전과 이동 처리
+            tr.Rotate(Vector3.up * rotSpeed * h * Time.deltaTime);
+            tr.Translate(Vector3.forward * v * moveSpeed * Time.deltaTime);
+        }
+        else //원격 플레이어에 보이는 나의 아바타일 때는...
+        {
+            if (10.0f < (transform.position - currPos).magnitude)
+            {
+                //중계 받은 좌표와 현재좌표의 거리차가 10m 이상이면 즉시 점프시켜 보정
+                transform.position = currPos;
+            }
+            else
+            {
+                //원격 플레이어의 탱크를 수신받은 위치까지 부드럽게 이동시킴
+                tr.position = Vector3.Lerp(tr.position, currPos, Time.deltaTime * 10.0f);
+            }
+            tr.rotation = Quaternion.Slerp(tr.rotation, currRot, Time.deltaTime * 10.0f);
+        }
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        //로컬 플레이어의 위치 정보 송신
+        if (stream.IsWriting)
+        {
+            stream.SendNext(tr.position);
+            stream.SendNext(tr.rotation);
+        }
+        else //원격 플레이어 PC에 보이는 IsMine의 아바타 오브젝트 위치 정보 수신
+        {
+            currPos = (Vector3) stream.ReceiveNext();
+            currRot = (Quaternion) stream.ReceiveNext();
+        }
+
     }
 }

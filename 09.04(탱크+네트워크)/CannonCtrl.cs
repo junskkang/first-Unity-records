@@ -1,73 +1,103 @@
+using Photon.Pun;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CannonCtrl : MonoBehaviour
+public class CannonCtrl : MonoBehaviourPunCallbacks,IPunObservable
 {
     private Transform tr;
     public float rotSpeed = 1000.0f;
 
     private RaycastHit hit;
 
+    private PhotonView pv = null;
+    private Quaternion currRot = Quaternion.identity;   
+
     // Start is called before the first frame update
     void Start()
     {
         tr = GetComponent<Transform>();
+        pv = GetComponent<PhotonView>();
+
+        //초기 회전값 저장
+        currRot = transform.localRotation;
     }
 
     // Update is called once per frame
     void Update()
     {
-        //float angle = -Input.GetAxis("Mouse ScrollWheel") * Time.deltaTime * rotSpeed;
-        //tr.Rotate(angle, 0, 0);          
-
-        //메인 카메라에서 마우스 커서의 위치로 캐스팅되는 레이캐스트생성
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out hit, Mathf.Infinity, 1 << LayerMask.NameToLayer("TERRAIN"))) 
+        if (pv.IsMine)
         {
-            //포신에서 히트를 향하는 벡터
-            Vector3 cacVec = hit.point - transform.position;
-            //해당 벡터의 회전값을 구함
-            Quaternion rotate = Quaternion.LookRotation(cacVec.normalized); 
-            //x축으로만 회전을 줄것이기에 나머지는 고정시키기 
-            rotate.eulerAngles = new Vector3(rotate.eulerAngles.x, transform.eulerAngles.y, transform.eulerAngles.z);
-            //보간함수를 통해 스무스하게 회전되도록함
-            transform.rotation = Quaternion.Slerp(transform.rotation, rotate, Time.deltaTime * 10.0f);
-            //y,z축으로는 회전이 없도록 다시 한 번 초기값으로 고정시켜버림
-            transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, 0.0f, 0.0f);
-        }
-        else
-        {
-            //origin : 레이의 시작지점 
-            //direction : 레이의 방향
-            Vector3 orgVec = ray.origin + ray.direction * 2000.0f;
-            //반대방향으로 쏘는 이유 : 구는 바깥에만 그리고 있어서 안에서 쏘면 히트가 되지 않음
-            ray = new Ray(orgVec, -ray.direction);
+            //float angle = -Input.GetAxis("Mouse ScrollWheel") * Time.deltaTime * rotSpeed;
+            //tr.Rotate(angle, 0, 0);          
 
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity, 1 << LayerMask.NameToLayer("TurretPickObject")))
+            //메인 카메라에서 마우스 커서의 위치로 캐스팅되는 레이캐스트생성
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity, 1 << LayerMask.NameToLayer("TERRAIN")))
             {
+                //포신에서 히트를 향하는 벡터
                 Vector3 cacVec = hit.point - transform.position;
+                //해당 벡터의 회전값을 구함
                 Quaternion rotate = Quaternion.LookRotation(cacVec.normalized);
-                rotate.eulerAngles = new Vector3(rotate.eulerAngles.x,
-                    transform.eulerAngles.y, transform.eulerAngles.z);
+                //x축으로만 회전을 줄것이기에 나머지는 고정시키기 
+                rotate.eulerAngles = new Vector3(rotate.eulerAngles.x, transform.eulerAngles.y, transform.eulerAngles.z);
+                //보간함수를 통해 스무스하게 회전되도록함
                 transform.rotation = Quaternion.Slerp(transform.rotation, rotate, Time.deltaTime * 10.0f);
+                //y,z축으로는 회전이 없도록 다시 한 번 초기값으로 고정시켜버림
                 transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, 0.0f, 0.0f);
             }
+            else
+            {
+                //origin : 레이의 시작지점 
+                //direction : 레이의 방향
+                Vector3 orgVec = ray.origin + ray.direction * 2000.0f;
+                //반대방향으로 쏘는 이유 : 구는 바깥에만 그리고 있어서 안에서 쏘면 히트가 되지 않음
+                ray = new Ray(orgVec, -ray.direction);
+
+                if (Physics.Raycast(ray, out hit, Mathf.Infinity, 1 << LayerMask.NameToLayer("TurretPickObject")))
+                {
+                    Vector3 cacVec = hit.point - transform.position;
+                    Quaternion rotate = Quaternion.LookRotation(cacVec.normalized);
+                    rotate.eulerAngles = new Vector3(rotate.eulerAngles.x,
+                        transform.eulerAngles.y, transform.eulerAngles.z);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, rotate, Time.deltaTime * 10.0f);
+                    transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, 0.0f, 0.0f);
+                }
+            }
+
+            //포신 각도 제한
+            Vector3 angle = transform.localEulerAngles;
+            if (angle.x < 180.0f)
+            {
+                if (5.0f < angle.x)
+                    angle.x = 5.0f;
+            }
+            else
+            {
+                if (angle.x < 330.0f)
+                    angle.x = 330.0f;
+            }
+            transform.localEulerAngles = angle;
+        }
+        else        //나의 아바타 탱크일경우
+        {
+            tr.localRotation = Quaternion.Slerp(tr.localRotation, currRot, Time.deltaTime * 10.0f);
         }
 
-        //포신 각도 제한
-        Vector3 angle = transform.localEulerAngles;
-        if (angle.x < 180.0f)
+
+        
+
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
         {
-            if (5.0f < angle.x)
-                angle.x = 5.0f;
+            stream.SendNext(tr.localRotation);
         }
         else
         {
-            if (angle.x < 330.0f)
-                angle.x = 330.0f;
+            currRot = (Quaternion)stream.ReceiveNext(); 
         }
-        transform.localEulerAngles = angle;
-
     }
 }
