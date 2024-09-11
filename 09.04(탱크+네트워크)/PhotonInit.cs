@@ -3,9 +3,15 @@ using Photon.Realtime;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class PhotonInit : MonoBehaviourPunCallbacks
 {
+    //플레이어의 이름을 입력하는 UI
+    public InputField userIdInput;
+    public Button joinButton;
+
     private void Awake()
     {
        if (!PhotonNetwork.IsConnected)
@@ -15,17 +21,44 @@ public class PhotonInit : MonoBehaviourPunCallbacks
             PhotonNetwork.ConnectUsingSettings();
 
         }
+
+        userIdInput.text = GetUserId();
     }
     // Start is called before the first frame update
     void Start()
     {
-        
+        if (joinButton != null)
+            joinButton.onClick.AddListener(ClickJoninButton);
     }
 
     // Update is called once per frame
     void Update()
     {
         
+    }
+
+    //로컬에 저장된 플레이어 이름을 반환하거나 생성하는 함수
+    string GetUserId()
+    {
+        string userId = PlayerPrefs.GetString("USER_ID");
+        if (string.IsNullOrEmpty(userId))
+        {
+            userId = "USER_" + Random.Range(0, 999).ToString("000");
+        }
+
+        return userId;
+    }
+
+    public void ClickJoninButton()
+    {
+        //로컬 플레이어의 이름을 설정
+        PhotonNetwork.LocalPlayer.NickName = userIdInput.text;
+
+        //플레이어 이름을 저장
+        PlayerPrefs.SetString("USER_ID", userIdInput.text);
+
+        //무작위 방 입장 시도
+        PhotonNetwork.JoinRandomRoom();
     }
 
     private void OnGUI()
@@ -53,7 +86,9 @@ public class PhotonInit : MonoBehaviourPunCallbacks
         Debug.Log("로비접속 성공");
 
         //무작위 방 입장 시도
-        PhotonNetwork.JoinRandomRoom();
+        //PhotonNetwork.JoinRandomRoom();
+
+        userIdInput.text = GetUserId();
     }
 
     //PhotonNetwork.JoinRandomRoom();함수가 실패하면 호출되는 함수
@@ -85,13 +120,37 @@ public class PhotonInit : MonoBehaviourPunCallbacks
         //플레이어끼리 실시간으로 공유해야할 오브젝트는
         //포톤에서 제공해주는 함수를 통해서 동적 생성해야지만 
         //해당룸에 같이 있는 모든 플레이어에게 동시에 적용된다.
-        CreateTank();
+        //CreateTank();
+
+        StartCoroutine(this.LoadBattleField());
     }
 
-    void CreateTank()
+    //배틀씬으로 이동하는 코루틴 함수
+    IEnumerator LoadBattleField()
     {
-        float pos = Random.Range(-100.0f, 100.0f);
-        PhotonNetwork.Instantiate("Tank", new Vector3(pos, 20.0f, pos), Quaternion.identity, 0);
+        //씬을 이용하는 동안 포톤 클라우드 서버로부터 네트워크 메세지 수신 중단
+        PhotonNetwork.IsMessageQueueRunning = false;
+
+        Time.timeScale = 1.0f;  //게임에 들어갈 때 원래 속도로 돌려놓기
+
+        //백그라운드로 씬 로딩
+        //Async 비동기식 로딩 (병렬식 로딩)
+        //뒤에서 로딩하는 동안 로딩하는 연출을 보여주거나 하는 용도로 사용
+        AsyncOperation ao = SceneManager.LoadSceneAsync("scBattleField");
+        //while (!ao.isDone)
+        //{
+        //    Debug.Log(ao.progress); //로딩 진행 상태 출력
+        //}
+        
+
+
+        yield return ao;
     }
+
+    //void CreateTank()
+    //{
+    //    float pos = Random.Range(-100.0f, 100.0f);
+    //    PhotonNetwork.Instantiate("Tank", new Vector3(pos, 20.0f, pos), Quaternion.identity, 0);
+    //}
 }
 

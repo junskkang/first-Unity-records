@@ -32,8 +32,8 @@ public class TurretCtrl : MonoBehaviourPunCallbacks, IPunObservable
     void Update()
     {
         //자신의 탱크일 때만 조정
-        if (pv.IsMine)
-        {        
+        if (pv.IsMine && GameManager.isFocus)
+        {          
             //메인 카메라에서 마우스 커서의 위치로 캐스팅되는 Ray를 생성
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             //생성된 Ray를 Scene뷰에 녹색 광선으로 표현

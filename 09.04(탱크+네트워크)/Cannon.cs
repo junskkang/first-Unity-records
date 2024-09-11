@@ -49,8 +49,10 @@ public class Cannon : MonoBehaviour
         //물리엔진의 영향을 받을 필요 없음
         if (_rigid != null)
         {
-            _rigid.velocity  = Vector3.zero;
+            //Debug.Log(_rigid.isKinematic);
             _rigid.collisionDetectionMode = CollisionDetectionMode.Discrete;
+            _rigid.isKinematic = false;
+            _rigid.velocity = Vector3.zero;
             _rigid.isKinematic = true;
         }
             

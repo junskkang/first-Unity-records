@@ -26,7 +26,7 @@ public class CannonCtrl : MonoBehaviourPunCallbacks,IPunObservable
     // Update is called once per frame
     void Update()
     {
-        if (pv.IsMine)
+        if (pv.IsMine && GameManager.isFocus)
         {
             //float angle = -Input.GetAxis("Mouse ScrollWheel") * Time.deltaTime * rotSpeed;
             //tr.Rotate(angle, 0, 0);          
