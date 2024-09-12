@@ -12,6 +12,18 @@ public class PhotonInit : MonoBehaviourPunCallbacks
     public InputField userIdInput;
     public Button joinButton;
 
+    //룸 이름을 입력받을 UI
+    public InputField roomName;
+    public Button createRoomBtn;
+
+    //룸 목록 갱신을 위한 변수들
+    public GameObject roomNodePrefab; //룸 목록만큼 생성될 Room Node Item
+    public Transform content;         //노드를 붙일 부모 객체
+    RoomIcon[] roomIconList;          //Content 하위의 차일드 목록을 찾기 위한 변수
+
+    
+    
+
     private void Awake()
     {
        if (!PhotonNetwork.IsConnected)
@@ -23,12 +35,17 @@ public class PhotonInit : MonoBehaviourPunCallbacks
         }
 
         userIdInput.text = GetUserId();
+        roomName.text = "Room_" + Random.Range(0, 999).ToString("000");
+        roomNodePrefab = Resources.Load("RoomIcon") as GameObject;
     }
     // Start is called before the first frame update
     void Start()
     {
         if (joinButton != null)
             joinButton.onClick.AddListener(ClickJoninButton);
+
+        if (createRoomBtn != null)
+            createRoomBtn.onClick.AddListener(OnClickCreateRoom);
     }
 
     // Update is called once per frame
@@ -152,5 +169,62 @@ public class PhotonInit : MonoBehaviourPunCallbacks
     //    float pos = Random.Range(-100.0f, 100.0f);
     //    PhotonNetwork.Instantiate("Tank", new Vector3(pos, 20.0f, pos), Quaternion.identity, 0);
     //}
+
+    public void OnClickCreateRoom()
+    {
+        string _roomName = roomName.text;
+        //룸 이름이 없거나 Null일 경우 룸 이름 지정
+        if (string.IsNullOrEmpty(roomName.text))
+        {
+            _roomName = "Room_" + Random.Range(0, 999).ToString("000");
+        }
+
+        //로컬 플레이어의 이름을 설정
+        PhotonNetwork.LocalPlayer.NickName = userIdInput.text;
+        //플레이어 이름을 로컬에 저장
+        PlayerPrefs.SetString("USER_ID", userIdInput.text);
+
+        //생성할 룸 조건 설정
+        RoomOptions roomOptions = new RoomOptions();
+        roomOptions.IsOpen = true;
+        roomOptions.IsVisible = true;
+        roomOptions.MaxPlayers = 8;
+
+        //지정한 조건에 맞는 룸 생성
+        PhotonNetwork.CreateRoom(_roomName, roomOptions, TypedLobby.Default);
+        //TypedLobby.Default : 어느 로비에 방을 만들건지
+
+        //MakeRoom();
+    }
+
+    //룸 생성 실패시 호출되는 콜백 함수
+    public override void OnCreateRoomFailed(short returnCode, string message)
+    {
+        Debug.Log("방 만들기 실패");
+        //주로 같은 이름의 방이 존재할 때 실패하게 됨.
+        Debug.Log(returnCode.ToString());
+        Debug.Log(message);
+    }
+
+    //생성된 룸 목록이 변경 되었을때 호출되는 오버라이드 함수
+    //방 리스트 갱신은 포톤 클라우드 로비에서만 가능하다.
+    //<이 함수가 호출되는 상황들>
+    //1. 내가 로비로 진입할 때
+    //2. 누군가 방을 새로 만들거나 방이 파괴될 때(해당 방에서 마지막사람까지 방을 나갔을 때)
+    //3. 방이 생성되는 시점에 로비에 대기중인 다른 사람들에게 호출
+    //4. 방이 리스트에 노출이 될 때 roomList[i].RemovedFromList = false;
+    //   방이 리스트에서 사라질 때 roomList[i].RemovedFromList = true;
+    //   (방이 사라짐, 꽉참, 숨겨짐)
+    public override void OnRoomListUpdate(List<RoomInfo> roomList)
+    {
+        
+    }
+
+    public void MakeRoom()
+    {
+        GameObject go = Instantiate(roomNodePrefab);
+        go.transform.SetParent(content.transform);
+
+    }
 }
 

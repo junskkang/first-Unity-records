@@ -35,6 +35,8 @@ public class GameManager : MonoBehaviour
     {
         isFocus = focus;
 
+        Debug.Log(isFocus);
+
         //true : 이 창에 포커스를 가져왔다는 의미
         //false : 포커스를 잃었다는 의미 
     }

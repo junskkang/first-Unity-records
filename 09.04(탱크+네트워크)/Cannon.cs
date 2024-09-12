@@ -12,6 +12,11 @@ public class Cannon : MonoBehaviour
     CapsuleCollider _collider;
     Rigidbody _rigid;
 
+    //포탄을 발사한 플레이어의 ID 저장
+    [HideInInspector] public int AttackerId = -1;
+    //누가 쏜 총알인지를 저장하기 위한 변수
+    //팀킬 방지 / 킬 카운트를 위하여 
+
     void Start()
     {
         _collider = GetComponent<CapsuleCollider>();
@@ -55,11 +60,17 @@ public class Cannon : MonoBehaviour
             _rigid.velocity = Vector3.zero;
             _rigid.isKinematic = true;
         }
-            
+        
+        //카메라와 포탄의 거리를 계산하여 그 거리에 따라
+        //이펙트가 터지는 위치를 보정해줌
+        Vector3 cacDist = transform.position - Camera.main.transform.position;
+        float backLength = cacDist.magnitude * 0.1f;
+        if (9.0f < backLength)
+            backLength = 9.0f;
 
         //폭발프리팹 동적 생성
         //좀 더 잘 보이게 하기 위해서 발사한 방향으로 살짝 이펙트를 앞으로 꺼냄
-        GameObject go = Instantiate(expEffect, transform.position - (transform.forward * 9.0f), Quaternion.identity);
+        GameObject go = Instantiate(expEffect, transform.position - (transform.forward * backLength), Quaternion.identity);
 
         Destroy(go, 1.0f);
 

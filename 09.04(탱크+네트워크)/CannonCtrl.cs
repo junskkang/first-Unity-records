@@ -97,7 +97,8 @@ public class CannonCtrl : MonoBehaviourPunCallbacks,IPunObservable
         }
         else
         {
-            currRot = (Quaternion)stream.ReceiveNext(); 
+            currRot = (Quaternion)stream.ReceiveNext();
+            //Debug.Log("정보가 들어오나?" + currRot);            
         }
     }
 }

@@ -17,6 +17,8 @@ public class FireCannon : MonoBehaviour
 
     private PhotonView pv = null;
 
+    TankDamage tankdamage = null;
+
 
     private void Awake()
     {
@@ -28,6 +30,8 @@ public class FireCannon : MonoBehaviour
         sfx = GetComponent<AudioSource>();
 
         pv = GetComponent<PhotonView>();
+
+        tankdamage = GetComponent<TankDamage>();
     }
     // Start is called before the first frame update
     void Start()
@@ -41,6 +45,8 @@ public class FireCannon : MonoBehaviour
         //마우스 왼쪽 버튼 클릭시 발사 로직 수행
         if (pv.IsMine && Input.GetMouseButtonDown(0))
         {
+            if (tankdamage != null && tankdamage.currHp <= 0) return;   //죽은상태에서 쏘지 못하게
+            
             //자신의 탱크일 경우는 로컬함수를 호출해 포탄을 발사
             Fire();
             //원격 네트워크에 있는 플레이어의 탱크에 RPC로 원격으로 함수를 호출
@@ -64,6 +70,9 @@ public class FireCannon : MonoBehaviour
     {
         //발사 사운드 재생
         sfx.PlayOneShot(fireSfx, 1.0f);
-        Instantiate(cannon, firePos.position, firePos.rotation);
+        GameObject cannon = Instantiate(this.cannon, firePos.position, firePos.rotation);
+        cannon.GetComponent<Cannon>().AttackerId = pv.Owner.ActorNumber;
+        //PhotonView.Owner.ActorNumber : 오너가 갖는 고유 넘버
+        //IsMine과 IsMine의 아바타도 모두 Owner판정
     }
 }
