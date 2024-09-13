@@ -66,8 +66,10 @@ public class TankMove : MonoBehaviourPunCallbacks, IPunObservable
     void Update()
     {
         //자신이 만든 네트워크 게임오브젝트가 아닌 경우 키보드 조작 불가능
-        if (pv.IsMine)
+        if (pv.IsMine) //  && !GameManager.inst.chatInput.isFocused
         {
+            if (GameManager.isChat) return;
+
             h = Input.GetAxis("Horizontal");
             v = Input.GetAxis("Vertical");
 

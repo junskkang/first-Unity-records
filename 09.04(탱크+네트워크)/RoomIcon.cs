@@ -12,12 +12,19 @@ public class RoomIcon : MonoBehaviour
     public Text textRoomName;
     public Text textConnectInfo;
 
-
+    public Button roomBtn;
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        this.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                PhotonInit refPI = FindObjectOfType<PhotonInit>();
+                if (refPI != null)
+                {
+                    refPI.OnClickRoomIcon(roomName);
+                }
+            });
     }
 
     // Update is called once per frame

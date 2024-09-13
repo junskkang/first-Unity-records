@@ -45,6 +45,9 @@ public class FireCannon : MonoBehaviour
         //마우스 왼쪽 버튼 클릭시 발사 로직 수행
         if (pv.IsMine && Input.GetMouseButtonDown(0))
         {
+            //마우스가 UI위에 있는지 판단
+            if (GameManager.IsPointerOverUIObject()) return;
+
             if (tankdamage != null && tankdamage.currHp <= 0) return;   //죽은상태에서 쏘지 못하게
             
             //자신의 탱크일 경우는 로컬함수를 호출해 포탄을 발사

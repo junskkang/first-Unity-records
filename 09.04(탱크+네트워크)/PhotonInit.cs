@@ -216,15 +216,99 @@ public class PhotonInit : MonoBehaviourPunCallbacks
     //   방이 리스트에서 사라질 때 roomList[i].RemovedFromList = true;
     //   (방이 사라짐, 꽉참, 숨겨짐)
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
-    {
-        
+    {        
+        roomIconList = content.transform.GetComponentsInChildren<RoomIcon>(true);
+        //roomIconList : 스크롤뷰에 노드로 달린 방 갯수
+        //roomList : 포톤에 등록된 변화가 있는 방 리스트 = 갱신해줘야 하는 방
+
+        int roomCount = roomList.Count;
+        int arrIdx = 0;
+        for (int i = 0; i < roomCount; i++)
+        {
+            arrIdx = MyFindIndex(roomIconList, roomList[i]);
+
+            if (!roomList[i].RemovedFromList) //방을 새로 생성하거나, 방정보를 갱신해줘야 하는 상황
+            {
+                
+                if (arrIdx < 0) //arrIdx == -1 : 일치하는 방이 없으므로 새로 생성
+                {
+                    //스크롤 뷰에 붙여줄 새로운 방 오브젝트를 생성해줘야함
+                    GameObject room = Instantiate(roomNodePrefab);
+                    room.transform.SetParent(content, false);
+                    //생성한 프리팹에 텍스트 정보 전달
+                    RoomIcon roomData = room.GetComponent<RoomIcon>();
+                    roomData.roomName = roomList[i].Name;
+                    roomData.connectPlayer = roomList[i].PlayerCount;
+                    roomData.maxPlayers = roomList[i].MaxPlayers;
+
+                    //텍스트 정보를 UI에 표시
+                    roomData.DispRoomData(roomList[i].IsOpen);
+                }
+                else
+                {
+                    //해당 방이 리스트 뷰에 존재하면 기존 방에 방정보만 갱신
+                    roomIconList[arrIdx].roomName = roomList[i].Name;
+                    roomIconList[arrIdx].connectPlayer = roomList[i].PlayerCount;
+                    roomIconList[arrIdx].maxPlayers = roomList[i].MaxPlayers;
+
+                    //텍스트 정보 갱신
+                    roomIconList[arrIdx].DispRoomData(roomList[i].IsOpen);
+                }
+            }
+            else //roomList[i].RemovedFromList == true (방이 사라짐, 꽉참, 숨겨짐)
+            {
+                if (0 <= arrIdx)
+                {
+                    //이 방 정보를 갖고 있는 리스트뷰 목록을 모두 제거
+                    MyDestroy(roomIconList, roomList[i]);
+                }
+            }
+        }
     }
 
-    public void MakeRoom()
+    int MyFindIndex(RoomIcon[] roomIconList, RoomInfo roomInfo)
     {
-        GameObject go = Instantiate(roomNodePrefab);
-        go.transform.SetParent(content.transform);
+        if (roomIconList == null) return -1;
 
+        if (roomIconList.Length <= 0) return -1;
+
+        for (int i = 0; i < roomIconList.Length; i++)
+        {
+            if (roomIconList[i].roomName == roomInfo.Name)
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
+
+    void MyDestroy(RoomIcon[] roomIconList, RoomInfo roomInfo)
+    {
+        if (roomIconList == null) return;
+        if (roomIconList.Length <= 0) return;
+
+        for (int i = 0; i < roomIconList.Length; i++)
+        {
+            if (roomIconList[i].roomName == roomInfo.Name)
+            {
+                Destroy(roomIconList[i].gameObject);
+
+            }
+        }
+    }
+
+    public void OnClickRoomIcon(string roomName)
+    {
+        //로컬 플레이어의 이름을 설정
+        PhotonNetwork.LocalPlayer.NickName = userIdInput.text;
+        //플레이어 이름을 저장
+        PlayerPrefs.SetString("USER_ID", userIdInput.text);
+
+        //매개변수로 전달된 이름에 해당하는 룸으로 입장
+        PhotonNetwork.JoinRoom(roomName);
+    }
+
+
 }
 
