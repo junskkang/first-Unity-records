@@ -37,16 +37,23 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
 
     PhotonView pv = null;
     //플레이어의 고유번호를 저장할 변수
-    int PlayerId = -1;
+    public int PlayerId = -1;
+
+    //Kill Count 동기화에 필요한 변수
+    //탱크 HUD에 표시할 스코어 Text UI 항목
+    public Text txtKillCount;
 
     //적 탱크 파괴 스코어를 CustomProperties를 통해 중계하기 위한 변수들
-    //int killCount = 0;
+    int killCount = 0;
     int lastAttackId = -1;  //막타를 누가 쳤는지 아이디를 받아놓을 변수
+
+    ExitGames.Client.Photon.Hashtable KillProps = new ExitGames.Client.Photon.Hashtable();
 
     private void Awake()
     {
         //탱크 모델의 모든 MeshRenderer 컴포넌트를 추출한 후 배열에 할당
         _renderers = GetComponentsInChildren<MeshRenderer>();
+        
         pv = GetComponent<PhotonView>();
 
         //현재 생명치를 초기 생명치로 초기값 설정
@@ -57,16 +64,31 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
         startColor = hpBarImg.color;
 
         PlayerId = pv.Owner.ActorNumber;
+
+        InitCustomProperties(pv);
     }
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
+    int updateCk = 2;
     // Update is called once per frame
     void Update()
     {
+        //탱크는 방에 처음 입장하면 안보이도록 처리
+        //타이밍 상 모두 update를 돌고난 후에 적용되어야 UI가 깨지지 않는다
+        if (0 < updateCk) 
+        {
+            updateCk--;
+            if (updateCk <= 0)
+            {
+                ReadyStateTank();
+            }
+        }
+
+
         if (PhotonNetwork.CurrentRoom == null ||
             PhotonNetwork.LocalPlayer == null) return;
         //동기화 가능한 상태일때만 업데이트를 계산해 준다.
@@ -79,9 +101,34 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
         {
             //원격 플레이어일때
             AvatarUpdate();
+
+            //아바타 탱크들 입장에서 KillCount 중계 받기
+            ReceiveKillCount();
         }
+
+        if (txtKillCount != null)
+            txtKillCount.text = killCount.ToString();   //킬 카운트 UI 갱신
     }
 
+    void ReadyStateTank()
+    {
+        if (GameManager.gameState != GameState.GS_Ready) return;
+
+        StartCoroutine(this.WaitReadyTank());
+    }
+
+    //게임 시작 대기 시
+    IEnumerator WaitReadyTank()
+    {
+        //HUD 비활성화
+        hudCanvas.enabled = false;
+
+        //탱크 투명처리
+        SetTankVisible(false);
+
+        while (GameManager.gameState == GameState.GS_Ready)
+            yield return null;
+    }
     private void OnTriggerEnter(Collider coll)
     {
         //충돌한 Collider의 태그 비교
@@ -194,7 +241,7 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
         Rigidbody[] rigids = GetComponentsInChildren<Rigidbody>(true);
         foreach (Rigidbody rig in rigids)
         {
-            rig.isKinematic = isVisible;
+            rig.isKinematic = !isVisible;
         }
 
         BoxCollider[] boxColliders = GetComponentsInChildren<BoxCollider>(true);
@@ -250,7 +297,12 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
                     //나에게 막타를 친 탱크가 누구인지를 파악해서 
                     //KillCount를 올려줘야함.
                     //자신을 파괴시킨 적 탱크의 스코어를 증가시키는 함수를 호출
-                    //
+                    //'죽는 탱크 입장'에서 나를 죽인 대상은 다른 플레이어의 '아바타'임
+                    //그래서 내 기준에서 존재하는 아바타들 중에서 lastAttackId와 동일한
+                    //아이디를 갖고 있는 IsMine을 찾아서 그곳에서 킬 카운트를 올리는
+                    //함수를 호출시켜줘야 함.
+                    
+                    SaveKillCount(lastAttackId);
                 }
             }
         }
@@ -275,6 +327,90 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
                 SetTankVisible(true);
 
             }
+        }
+    }
+
+    //자신을 파괴시킨 적 탱크를 찾아서 스코어를 증가시켜주는 함수
+    void SaveKillCount(int AttackerId)
+    {
+        //탱크 태그로 지정된 모든 오브젝트를 가져와 배열로 저장
+        GameObject[] tanks = GameObject.FindGameObjectsWithTag("TANK");
+        foreach (GameObject tank in tanks)
+        {
+            var tankDamage = tank.GetComponent<TankDamage>();
+            if (tankDamage != null && tankDamage.PlayerId == AttackerId)
+            {
+                //탱크의 PlayerId와 포탄의 AttackerID가 동일한지 판단
+                if (tankDamage.IncKillCount())
+                {
+                    return;
+                }
+            }
+        }
+    }
+
+    public bool IncKillCount()  
+    {
+        //때린 탱크 IsMine 입장에서 이 함수가 호출되어야 한다.
+        if (pv != null && pv.IsMine)
+        {
+            //IsMine 한군데서만 KillCount를 증가시키는 이유는
+            //IsMine과 아바타의 구분없이 모두 각각 KillCount를 증가시켜 중계하다보면
+            //KillCount가 어긋날 수 있기 때문
+            killCount++;
+
+            //IsMine일때만 중계함
+            SendKillCount(killCount);
+
+            return true;
+        }
+        
+        return false;
+    }
+
+    void InitCustomProperties(PhotonView pv)
+    {
+        //버퍼를 미리 만들어 놓기 위한 함수
+        if (pv != null && pv.IsMine)
+        {
+            //pv.IsMine == true 내가 조정하고 있는 탱크이고 스폰 시점에 초기화
+            KillProps.Clear();
+            KillProps.Add("KillCount", 0);  //키값과 밸류로 이루어져 있음
+            pv.Owner.SetCustomProperties(KillProps);
+        }
+    }
+
+    void SendKillCount(int killCount = 0)
+    {
+        if (pv == null) return;
+
+        if (!pv.IsMine) return; //IsMine에서만 중계를 보냄
+
+        if (KillProps == null)
+        {
+            KillProps = new ExitGames.Client.Photon.Hashtable();
+            KillProps.Clear();
+        }
+
+        if (KillProps.ContainsKey("KillCount"))
+            KillProps["KillCount"] = killCount;
+        else
+            KillProps.Add("KillCount", killCount);
+
+        pv.Owner.SetCustomProperties(KillProps);    //중계하는 곳   
+    }
+
+    void ReceiveKillCount()
+    {
+        if(pv == null) return;
+
+        if(pv.IsMine) return;   //아바타인 탱크들만 받게 함
+
+        if (pv.Owner == null) return;
+
+        if (pv.Owner.CustomProperties.ContainsKey("KillCount"))
+        {
+            killCount = (int)pv.Owner.CustomProperties["KillCount"];
         }
     }
 

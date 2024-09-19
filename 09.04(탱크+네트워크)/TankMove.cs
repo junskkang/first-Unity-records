@@ -70,6 +70,8 @@ public class TankMove : MonoBehaviourPunCallbacks, IPunObservable
         {
             if (GameManager.isChat) return;
 
+            if (GameManager.gameState != GameState.GS_Playing) return;
+
             h = Input.GetAxis("Horizontal");
             v = Input.GetAxis("Vertical");
 
@@ -128,10 +130,10 @@ public class TankMove : MonoBehaviourPunCallbacks, IPunObservable
 
             if (rbody != null)
             {
-                rbody.isKinematic = false;
+                //rbody.isKinematic = false;
                 rbody.velocity = new Vector3(0.0f, rbody.velocity.y, 0.0f);
                 rbody.angularVelocity = Vector3.zero;
-                rbody.isKinematic = true;
+                rbody.isKinematic = true;                
             }
         }
 
@@ -155,10 +157,13 @@ public class TankMove : MonoBehaviourPunCallbacks, IPunObservable
             //월드의 업벡터와 탱크의 업벡터를 내적하여 그 각도가 90도를 넘어가려할 때
             //탱크의 업벡터를 보정시켜버림
             transform.up = Vector3.up;
-            rbody.isKinematic = false;
+            //rbody.isKinematic = false;
+                
+                
             rbody.angularVelocity = new Vector3(0, 0, 0);
             rbody.isKinematic = true;
-            }
+
+         }
 
     }
 }
