@@ -65,12 +65,16 @@ public class TankMove : MonoBehaviourPunCallbacks, IPunObservable
     // Update is called once per frame
     void Update()
     {
+        //if (tankDamage.currHp <= 0) return;
+
         //자신이 만든 네트워크 게임오브젝트가 아닌 경우 키보드 조작 불가능
         if (pv.IsMine) //  && !GameManager.inst.chatInput.isFocused
         {
             if (GameManager.isChat) return;
 
             if (GameManager.gameState != GameState.GS_Playing) return;
+
+            //if (tankDamage.currHp <= 0) return;
 
             h = Input.GetAxis("Horizontal");
             v = Input.GetAxis("Vertical");
@@ -132,7 +136,7 @@ public class TankMove : MonoBehaviourPunCallbacks, IPunObservable
             {
                 //rbody.isKinematic = false;
                 rbody.velocity = new Vector3(0.0f, rbody.velocity.y, 0.0f);
-                rbody.angularVelocity = Vector3.zero;
+                //rbody.angularVelocity = Vector3.zero;
                 rbody.isKinematic = true;                
             }
         }

@@ -1,4 +1,5 @@
 using Photon.Pun;
+using Photon.Realtime;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -49,6 +50,8 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
 
     ExitGames.Client.Photon.Hashtable KillProps = new ExitGames.Client.Photon.Hashtable();
 
+    [HideInInspector] public float m_ResetTime = 0.0f;
+
     private void Awake()
     {
         //탱크 모델의 모든 MeshRenderer 컴포넌트를 추출한 후 배열에 할당
@@ -88,6 +91,10 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
 
+        if (m_ResetTime > 0.0f)
+        {
+            m_ResetTime -= Time.deltaTime;
+        }
 
         if (PhotonNetwork.CurrentRoom == null ||
             PhotonNetwork.LocalPlayer == null) return;
@@ -128,7 +135,43 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
 
         while (GameManager.gameState == GameState.GS_Ready)
             yield return null;
+
+        //탱크 특정한 위치에 스폰 및 투명화 제거
+        float pos = Random.Range(-100.0f, 100.0f);
+        Vector3 sitPos = new Vector3(pos, 20.0f, pos);
+
+        string a_TeamKind = ReceiveSelTeam(pv.Owner);
+        int a_SitPosIdx = ReceiveSitPosIdx(pv.Owner);
+        if (0 <= a_SitPosIdx && a_SitPosIdx < 4)
+        {
+            if (a_TeamKind == "blue")
+            {
+                sitPos = GameManager.m_Team1Pos[a_SitPosIdx];
+                this.gameObject.transform.eulerAngles = new Vector3(0.0f, 201.0f, 0.0f);
+            }
+            else if (a_TeamKind == "red")
+            {
+                sitPos = GameManager.m_Team2Pos[a_SitPosIdx];
+                this.gameObject.transform.eulerAngles = new Vector3(0.0f, 19.5f, 0.0f);
+            }
+        }
+
+        transform.position = sitPos;
+        //HUD 초기화
+        hpBarImg.fillAmount = 1.0f;
+        hpBarImg.color = startColor;
+        hudCanvas.enabled = true;
+
+        if (pv != null && pv.IsMine)
+            currHp = initHp;
+
+        //리스폰 무적 시간 초기화
+        m_ResetTime = 5.0f;
+
+
+        SetTankVisible(true);        
     }
+
     private void OnTriggerEnter(Collider coll)
     {
         //충돌한 Collider의 태그 비교
@@ -140,7 +183,7 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
             if ((refCannon) != null)
                 att_Id = refCannon.AttackerId;  
 
-            TakeDamage(att_Id);
+            TakeDamage(att_Id, coll);
 
             //Debug.Log("충돌은 되네?");
 
@@ -162,7 +205,7 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
         }
     }
 
-    public void TakeDamage(int Attacker = -1)
+    public void TakeDamage(int Attacker = -1, Collider coll = null)
     {
         //자기가 쏜 총알은 자기가 맞으면 안되도록 처리
         if (Attacker == PlayerId) return;
@@ -173,7 +216,12 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
 
         if (!pv.IsMine) return;     //이 함수에 IsMine만 적용되도록 예외처리
 
-        
+        //if (0.0f < m_ResetTime) return; //리스폰 후 무적타임
+
+        Debug.Log((string)pv.Owner.CustomProperties["MyTeam"] + " : " + coll.gameObject.tag);
+        if ((string)pv.Owner.CustomProperties["MyTeam"] == coll.gameObject.tag)
+            return;
+
         //pv.IsMine일때
         lastAttackId = Attacker;
         currHp -= 20;
@@ -206,27 +254,31 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
         hudCanvas.enabled = false;
 
         //탱크 투명 처리
-        SetTankVisible(false);
-        
-        if (pv != null && pv.IsMine)    //IsMine일때만 여기를 통해 되살리기
-        {
-            //3초동안 기다렸다가 활성화하는 로직을 수행
-            yield return new WaitForSeconds(5.0f);
+        SetTankVisible(false); yield return null;
 
-            //HUD 초기화
-            hpBarImg.fillAmount = 1.0f;
-            hpBarImg.color = startColor;
-            hudCanvas.enabled = true;
+        //if (pv != null && pv.IsMine)    //IsMine일때만 여기를 통해 되살리기
+        //{
+        //    //3초동안 기다렸다가 활성화하는 로직을 수행
+        //    yield return new WaitForSeconds(5.0f);
 
-            //리스폰 시 생명 초기값 설정
-            currHp = initHp;
-            //탱크를 다시 보이게 처리
-            SetTankVisible(true);
-        }
-        else
-        {   //아바타 탱크들은 중계받아서 되살리기 위해 아무것도 하지 않고 나가기
-            yield return null;
-        }
+        //    //HUD 초기화
+        //    hpBarImg.fillAmount = 1.0f;
+        //    hpBarImg.color = startColor;
+        //    hudCanvas.enabled = true;
+
+        //    //리스폰 시 생명 초기값 설정
+        //    currHp = initHp;
+
+        //    //리스폰 무적 시간 초기화
+        //    m_ResetTime = 5.0f;
+
+        //    //탱크를 다시 보이게 처리
+        //    SetTankVisible(true);
+        //}
+        //else
+        //{   //아바타 탱크들은 중계받아서 되살리기 위해 아무것도 하지 않고 나가기
+        //    yield return null;
+        //}
 
     }
 
@@ -300,10 +352,10 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
                     //'죽는 탱크 입장'에서 나를 죽인 대상은 다른 플레이어의 '아바타'임
                     //그래서 내 기준에서 존재하는 아바타들 중에서 lastAttackId와 동일한
                     //아이디를 갖고 있는 IsMine을 찾아서 그곳에서 킬 카운트를 올리는
-                    //함수를 호출시켜줘야 함.
-                    
+                    //함수를 호출시켜줘야 함.                   
                     SaveKillCount(lastAttackId);
                 }
+                StartCoroutine(ExplosionTank());
             }
         }
         else
@@ -323,6 +375,10 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
 
                 //리스폰시 새생명값으로 설정
                 currHp = initHp;
+
+                //리스폰 무적 시간 초기화
+                m_ResetTime = 5.0f;
+
                 //탱크를 다시 보이게 처리
                 SetTankVisible(true);
 
@@ -412,6 +468,36 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
         {
             killCount = (int)pv.Owner.CustomProperties["KillCount"];
         }
+    }
+
+    private int ReceiveSitPosIdx(Player a_Player)
+    {
+        int a_SitPosidx = -1;
+
+        if (a_Player == null)
+            return a_SitPosidx;
+
+        if (a_Player.CustomProperties.ContainsKey("SitPosInx"))
+        {
+            a_SitPosidx = (int)a_Player.CustomProperties["SitPosInx"];
+        }
+
+        return a_SitPosidx;
+    }
+
+    private string ReceiveSelTeam(Player a_Player)
+    {
+        string a_TeamKind = "blue";
+
+        if (a_Player == null)
+            return a_TeamKind;
+
+        if (a_Player.CustomProperties.ContainsKey("MyTeam"))
+        {
+            a_TeamKind = (string)a_Player.CustomProperties["MyTeam"];
+        }
+
+        return a_TeamKind;
     }
 
 }

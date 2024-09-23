@@ -2,6 +2,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -9,7 +10,7 @@ using UnityEngine.UI;
 
 public enum GameState
 {
-    GS_Ready,
+    GS_Ready = 0,
     GS_Playing,
     GS_End
 }
@@ -62,18 +63,25 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     ExitGames.Client.Photon.Hashtable m_PlayerReadyState = 
         new ExitGames.Client.Photon.Hashtable();
+
+    ExitGames.Client.Photon.Hashtable SitPosInxProps =
+        new ExitGames.Client.Photon.Hashtable();
     //내부적으로 딕셔너리로 구현되어 있기 때문에 키값을 다르게 한다면
     //변수 하나에 여러가지 키값을 넣어서 사용할 수도 있음
+
+    [HideInInspector] public static Vector3[] m_Team1Pos = new Vector3[4];
+    [HideInInspector] public static Vector3[] m_Team2Pos = new Vector3[4];
+
 
     //Round 관련 변수
     [Header("--- StartTimer UI ---")]
     public Text waitTimerText;  //게임 시작 후 카운트 3, 2, 1, Go!
     [HideInInspector] float countDown = 4.0f;
     int m_RoundCount = 0;   //총 5라운드로 진행 예정 5판 3선승
-    double m_CheckWinTime = 2.0f;   //라운드 시작 후 승패 판정은 2초후부터 시작
 
-
-
+    [Header("--- WinLoss ---")]
+    public Text countWinLossText;
+    public Text winnerText; 
 
     public static GameManager inst;
     
@@ -81,6 +89,16 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         //팀대전 관련 변수 초기화
         gameState = GameState.GS_Ready;
+
+        m_Team1Pos[0] = new Vector3(88.4f, 20.0f, 77.9f);
+        m_Team1Pos[1] = new Vector3(61.1f, 20.0f, 88.6f);
+        m_Team1Pos[2] = new Vector3(34.6f, 20.0f, 98.7f);
+        m_Team1Pos[3] = new Vector3(7.7f, 20.0f, 108.9f);
+
+        m_Team2Pos[0] = new Vector3(-19.3f, 20.0f, -134.1f);
+        m_Team2Pos[1] = new Vector3(-43.1f, 20.0f, -125.6f);
+        m_Team2Pos[2] = new Vector3(-66.7f, 20.0f, -117.0f);
+        m_Team2Pos[3] = new Vector3(-91.4f, 20.0f, -108.6f);
 
         inst = this;
 
@@ -147,7 +165,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             //버튼의 초기 상태는 SetActive(false) && Interactable == false
             startBtn.gameObject.SetActive(true);
-            startBtn.interactable = false;
+            //startBtn.interactable = false;
 
             startBtn.onClick.AddListener(() =>
             {
@@ -206,6 +224,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             ClickStartBtn();
         }
+
+        WinLossManager.Inst.WinLossObserver();  //한쪽팀 전멸 체크 및 승패 판정
     }
 
     void CreateTank()
@@ -301,12 +321,19 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
 
-    public static bool IsGamePossible() //게임이 가능한 상태인지 체크하는 함수
+    bool IsGamePossible() //게임이 가능한 상태인지 체크하는 함수
     {
         //나가는 타이밍에 포톤 정보들이 한프레임 먼저 사라지고
         //그 다음 LoadScene()이 실행됨
         if (PhotonNetwork.CurrentRoom == null || PhotonNetwork.LocalPlayer == null)
             return false;
+
+        if (!PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("GameState"))
+            return false;
+
+        gameState = ReceiveGState();
+
+        //Debug.Log(gameState.ToString());
 
         return true;
 
@@ -396,6 +423,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         //현재 입장한 룸에 접속한 모든 네트워크 플레이어 정보를 저장
         int a_CurHp = 0;
         int curKillCount = 0;
+        string playerTeam = "blue";
         Player[] players = PhotonNetwork.PlayerList;    //using Photon.Realtime;                
 
         GameObject[] tanks = GameObject.FindGameObjectsWithTag("TANK");
@@ -405,6 +433,9 @@ public class GameManager : MonoBehaviourPunCallbacks
             curKillCount = 0;
             if (a_Player.CustomProperties.ContainsKey("KillCount"))
                 curKillCount = (int)a_Player.CustomProperties["KillCount"];
+
+            if (a_Player.CustomProperties.ContainsKey("MyTeam"))
+                playerTeam = (string)a_Player.CustomProperties["MyTeam"];
 
             TankDamage tankDamage = null;
             foreach (GameObject a_Tank in tanks)
@@ -424,23 +455,36 @@ public class GameManager : MonoBehaviourPunCallbacks
             {               
                 //모든 케릭터의 에너지바 동기화
                 a_CurHp = tankDamage.currHp;
-            }                
-
-            if (a_CurHp <= 0)
-            {
-                //죽어 있을 때
-                GUILayout.Label("<color=Blue><size=25>" +
-                "[" + a_Player.ActorNumber + "] " + a_Player.NickName + " "
-                + curKillCount + " kill" + "</size></color>"
-                + "<color=Red><size=25>" + " <Die>" + "</size></color>");
             }
-            else
-            {
-                //살아있을 때
-                GUILayout.Label("<color=Blue><size=25>" +
+            string printStr = "";
+            string stringColor = "<color=Blue>";
+            if (playerTeam == "red")
+                stringColor = "<color=Red>";
+
+            printStr = stringColor +"<size=25>" +
                 "[" + a_Player.ActorNumber + "] " + a_Player.NickName + " "
-                + curKillCount + " kill" + "</size></color>");
-            }                            
+                + curKillCount + " kill" + "</size></color>";
+            if (a_CurHp <= 0)
+                printStr += "<color=Black><size=25>" + " <Die>" + "</size></color>";
+
+            GUILayout.Label(printStr);
+
+
+            //if (a_CurHp <= 0)
+            //{
+            //    //죽어 있을 때
+            //    GUILayout.Label("<color=Blue><size=25>" +
+            //    "[" + a_Player.ActorNumber + "] " + a_Player.NickName + " "
+            //    + curKillCount + " kill" + "</size></color>"
+            //    + "<color=Black><size=25>" + " <Die>" + "</size></color>");
+            //}
+            //else
+            //{
+            //    //살아있을 때
+            //    GUILayout.Label("<color=Blue><size=25>" +
+            //    "[" + a_Player.ActorNumber + "] " + a_Player.NickName + " "
+            //    + curKillCount + " kill" + "</size></color>");
+            //}                            
         }
     }
 
@@ -494,7 +538,11 @@ public class GameManager : MonoBehaviourPunCallbacks
         else
             m_StateProps.Add("GameState", (int)state);
 
-        PhotonNetwork.CurrentRoom.SetCustomProperties(m_StateProps);
+        //Debug.Log(m_StateProps["GameState"]); //1
+
+        PhotonNetwork.CurrentRoom.SetCustomProperties(m_StateProps); // 여기가 제대로 동작을 안하는가본데..
+
+        //Debug.Log(PhotonNetwork.CurrentRoom.CustomProperties["GameState"]); //0
     }
 
     GameState ReceiveGState()   //게임 상태를 받아서 처리하는 부분
@@ -503,6 +551,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("GameState"))
             a_RoomValue = (GameState)PhotonNetwork.CurrentRoom.CustomProperties["GameState"];
 
+        //Debug.Log(a_RoomValue.ToString());
+        
         return a_RoomValue;
     }
     
@@ -735,6 +785,10 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             startBtn.interactable = true;
         }
+        else
+        {
+            startBtn.interactable = false;
+        }
     }
 
     void ClickStartBtn()
@@ -766,6 +820,9 @@ public class GameManager : MonoBehaviourPunCallbacks
             if (0.0f < countDown && a_OldGoWait != (int)countDown)
             {
                 //자리배정
+                //왜 세번이나 반복하느냐? 
+                //혹시나 모종의 이유로 마스터 클라이언트가 바뀌는 경우를 대비하여.... 
+                SitPosInxMasterCtrl();
             }
 
         if (countDown <= 0.0f)
@@ -778,7 +835,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             waitTimerText.gameObject.SetActive(false);
             startBtn.gameObject.SetActive(false);
 
-            m_CheckWinTime = 2.0f;
+            WinLossManager.Inst.m_CheckWinTime = 2.0f;
             countDown = 0.0f;
         }
 
@@ -787,11 +844,41 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (countDown <= 0.0f) 
         {
             SendGState(GameState.GS_Playing);
-            isStartOn = false;
-                
+            isStartOn = false;            
+      
+        }        
+    }
+
+    void SitPosInxMasterCtrl()  //팀을 변경할 때마다 마스터클라이언트에서 중계할 예정
+    {
+        int a_Tm1Count = 0;
+        int a_Tm2Count = 0;
+        string a_TeamKind = "blue";
+        foreach (Player _player in PhotonNetwork.PlayerList)
+        {
+            if (_player.CustomProperties.ContainsKey("MyTeam"))
+            {
+                a_TeamKind = (string)_player.CustomProperties["MyTeam"];    //플레이어에 저장되어있는 팀값을 가져와서 분류
+            }
+
+            if (a_TeamKind == "blue")   //파랑팀일 때 순서대로 Tm1Count 인덱스 부여
+            {
+                SitPosInxProps.Clear();
+                SitPosInxProps.Add("SitPosInx", a_Tm1Count);
+                _player.SetCustomProperties(SitPosInxProps);
+                a_Tm1Count++;
+            }
+            else if (a_TeamKind == "red") //빨강팀일 때 순서대로 Tm2Count 인덱스 부여
+            {
+                SitPosInxProps.Clear();
+                SitPosInxProps.Add("SitPosInx", a_Tm2Count);
+                _player.SetCustomProperties(SitPosInxProps);
+                a_Tm2Count++;
+            }
         }
 
-        
+        //부여된 인덱스에 따라 초기 좌표값에서 스폰되도록 하기
     }
+
     #endregion
 }

@@ -77,6 +77,11 @@ public class FireCannon : MonoBehaviour
         sfx.PlayOneShot(fireSfx, 1.0f);
         GameObject cannon = Instantiate(this.cannon, firePos.position, firePos.rotation);
         cannon.GetComponent<Cannon>().AttackerId = pv.Owner.ActorNumber;
+
+        if (pv.Owner.CustomProperties.ContainsKey("MyTeam"))
+            cannon.gameObject.tag = (string)pv.Owner.CustomProperties["MyTeam"];
+
+        //Debug.Log(cannon.gameObject.tag);
         //PhotonView.Owner.ActorNumber : 오너가 갖는 고유 넘버
         //IsMine과 IsMine의 아바타도 모두 Owner판정
     }

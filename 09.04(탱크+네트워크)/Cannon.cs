@@ -26,6 +26,7 @@ public class Cannon : MonoBehaviour
 
         //3초가 지난 후 자동으로 폭발하는 코루틴 실행
         StartCoroutine(this.ExplosionCannon(3.0f));
+
     }
 
     // Update is called once per frame
