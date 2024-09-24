@@ -16,6 +16,7 @@ public class Cannon : MonoBehaviour
     [HideInInspector] public int AttackerId = -1;
     //누가 쏜 총알인지를 저장하기 위한 변수
     //팀킬 방지 / 킬 카운트를 위하여 
+    [HideInInspector] public string teamColor = "";
 
     void Start()
     {

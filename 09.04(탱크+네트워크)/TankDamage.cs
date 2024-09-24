@@ -117,7 +117,7 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
             txtKillCount.text = killCount.ToString();   //킬 카운트 UI 갱신
     }
 
-    void ReadyStateTank()
+    public void ReadyStateTank()
     {
         if (GameManager.gameState != GameState.GS_Ready) return;
 
@@ -181,9 +181,15 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
             int att_Id = -1;
             Cannon refCannon = coll.gameObject.GetComponent<Cannon>();
             if ((refCannon) != null)
-                att_Id = refCannon.AttackerId;  
+                att_Id = refCannon.AttackerId;
 
-            TakeDamage(att_Id, coll);
+            if ((string)pv.Owner.CustomProperties["MyTeam"] == refCannon.teamColor)
+                return;
+
+            TakeDamage(att_Id);
+
+            //Debug.Log((string)pv.Owner.CustomProperties["MyTeam"] + " : " + refCannon.teamColor);
+            
 
             //Debug.Log("충돌은 되네?");
 
@@ -205,7 +211,7 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
         }
     }
 
-    public void TakeDamage(int Attacker = -1, Collider coll = null)
+    public void TakeDamage(int Attacker = -1)
     {
         //자기가 쏜 총알은 자기가 맞으면 안되도록 처리
         if (Attacker == PlayerId) return;
@@ -216,11 +222,9 @@ public class TankDamage : MonoBehaviourPunCallbacks, IPunObservable
 
         if (!pv.IsMine) return;     //이 함수에 IsMine만 적용되도록 예외처리
 
-        //if (0.0f < m_ResetTime) return; //리스폰 후 무적타임
+        if (0.0f < m_ResetTime) return; //리스폰 후 무적타임
 
-        Debug.Log((string)pv.Owner.CustomProperties["MyTeam"] + " : " + coll.gameObject.tag);
-        if ((string)pv.Owner.CustomProperties["MyTeam"] == coll.gameObject.tag)
-            return;
+
 
         //pv.IsMine일때
         lastAttackId = Attacker;

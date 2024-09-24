@@ -31,7 +31,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     PhotonView pv;
 
     //팀대전 관련 변수들
-    GameState oldState = GameState.GS_Ready;
+    public GameState oldState = GameState.GS_Ready;
     public static GameState gameState = GameState.GS_Ready;
 
     ExitGames.Client.Photon.Hashtable m_StateProps = 
@@ -76,7 +76,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     //Round 관련 변수
     [Header("--- StartTimer UI ---")]
     public Text waitTimerText;  //게임 시작 후 카운트 3, 2, 1, Go!
-    [HideInInspector] float countDown = 4.0f;
+    [HideInInspector] public float countDown = 4.0f;
     int m_RoundCount = 0;   //총 5라운드로 진행 예정 5판 3선승
 
     [Header("--- WinLoss ---")]
@@ -328,10 +328,18 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.CurrentRoom == null || PhotonNetwork.LocalPlayer == null)
             return false;
 
-        if (!PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("GameState"))
+        if (!PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("GameState") ||
+            !PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("Team1Win") ||
+            !PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("Team2Win"))
             return false;
 
+        //Debug.Log("리턴 안됨");
+
         gameState = ReceiveGState();
+
+        //WinLossManager.Inst.m_Team1Win = (int)PhotonNetwork.CurrentRoom.CustomProperties["Team1Win"];
+        //WinLossManager.Inst.m_Team2Win = (int)PhotonNetwork.CurrentRoom.CustomProperties["Team2Win"];
+
 
         //Debug.Log(gameState.ToString());
 
@@ -525,7 +533,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         PhotonNetwork.CurrentRoom.SetCustomProperties(m_StateProps);
     }
 
-    void SendGState(GameState state)
+    public void SendGState(GameState state)
     {
         if (m_StateProps == null)
         {

@@ -79,7 +79,7 @@ public class FireCannon : MonoBehaviour
         cannon.GetComponent<Cannon>().AttackerId = pv.Owner.ActorNumber;
 
         if (pv.Owner.CustomProperties.ContainsKey("MyTeam"))
-            cannon.gameObject.tag = (string)pv.Owner.CustomProperties["MyTeam"];
+            cannon.GetComponent<Cannon>().teamColor = (string)pv.Owner.CustomProperties["MyTeam"];
 
         //Debug.Log(cannon.gameObject.tag);
         //PhotonView.Owner.ActorNumber : 오너가 갖는 고유 넘버
