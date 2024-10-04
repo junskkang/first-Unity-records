@@ -4,6 +4,8 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Photon.Pun;
+
 
 enum JoyStickType
 {
@@ -14,6 +16,7 @@ enum JoyStickType
 
 public class GameMgr : MonoBehaviour
 {
+    PhotonView pv;
     [HideInInspector] public Hero_Ctrl m_RefHero = null;
 
 
@@ -64,13 +67,21 @@ public class GameMgr : MonoBehaviour
 
     void Awake()
     {
-        Inst = this;        
+        Inst = this;       
+        
+        //photonView 컴포넌트 할당
+        pv = GetComponent<PhotonView>();
+
+        CreateHero();
     }
+
     //싱글턴 패턴을 위한 인스턴스 변수 선언
 
     // Start is called before the first frame update
     void Start()
     {
+        PhotonNetwork.IsMessageQueueRunning = true;
+
         //--- Attack Button 처리 코드
         if (m_Attack_Btn != null)
             m_Attack_Btn.onClick.AddListener(() =>
@@ -181,6 +192,16 @@ public class GameMgr : MonoBehaviour
                 OnDragJoyStick_Flx((PointerEventData)data);
             });
             trigger.triggers.Add(entry);
+        }
+
+        //몬스터 스폰 매니저 포톤 룸 소속으로 생성
+        if (PhotonNetwork.IsMasterClient)
+        {
+            MonSpawnMgr a_SpawnMgr = GameObject.FindObjectOfType<MonSpawnMgr>();
+            if (a_SpawnMgr == null)
+            {
+                PhotonNetwork.InstantiateRoomObject("MonSpawnMgr", Vector3.zero, Quaternion.identity);
+            }
         }
 
     } //void Start()
@@ -426,6 +447,27 @@ public class GameMgr : MonoBehaviour
         }
 
     }
+
+    #region Photon 
+    void CreateHero()   //PhotonNetwork를 통하여 캐릭터 스폰
+    {
+        Vector3 a_HeroPos = Vector3.zero;
+        Vector3 a_AddPos = Vector3.zero;
+
+        GameObject a_HPosObj = GameObject.Find("HeroSpawnPos");
+        if (a_HPosObj != null)
+        {
+            a_AddPos.x = Random.Range(-5.0f, 5.0f);
+            a_AddPos.z = Random.Range(-5.0f, 5.0f);
+            a_HeroPos = a_HPosObj.transform.position + a_AddPos;
+        }
+
+
+        PhotonNetwork.Instantiate("SK_Bei_T_pose", a_HeroPos, Quaternion.identity, 0);
+    }
+
+    #endregion  
+
     public static bool IsPointerOverUIObject() //UGUI의 UI들이 먼저 피킹되는지 확인하는 함수
     {
         PointerEventData a_EDCurPos = new PointerEventData(EventSystem.current);
@@ -450,5 +492,6 @@ public class GameMgr : MonoBehaviour
         return (0 < results.Count);
 #endif
     }//public bool IsPointerOverUIObject() 
+
 
 }

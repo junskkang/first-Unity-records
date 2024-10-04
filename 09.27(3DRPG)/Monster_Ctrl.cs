@@ -1,6 +1,8 @@
+using Photon.Pun;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum MonType
 {
@@ -9,9 +11,18 @@ public enum MonType
     Count
 }
 
-public class Monster_Ctrl : MonoBehaviour
+public class Monster_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
 {
     public MonType monType;
+
+    //Hp 
+    float curHp = 100;
+    float maxHp = 100;
+    float netHp = 100;  //네트워크 중계를 위한 Hp값
+    public Image hpBarImg;
+    public RectTransform HUDCanvas;
+
+    [HideInInspector] public int m_SpawnIdx = -1;
 
     //몬스터의 현재 상태 정보를 저장할 Enum 변수
     AnimState m_Prestate = AnimState.idle;  //Animation 변경을 위한 변수 
@@ -41,29 +52,59 @@ public class Monster_Ctrl : MonoBehaviour
     public GameObject targetMark = null;
     [HideInInspector] public bool isTarget = false;
 
+    //네트워크 동기화를 위하여
+    Vector3 curPos = Vector3.zero;
+    Quaternion curRot = Quaternion.identity;
+    int curAnim = 0;
+    string m_OldAnim = "";
+    PhotonView pv = null;
+
+    void Awake()
+    {
+        pv = GetComponent<PhotonView>();
+
+        curPos = transform.position;
+        curRot = transform.rotation;
+    }
     // Start is called before the first frame update
     void Start()
     {
         m_RefAnimation = GetComponentInChildren<Animation>();
+        m_RefAnimator = GetComponentInChildren<Animator>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (PhotonNetwork.CurrentRoom == null) return;
+        
         if (m_CurState == AnimState.die) return;
 
-        MonStateUpdate();
-        MonActionUpdate();
-        TargetMark();
+        if (pv.IsMine)
+        {            
+            MonStateUpdate();
+            MonActionUpdate();
+            TargetMark();
+        }
+        else
+        {
+            Remote_TrUpdate();
+            Remote_TakeDamage();
+            Remote_Animation();
+        }
+
+        
     }
     public void TargetMark()
     {
         if (isTarget)
         {
+            HUDCanvas.gameObject.SetActive(true);
             targetMark.gameObject.SetActive(true);
         }
         else
         {
+            HUDCanvas.gameObject.SetActive(false);
             targetMark.gameObject.SetActive(false);
         }
         
@@ -196,6 +237,22 @@ public class Monster_Ctrl : MonoBehaviour
                 m_RefAnimation.Play(a_StrAnim);
         }
 
+        if (m_RefAnimator != null)
+        {
+            m_RefAnimator.ResetTrigger(m_Prestate.ToString());  //기존에 적용되어 있던 Trigger 변수 제거
+
+            if (0.0f < CrossTime)
+                m_RefAnimator.SetTrigger(newState.ToString());
+            else
+            {
+                string animName = anim.Idle.name;
+                if (newState == AnimState.die)
+                    animName = anim.Die.name;
+
+                m_RefAnimator.Play(animName, -1, 0);
+            }                
+        }
+
         m_Prestate = newState;
         m_CurState = newState;
     }
@@ -204,26 +261,47 @@ public class Monster_Ctrl : MonoBehaviour
     float m_CacRate = 0.0f;
     float m_NormalTime = 0.0f;
 
-    bool IsAttackAnim()
+    bool IsAttackAnim() //현재 공격 애니메이션 중인지 아닌지 체크하는 함수
     {
-        if (m_RefAnimation == null) return false;
+        //if (m_RefAnimation == null) return false;
 
-        if (m_RefAnimation.IsPlaying(anim.Attack1.name))
+        if (m_RefAnimation != null)
         {
-            m_NormalTime = m_RefAnimation[anim.Attack1.name].time /
-                            m_RefAnimation[anim.Attack1.name].length;
+            if (m_RefAnimation.IsPlaying(anim.Attack1.name))
+            {
+                m_NormalTime = m_RefAnimation[anim.Attack1.name].time /
+                                m_RefAnimation[anim.Attack1.name].length;
 
-            //m_RefAnimation[anim.Attack1.name].time : 애니메이션의 현재 재생 시간값
-            //m_RefAnimation[anim.Attack1.name].length : 애니메이션 한 동작의 총 시간값
-            //time값은 루프가 걸려있으면 애니메이션 한동작이 끝나고 다음동작으로 갈 때 값이 초기화되지 않고
-            //계속 누적된다.
+                //m_RefAnimation[anim.Attack1.name].time : 애니메이션의 현재 재생 시간값
+                //m_RefAnimation[anim.Attack1.name].length : 애니메이션 한 동작의 총 시간값
+                //time값은 루프가 걸려있으면 애니메이션 한동작이 끝나고 다음동작으로 갈 때 값이 초기화되지 않고
+                //계속 누적된다.
 
-            //그래서~ 누적된 정수값을 빼주는 것
-            m_CacRate = m_NormalTime - (int)m_NormalTime;
+                //그래서~ 누적된 정수값을 빼주는 것
+                m_CacRate = m_NormalTime - (int)m_NormalTime;
 
-            if (m_CacRate <= 0.95f)
-                return true;
+                if (m_CacRate <= 0.95f)
+                    return true;
+            }
         }
+
+        if (m_RefAnimator != null)
+        {
+            //현재 애니메이션 상태 정보를 가져옴
+            AnimatorStateInfo stateInfo = m_RefAnimator.GetCurrentAnimatorStateInfo(0);
+
+            //현재 상태가 공격 애니메이션인지 체크
+            if (stateInfo.IsName(anim.Attack1.name)) 
+            {
+                //애니메이션의 진행도를 체크
+                m_NormalTime = stateInfo.normalizedTime % 1.0f;
+
+                //애니메이션이 아직 끝부분이 아니라면 (95% 진행)
+                if (m_NormalTime < 0.95f)
+                    return true;
+            }
+        }
+
         return false;
 
     }
@@ -244,5 +322,103 @@ public class Monster_Ctrl : MonoBehaviour
         if ((m_AttackDist + 1.7f) < a_CacLen) return;
 
         m_AggroTarget.GetComponent<Hero_Ctrl>().TakeDamage(10);
+    }
+
+    public void TakeDamage(GameObject a_Attacker, float a_Damage = 10.0f)
+    {
+        if (curHp <= 0) return;
+
+        if (pv.IsMine)
+        {
+            curHp -= a_Damage;
+
+            if (curHp < 0)
+                curHp = 0;
+
+            if (hpBarImg != null)
+                hpBarImg.fillAmount = curHp / maxHp;
+        }
+        else
+        {
+            Remote_TakeDamage();
+        }
+
+        Vector3 a_CacPos = this.transform.position;
+        a_CacPos.y += 1.9f;
+        GameMgr.Inst.SpawnDamageText((int)a_Damage, a_CacPos);
+        if (pv.IsMine)
+        if (curHp <= 0)
+        {
+            //쥬금
+            if (monType == MonType.Alien)
+            {
+                ChangeAnimState(AnimState.die);
+
+                    PhotonNetwork.Destroy(this.gameObject);    //Destroy(this.gameObject, 2.0f);
+            }
+            else
+                    PhotonNetwork.Destroy(this.gameObject);    //Destroy(this.gameObject);
+        }
+    }
+
+    void Remote_TrUpdate()
+    {
+        if (5.0f < (transform.position - curPos).magnitude)
+        {
+            transform.position = curPos;
+        }
+        else
+        {
+            transform.position = Vector3.Lerp(transform.position, curPos, Time.deltaTime * 10.0f);
+        }
+
+        transform.rotation = Quaternion.Lerp(transform.rotation, curRot, Time.deltaTime * 10.0f);
+    }
+
+    void Remote_TakeDamage()
+    {
+        if (0.0f < curHp)
+        {
+            curHp = netHp;
+            hpBarImg.fillAmount = curHp / maxHp;
+
+            if (curHp <= 0)
+            { 
+                curHp = 0.0f;
+                //사망 연출만
+            }
+
+        }
+        else
+        {
+            curHp = netHp;
+            hpBarImg.fillAmount = curHp / maxHp;
+        }
+    }
+
+    void Remote_Animation()
+    {
+        ChangeAnimState(m_CurState);
+    }
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(transform.position);
+            stream.SendNext(transform.rotation);
+            stream.SendNext(curHp);
+
+            stream.SendNext((int)m_CurState);
+            stream.SendNext(m_SpawnIdx);
+        }
+        else
+        {
+            curPos = (Vector3)stream.ReceiveNext();
+            curRot = (Quaternion)stream.ReceiveNext();
+            netHp = (float)stream.ReceiveNext();
+
+            m_CurState = (AnimState)stream.ReceiveNext();
+            m_SpawnIdx = (int)stream.ReceiveNext();
+        }
     }
 }
