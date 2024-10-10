@@ -436,7 +436,9 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
     //공격 명령 처리 메서드
     public void AttackOrder()
     {
-        if(IsAttack() == false) //공격중이거나 스킬 사용중이 아닐때만...
+        if (pv.IsMine == false) return;
+
+        if (IsAttack() == false) //공격중이거나 스킬 사용중이 아닐때만...
         {
             //키보드 컨트롤이나 조이스틱 컨트롤로 이동 중이고
             //공격키를 연타해서 누르면 달리는 애니메이션에 잠깐동안
@@ -453,6 +455,8 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
     //스킬 명령 처리 메서드
     public void SkillOrder(string Type, ref float CoolDur, ref float CurCool)
     {
+        if (pv.IsMine == false) return;
+
         if (0.0f < CurCool) return;
 
         if (m_PreState == AnimState.skill) return;
@@ -489,6 +493,11 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
             if (m_AttackDist + 0.1f < a_fCacLen)
                 continue;
 
+            a_EffObj = EffectPool.Inst.GetEffectObj("FX_Hit_01", Vector3.zero, Quaternion.identity);
+            a_EffPos = m_EnemyList[i].transform.position;
+            a_EffPos.y += 1.1f;
+            a_EffObj.transform.position = a_EffPos + (-m_CacTgVec.normalized * 1.13f);
+            a_EffObj.transform.LookAt(a_EffPos + (m_CacTgVec.normalized * 2.0f));
             m_EnemyList[i].GetComponent<Monster_Ctrl>().TakeDamage(this.gameObject);
         }
     }
@@ -501,6 +510,11 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
         GameObject a_EffObj = null;
         Vector3 a_EffPos = Vector3.zero;
 
+        a_EffObj = EffectPool.Inst.GetEffectObj("FX_AttackCritical_01", Vector3.zero, Quaternion.identity);
+        a_EffPos = transform.position;
+        a_EffPos.y += 1.0f;
+        a_EffObj.transform.position = a_EffPos + (transform.forward * 2.3f);
+        a_EffObj.transform.LookAt(a_EffPos + (-transform.forward * 2.0f));
         for (int i = 0; i < a_iCount; ++i)
         {
             m_CacTgVec = m_EnemyList[i].transform.position - transform.position;
@@ -512,6 +526,13 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
             if (m_AttackDist + 0.1f < a_fCacLen)
                 continue;
 
+
+            a_EffObj = EffectPool.Inst.GetEffectObj("FX_Attack01_01", Vector3.zero, Quaternion.identity);
+            a_EffPos = m_EnemyList[i].transform.position;
+            a_EffPos.y += 1.1f;
+            a_EffObj.transform.position = a_EffPos + (-m_CacTgVec.normalized * 1.13f);
+            a_EffObj.transform.LookAt(a_EffPos + (m_CacTgVec.normalized * 2.0f));
+
             m_EnemyList[i].GetComponent<Monster_Ctrl>().TakeDamage(this.gameObject, 30);
         }
 
@@ -519,6 +540,8 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
     //공격 종료 이벤트 처리 메서드
     void Event_AttFinish()
     {
+        if (pv.IsMine == false) return; //공격 애니메이션이 끝나고 다음 행동에 대한 판단도 IsMine만
+            
         if ((0.0f != h || 0.0f != v) || 0.0f < m_JoyMvLen || m_IsPickMoveOnOff)
         {
             //스킬 사용 중 키보드조작, 조이스틱이 있는 경우
@@ -528,7 +551,7 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
         }
 
         //어택상태일때는 어택 상태로 끝나야 한다.
-        if (m_CurState == AnimState.skill)
+        if (m_CurState != AnimState.attack)
             return;
 
         if(IsTargetEnemyActive(0.2f) == true)
@@ -547,6 +570,8 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
     //스킬 종료 이벤트 처리 함수
     void Event_SkillFinish()
     {
+        if (pv.IsMine == false) return; //공격 애니메이션이 끝나고 다음 행동에 대한 판단도 IsMine만
+
         if ((0.0f != h || 0.0f != v) || 0.0f < m_JoyMvLen || m_IsPickMoveOnOff)
         {
             //스킬 사용 중 키보드조작, 조이스틱이 있는 경우
@@ -560,8 +585,8 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
         //스킬이 취소되는 현상이 발생할 수 있기 때문임
         //스킬상태일땐 스킬상태로 끝나야 한다.
 
-        //if (m_CurState == AnimState.attack)
-        //    return;
+        if (m_CurState != AnimState.skill)
+            return;
 
         if (IsTargetEnemyActive(0.2f) == true)
         {
@@ -711,7 +736,26 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
 
         }
     }
+    [PunRPC]
+    public void TakeItemRPC(int a_ItemType)
+    {
+        //자기가 조종하고 있는 Player를 기준으로 처리해준다.
+        if (!pv.IsMine) return;
 
+        if (CurHp <= 0.0f) return;
+
+        CurHp += 100;
+
+        if (MaxHP <= CurHp)
+            CurHp = MaxHP;
+
+        Vector3 cacPos = this.transform.position;
+        cacPos.y += 1.7f;
+        GameMgr.Inst.SpawnDamageText((int)100, cacPos, 1);
+
+        ImgHpbar.fillAmount = CurHp / (float)MaxHP;
+
+    }
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         //로컬 플레이어의 위치 정보 송신

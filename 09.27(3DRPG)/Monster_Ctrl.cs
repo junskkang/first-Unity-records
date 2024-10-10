@@ -349,6 +349,8 @@ public class Monster_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
         if (pv.IsMine)
         if (curHp <= 0)
         {
+            CreateItem();
+
             //쥬금
             if (monType == MonType.Alien)
             {
@@ -398,7 +400,18 @@ public class Monster_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
 
     void Remote_Animation()
     {
-        ChangeAnimState(m_CurState);
+        ChangeAnimState(m_CurState, 0.12f);
+    }
+
+    //아이템 생성 함수
+    void CreateItem()
+    {
+        if (PhotonNetwork.IsMasterClient == false) return;
+
+        Vector3 a_HPos = transform.position;
+        //a_HPos.y += 1.0f;
+
+        PhotonNetwork.InstantiateRoomObject("DiamondPrefab", a_HPos, Quaternion.identity, 0);
     }
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
