@@ -25,7 +25,7 @@ public class SpawnPos   // List로 관리하고 List이기 때문에 인덱스를 갖게 됨
 public class MonSpawnMgr : MonoBehaviourPunCallbacks, IPunObservable
 {
     PhotonView pv;
-    List<SpawnPos> m_SpawnPos = new List<SpawnPos>();
+    [HideInInspector] public List<SpawnPos> m_SpawnPos = new List<SpawnPos>();
 
     float g_NetDelay = 0.0f;
 

@@ -351,15 +351,17 @@ public class Monster_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
         {
             CreateItem();
 
-            //¡Í±›
+            float RespawnTime = Random.Range(3.5f, 12.0f);
+            MonSpawnMgr.inst.m_SpawnPos[m_SpawnIdx].m_SpawnTime = RespawnTime;
+                //¡Í±›
             if (monType == MonType.Alien)
             {
                 ChangeAnimState(AnimState.die);
 
-                    PhotonNetwork.Destroy(this.gameObject);    //Destroy(this.gameObject, 2.0f);
+                PhotonNetwork.Destroy(this.gameObject);    //Destroy(this.gameObject, 2.0f);
             }
             else
-                    PhotonNetwork.Destroy(this.gameObject);    //Destroy(this.gameObject);
+                PhotonNetwork.Destroy(this.gameObject);    //Destroy(this.gameObject);
         }
     }
 
