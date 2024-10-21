@@ -48,6 +48,9 @@ public class GameMgr : MonoBehaviour
     public Button m_Attack_Btn = null;
     public Button m_Skill_Btn = null;
 
+    [Header("--- Shader ---")]
+    public Shader g_AddTexShader = null;    //주인공 데미지 연출용(빨간색)
+    public Shader g_VertexLitShader = null; //몬스터 사망시 투명하게
     //스킬 쿨타임 적용
     Text m_Skill_Cool_Label = null;
     Image m_Skill_Cool_Mask = null;

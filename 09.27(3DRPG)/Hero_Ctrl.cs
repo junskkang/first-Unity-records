@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Photon.Pun;
+using Photon.Pun.Demo.PunBasics;
+using Photon.Pun.Demo.Cockpit;
 
 public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
 {
@@ -64,6 +66,21 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
 
     public Text NickName;
 
+    //--- 데미지 칼라 관련 변수
+    Shader m_DefTexShader = null;
+    Shader m_WeaponTexShader = null;
+
+    bool AttachColorChange = false;
+    SkinnedMeshRenderer m_SMR = null;
+    SkinnedMeshRenderer[] m_SMRList = null;
+    MeshRenderer[] m_MeshList = null;   //장착 무기
+    float AttachColorStartTime = 0.0f;
+    float AttachColorTime = 0.1f;       //피격을 짧게 준다.
+    float m_Ratio = 0.0f;
+    float m_fCol = 0.0f;
+    float m_DamageColor = 0.73f;
+    Color m_CacColor;
+
     void Awake()
     {
         pv = GetComponent<PhotonView>();
@@ -92,6 +109,8 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
         curRot = transform.rotation;
 
         NickName.text = pv.Owner.NickName;
+
+        FindDefShader();
     }
 
     // Update is called once per frame
@@ -136,6 +155,8 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
 
             Remote_TakeDamage();    //아바타들 Hp 동기화
         }
+
+        AttachColorUpdate();
     }
 
     void KeyBDMove()
@@ -706,7 +727,9 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
                 CurHp = 0.0f;
 
             ImgHpbar.fillAmount = CurHp / MaxHP;
-        }            
+        }
+
+        SetAttachColor();
 
         Vector3 cacPos = this.transform.position;
         cacPos.y += 1.7f;
@@ -773,6 +796,91 @@ public class Hero_Ctrl : MonoBehaviourPunCallbacks, IPunObservable
             NetHp = (float)stream.ReceiveNext();
             m_CurState = (AnimState)stream.ReceiveNext();
 
+        }
+    }
+
+    void FindDefShader()
+    {
+        if (m_SMR == null)
+        {
+            m_SMRList = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+            m_MeshList = gameObject.GetComponentsInChildren<MeshRenderer>();
+            m_SMR = gameObject.GetComponentInChildren<SkinnedMeshRenderer>();
+
+            if (m_SMR != null)
+                m_DefTexShader = m_SMR.material.shader;
+
+            if (0 < m_MeshList.Length)
+                m_WeaponTexShader = m_MeshList[0].material.shader;
+
+            if (m_DefTexShader == null || m_WeaponTexShader == null)
+                Debug.Log("디폴트 쉐이더 null");
+        }
+    }
+
+    void SetAttachColor()
+    {
+        AttachColorChange = true;
+        AttachColorStartTime = Time.time;
+    }
+
+    void AttachColorUpdate()
+    {
+        if (!this.gameObject.activeSelf) return;
+
+        if (!AttachColorChange) return;
+
+        FindDefShader();
+
+        m_Ratio = (Time.time - AttachColorStartTime) / AttachColorTime;
+        m_Ratio = Mathf.Min(m_Ratio, 1.0f);
+        m_fCol = m_DamageColor;
+        m_CacColor = new Color(m_fCol, m_fCol, m_fCol);
+
+        if (1.0f <= m_Ratio)
+        {
+            //외형
+            for (int i = 0; i < m_SMRList.Length; i++)
+            {
+                if (m_DefTexShader != null)
+                    m_SMRList[i].material.shader = m_DefTexShader;
+            }
+
+            //무기
+            if (m_MeshList != null)
+            {
+                for (int i = 0; i < m_MeshList.Length; i++)
+                {
+                    if (m_WeaponTexShader != null)
+                        m_MeshList[i].material.shader = m_WeaponTexShader;
+                }
+            }
+
+            AttachColorChange = false;
+        }
+        else
+        {
+            for (int i = 0; i < m_SMRList.Length; i++)
+            {
+                if (GameMgr.Inst.g_AddTexShader != null &&
+                    m_SMRList[i].material.shader != GameMgr.Inst.g_AddTexShader)
+                    m_SMRList[i].material.shader = GameMgr.Inst.g_AddTexShader;
+
+                m_SMRList[i].material.SetColor("_AddColor", m_CacColor);
+            }
+
+            //무기
+            if (m_MeshList != null)
+            {
+                for (int i = 0; i < m_MeshList.Length; i++)
+                {
+                    if (GameMgr.Inst.g_AddTexShader != null &&
+                        m_MeshList[i].material.shader != GameMgr.Inst.g_AddTexShader)
+                        m_MeshList[i].material.shader = GameMgr.Inst.g_AddTexShader;
+
+                    m_MeshList[i].material.SetColor("_AddColor", m_CacColor);
+                }
+            }
         }
     }
 }
