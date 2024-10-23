@@ -22,9 +22,18 @@ public class Game_Mgr : MonoBehaviour
     int m_Max    = 100;     //최대값
     bool m_IsGameOver = false;  //게임 종료 여부 변수
 
+    public Button Back_Btn; //로비로 돌아가는 버튼
+    public Button NickChange_Btn;  //닉네임 변경 버튼
+    public InputField Name_InputField;
+    public Text BestScore_Text;
+    public Text Message_Text;
+    float showMessageTimer = 0.0f;
+
     // Start is called before the first frame update
     void Start()
     {
+        NetworkMgr.Inst.ReadyNetworkMgr(this);
+
         m_CurNum = Random.Range(m_Min, (m_Max + 1));  // 1 ~ 100 랜덤값 발생
         ComQuestion_Text.text = "당신이 생각한 숫자는 " + m_CurNum + "입니까?";
 
@@ -39,12 +48,34 @@ public class Game_Mgr : MonoBehaviour
 
         if (Replay_Btn != null)
             Replay_Btn.onClick.AddListener(ReplayBtnClick);
+
+        if (Back_Btn != null)
+            Back_Btn.onClick.AddListener(() =>
+            {
+                SceneManager.LoadScene("LobbyScene");
+            });
+
+        if (Name_InputField != null)
+            Name_InputField.text = GlobalValue.g_NickName;
+
+        if (NickChange_Btn != null)
+            NickChange_Btn.onClick.AddListener(NickChangeClick);
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (0.0f < showMessageTimer)
+        {
+            showMessageTimer -= Time.deltaTime;
+            if (showMessageTimer <= 0.0f)
+            {
+                MessageOnOff("", false);    //메시지 끄기
+            }
+        }
 
+        if (BestScore_Text != null)
+            BestScore_Text.text = $"최고기록 : {GlobalValue.g_BestScore}점";
     }
 
     private void EqualBtnClick()
@@ -56,6 +87,12 @@ public class Game_Mgr : MonoBehaviour
         UserInfo_Text.text = "진행 횟수 : 20번 중 " + m_Count + "번";
 
         m_IsGameOver = true;
+
+        if (GlobalValue.g_BestScore < int.MaxValue - 1)
+        {
+            GlobalValue.g_BestScore++;
+            NetworkMgr.Inst.PushPacket(PacketType.BestScore);
+        }
     }
 
     private void SmallBtnClick()
@@ -93,6 +130,12 @@ public class Game_Mgr : MonoBehaviour
             ComQuestion_Text.text = "당신이 생각한 숫자는 " + m_CurNum + "입니까?";
             UserInfo_Text.text = "진행 횟수 : 20번 중 " + m_Count + "번";
         }////아직까지는 max가 min보다 큰 경우
+
+        if (GlobalValue.g_BestScore < int.MaxValue - 1)
+        {
+            GlobalValue.g_BestScore++;
+            NetworkMgr.Inst.PushPacket(PacketType.BestScore);
+        }
 
     }//private void SmallBtnClick()
 
@@ -132,11 +175,48 @@ public class Game_Mgr : MonoBehaviour
             UserInfo_Text.text = "진행 횟수 : 20번 중 " + m_Count + "번";
         }
 
+        if (GlobalValue.g_BestScore < int.MaxValue - 1)
+        {
+            GlobalValue.g_BestScore++;
+            NetworkMgr.Inst.PushPacket(PacketType.BestScore);
+        }
+
     }//private void BigBtnClick()
 
     private void ReplayBtnClick()
     {
-        SceneManager.LoadScene("SampleScene");
+        SceneManager.LoadScene("GameScene");
+    }
+
+    void NickChangeClick()
+    {
+        if (Name_InputField.text == GlobalValue.g_Unique_ID) return;
+
+        string a_NickStr = Name_InputField.text.Trim();
+
+        if (a_NickStr == "" || a_NickStr.Length < 3)
+        {
+            MessageOnOff("닉네임은 공백없이 3글자 이상 입력해주세요.", true);
+            return;
+        }
+
+        NetworkMgr.Inst.m_NickCgBuff = a_NickStr;
+        NetworkMgr.Inst.PushPacket(PacketType.NickUpdate);
+    }
+
+    public void MessageOnOff(string Msg = "", bool isOn = true)
+    {
+        if (isOn == true)
+        {
+            Message_Text.text = Msg;
+            Message_Text.gameObject.SetActive(true);
+            showMessageTimer = 5.0f;
+        }
+        else
+        {
+            Message_Text.text = "";
+            Message_Text.gameObject.SetActive(false);
+        }
     }
 
 }//public class Game_Mgr : MonoBehaviour

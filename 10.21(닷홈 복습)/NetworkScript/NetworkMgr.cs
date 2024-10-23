@@ -64,8 +64,8 @@ public class NetworkMgr : G_Singleton<NetworkMgr>
 
     //--- Scene별 컴포넌트 객체
     [HideInInspector] public TitleNetCoroutine TitleNetCom;
-    //[HideInInspector] public LobbyNetCoroutine LobbyNetCom;
-    //[HideInInspector] public InGameNetCoroutine InGameNetCom;
+    [HideInInspector] public LobbyNetCoroutine LobbyNetCom;
+    [HideInInspector] public InGameNetCoroutine InGameNetCom;
     //[HideInInspector] public StoreNetCoroutine StoreNetCom;
     //--- Scene별 컴포넌트 객체
 
@@ -85,8 +85,8 @@ public class NetworkMgr : G_Singleton<NetworkMgr>
         base.Init(); //부모쪽에 있는 Init() 함수 호출
 
         TitleNetCom  = gameObject.AddComponent<TitleNetCoroutine>();   //컴포넌트 추가
-        //LobbyNetCom  = gameObject.AddComponent<LobbyNetCoroutine>();   //컴포넌트 추가
-        //InGameNetCom = gameObject.AddComponent<InGameNetCoroutine>();  //컴포넌트 추가
+        LobbyNetCom  = gameObject.AddComponent<LobbyNetCoroutine>();   //컴포넌트 추가
+        InGameNetCom = gameObject.AddComponent<InGameNetCoroutine>();  //컴포넌트 추가
         //StoreNetCom  = gameObject.AddComponent<StoreNetCoroutine>();
     }
 
@@ -100,17 +100,17 @@ public class NetworkMgr : G_Singleton<NetworkMgr>
             TitleNetCom.TitleStart(a_Tm);
         }
 
-        //LobbyMgr a_Lm = a_CurMgr as LobbyMgr;
-        //if (a_Lm != null)
-        //{
-        //    LobbyNetCom.LobbyStart(a_Lm);
-        //}
+        LobbyMgr a_Lm = a_CurMgr as LobbyMgr;
+        if (a_Lm != null)
+        {
+            LobbyNetCom.LobbyStart(a_Lm);
+        }
 
-        //GameMgr a_Gm = a_CurMgr as GameMgr;
-        //if (a_Gm != null)
-        //{
-        //    InGameNetCom.GameStart(a_Gm);
-        //}
+        Game_Mgr a_Gm = a_CurMgr as Game_Mgr;
+        if (a_Gm != null)
+        {
+            InGameNetCom.GameStart(a_Gm);
+        }
 
         //DragAndDropMgr a_DAD = a_CurMgr as DragAndDropMgr;
         //if (a_DAD != null)
@@ -150,16 +150,17 @@ public class NetworkMgr : G_Singleton<NetworkMgr>
             StartCoroutine(TitleNetCom.CreateActCo(m_IdStrBuff, m_PwStrBuff, m_NickStrBuff));
         //--- Title
         //--- Lobby
-        //else if (m_PacketBuff[0] == PacketType.GetRankingList)
-        //    StartCoroutine(LobbyNetCom.GetRankListCo());
-        //else if (m_PacketBuff[0] == PacketType.NickUpdate)
-        //    StartCoroutine(LobbyNetCom.NickChangeCo(m_NickCgBuff, m_RefCfgBox));
+        else if (m_PacketBuff[0] == PacketType.GetRankingList)
+            StartCoroutine(LobbyNetCom.GetRankListCo());
+
         //else if (m_PacketBuff[0] == PacketType.ClearSave)
         //    StartCoroutine(LobbyNetCom.UpdateClearSaveCo());
         //--- Lobby
         //--- InGame
-        //else if (m_PacketBuff[0] == PacketType.BestScore)
-        //    StartCoroutine(InGameNetCom.UpdateScoreCo());
+        else if (m_PacketBuff[0] == PacketType.BestScore)
+            StartCoroutine(InGameNetCom.UpdateScoreCo());
+        else if (m_PacketBuff[0] == PacketType.NickUpdate)
+            StartCoroutine(InGameNetCom.NickChangeCo(m_NickCgBuff));
         //else if (m_PacketBuff[0] == PacketType.UserGold)
         //    StartCoroutine(InGameNetCom.UpdateGoldCo());
         //else if (m_PacketBuff[0] == PacketType.InfoUpdate)

@@ -169,6 +169,6 @@ public class Title_Mgr : MonoBehaviour
 
     public void LobbyLoadScene()
     {
-        SceneManager.LoadScene("Lobby");
+        SceneManager.LoadScene("LobbyScene");
     }
 }

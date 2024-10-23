@@ -116,8 +116,8 @@ public class TitleNetCoroutine : MonoBehaviour
 
             Debug.Log(sz);
 
-            //if (m_RefTitleMgr != null)
-            //    m_RefTitleMgr.LobbyLoadScene();
+            if (m_RefTitleMgr != null)
+                m_RefTitleMgr.LobbyLoadScene();
         }
         else
         {
