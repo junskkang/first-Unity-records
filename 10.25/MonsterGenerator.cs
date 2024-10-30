@@ -32,7 +32,7 @@ public class MonsterGenerator : MonoBehaviour
     void Update()
     {
         if (curMonCount == 0 && timeSpawn > 10.0f && createDone == true)
-            timeSpawn = 10.0f;
+            timeSpawn = 5.0f;
 
         timeSpawn -= Time.deltaTime;
 
@@ -92,7 +92,7 @@ public class MonsterGenerator : MonoBehaviour
                 monster.transform.SetParent(this.transform);
                 curMonCount++;
 
-                yield return new WaitForSeconds(1f);               
+                yield return new WaitForSeconds(0.8f);               
             }                    
         }
 

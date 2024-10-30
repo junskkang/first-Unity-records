@@ -71,7 +71,7 @@ public class Ally_Ctrl : MonoBehaviour
             if (cacDir.magnitude <= attackRange)
             {
                 //데미지 부여
-                coll.GetComponent<Monster_Ctrl>().TakeDamage(attackDamage, this);
+                //coll.GetComponent<Monster_Ctrl>().TakeDamage(attackDamage, this);
 
                 //이펙트 생성
                 if (attackEff != null)
@@ -109,7 +109,7 @@ public class Ally_Ctrl : MonoBehaviour
             if (cacDir.magnitude <= skillRange)
             {
                 //데미지 부여
-                coll.GetComponent<Monster_Ctrl>().TakeDamage(skillDamage, this);
+                //coll.GetComponent<Monster_Ctrl>().TakeDamage(skillDamage, this);
             }
         }
         

@@ -5,7 +5,11 @@ using UnityEngine;
 public class BulletCtrl : MonoBehaviour
 {
     Vector3 dirVec = Vector3.right;
-    float moveSpeed = 15.0f;        //날아가는 속도
+    float moveSpeed = 50.0f;        //날아가는 속도
+
+    [HideInInspector] public float curAttDamage = 0;
+    [HideInInspector] public GameObject hunterAttackEff = null;
+    [HideInInspector] public HunterUnit hunterUnit = null;
     // Start is called before the first frame update
     void Start()
     {
@@ -25,10 +29,32 @@ public class BulletCtrl : MonoBehaviour
             Destroy(gameObject);
     }
 
-    public void BulletSpawn(Vector3 startPos, Vector3 dirVec, float mvSpeed = 15.0f)
+    public void BulletSpawn(Vector3 startPos, Vector3 dirVec, float AttDamage, GameObject effect, HunterUnit whosAttack)
     {
         this.dirVec = dirVec;
-        this.moveSpeed = mvSpeed;
+        this.curAttDamage = AttDamage;
+        this.hunterAttackEff = effect;
+        this.hunterUnit = whosAttack;
+
         transform.position = new Vector3 (startPos.x, startPos.y, 0.0f);
+    }
+
+    private void OnTriggerEnter2D(Collider2D coll)
+    {
+        if (coll.tag == "Monster")
+        {         
+            coll.GetComponent<Monster_Ctrl>().TakeDamage(curAttDamage, hunterUnit.gameObject);
+
+            GameObject effect;
+            //이펙트 생성
+            if (hunterAttackEff != null)
+            {
+                effect = Instantiate(hunterAttackEff) as GameObject;
+                effect.transform.position = coll.transform.position;
+                Destroy(effect, 0.25f);
+            }
+
+            Destroy(this.gameObject);
+        }
     }
 }

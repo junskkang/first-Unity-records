@@ -13,7 +13,7 @@ public class Dancer_Att : Ally_Atrribute
         level = 0;
         maxHp = 0;
         maxMp = 0;
-        attack = 0;
+        //attack = 0;
 
         //댄서 고유 속성 기본값 부여
     }
@@ -49,7 +49,7 @@ public class DancerUnit : AllyUnit
         //댄서 고유 공격 패턴
     }
 
-    public override void UseSkill()
+    public override void Skill()
     {
         //댄서 고유 스킬 패턴
     }

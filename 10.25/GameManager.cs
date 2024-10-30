@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
     public int round;
 
     GameObject[] allyLoadObject = new GameObject[5];
+    Hero_Ctrl refHero = null;
 
     public static GameManager Inst;
 
@@ -27,10 +28,11 @@ public class GameManager : MonoBehaviour
         GlobalValue.LoadGameData();
         for (int i = 0; i < GlobalValue.g_AllyList.Count; i++)
         {
-            allyLoadObject[i] = Resources.Load($"Ally_{GlobalValue.g_AllyList[i].type}") as GameObject;
+            allyLoadObject[i] = Resources.Load($"Ally_{(int)GlobalValue.g_AllyList[i].type}") as GameObject;
 
-            //Debug.Log(GlobalValue.g_AllyList[i].type);
+            //Debug.Log(allyLoadObject[i]);
         }
+        refHero = GameObject.FindObjectOfType<Hero_Ctrl>();
 
     }
 
@@ -76,7 +78,7 @@ public class GameManager : MonoBehaviour
             if (cloneObject != null)
             {
                 AllyUnit refAlly = GlobalValue.g_AllyList[(int)ally].MyAddComponent(cloneObject);
-                refAlly.transform.position = Vector3.zero;
+                refAlly.transform.position = refHero.transform.position;
             }
         }
     }

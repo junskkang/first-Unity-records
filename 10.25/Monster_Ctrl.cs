@@ -121,7 +121,7 @@ public class Monster_Ctrl : MonoBehaviour
         }
     }
 
-    public void TakeDamage(float value, Ally_Ctrl whosAttack)
+    public void TakeDamage(float value, GameObject whosAttack)
     {
         if (curHp < 0) return;
 
@@ -133,10 +133,13 @@ public class Monster_Ctrl : MonoBehaviour
         if (curHp <= 0)
         {
             //»ç¸Á
+            
+            MonsterGenerator.inst.curMonCount--;
+            whosAttack.GetComponent<AllyUnit>().monKill++;
+            if (whosAttack.GetComponent<AllyUnit>().monKill % 10 == 0)
+                whosAttack.GetComponent<AllyUnit>().Levelup();
+
             Destroy(gameObject);
-            whosAttack.monKill++;
-            if (whosAttack.monKill % 10 == 0)
-                whosAttack.Levelup();
         }
 
 
@@ -149,17 +152,6 @@ public class Monster_Ctrl : MonoBehaviour
             MonsterGenerator.inst.curMonCount--;
             Destroy(this.gameObject);
             refHero.TakeDamage(10.0f);
-        }
-    }
-
-    private void OnTriggerEnter2D(Collider2D coll)
-    {
-        if (coll.tag == "AllyBullet")
-        {
-            Destroy(coll.gameObject);
-            Destroy(this.gameObject);
-            MonsterGenerator.inst.curMonCount--;
-            GameManager.Inst.AddPoint(10);
         }
     }
 }

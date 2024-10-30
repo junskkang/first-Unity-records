@@ -10,10 +10,24 @@ public class Hunter_Att : Ally_Atrribute
         //아군 공통 속성 기본값 부여
         type = AllyType.Hunter;
         name = "헌터";
-        level = 0;
-        maxHp = 0;
-        maxMp = 0;
-        attack = 0;
+        level = 1;
+        maxHp = 100;
+        maxMp = 20;
+
+        attackDamage = 5.0f;
+        attackRange = 6.0f;
+        attackSpeed = 1.5f;
+        attackCool = 0.0f;
+
+        attackCount = 0;
+        skillPossible = 7;
+        anyHit = false;
+        skillRange = 4.0f;
+        skillDamage = 15.0f;
+        skillHitLimit = 5;
+
+        attackEff = Resources.Load($"{type}AttackEff") as GameObject;
+        skillEff = Resources.Load($"{type}SkillEff") as GameObject;
 
         //헌터 고유 속성 기본값 부여
     }
@@ -32,25 +46,91 @@ public class Hunter_Att : Ally_Atrribute
 
 public class HunterUnit : AllyUnit
 {
+    public GameObject bulletPrefab;
+
     // Start is called before the first frame update
     protected override void Start()
     {
         base.Start();  //부모쪽 Start() 호출 (공통 등장 준비)
+        bulletPrefab = Resources.Load("BulletPrefab") as GameObject;
     }
 
     // Update is called once per frame
     protected override void Update()
     {
+        base.Update();
         //헌터 고유 행동 패턴
     }
 
     public override void Attack()
     {
         //헌터 고유 공격 패턴
+        Collider2D[] colls = Physics2D.OverlapCircleAll(transform.position, curAttRange);
+
+        GameObject bullet = null;
+        BulletCtrl bulletCtrl = null;
+        foreach (Collider2D coll in colls)
+        {
+            if (!coll.tag.Contains("Monster")) continue;
+
+            cacDir = coll.transform.position - transform.position;
+
+            if (cacDir.magnitude <= curAttRange)
+            {
+                //화살 발사
+                bullet = Instantiate(bulletPrefab);
+                bulletCtrl = bullet.GetComponent<BulletCtrl>();
+                bulletCtrl.BulletSpawn(transform.position, cacDir.normalized, curAttDamage
+                                        , base.ally_Attribute.attackEff, this);
+                bullet.transform.right = new Vector3(cacDir.normalized.x, cacDir.normalized.y, 0.0f);
+
+                anyHit = true;
+                break;
+            }
+        }
+
+        if (anyHit)
+        {
+            attackCount++;
+            anyHit = false;
+        }
     }
 
-    public override void UseSkill()
+    public override void Skill()
     {
         //헌터 고유 스킬 패턴
+        Debug.Log("헌터 스킬 발동!");
+
+        Collider2D[] colls = Physics2D.OverlapCircleAll(transform.position, skillRange);
+
+        GameObject effect = null;
+        foreach (Collider2D coll in colls)
+        {
+            if (skillHitLimit <= 0)
+            {
+                skillHitLimit = ally_Attribute.skillHitLimit;
+                break;
+            }
+            if (!coll.tag.Contains("Monster")) continue;
+
+            cacDir = coll.transform.position - transform.position;
+
+            if (cacDir.magnitude <= skillRange)
+            {
+                //데미지 부여
+                coll.GetComponent<Monster_Ctrl>().TakeDamage(skillDamage, this.gameObject);
+
+                //이펙트 생성
+                if (base.ally_Attribute.skillEff != null)
+                {
+                    effect = Instantiate(base.ally_Attribute.skillEff) as GameObject;
+                    effect.transform.position = new Vector3(coll.transform.position.x, coll.transform.position.y + 0.2f, coll.transform.position.z);
+                    Destroy(effect, 1.5f);
+                }
+
+                skillHitLimit--;
+            }
+        }
+        attackCount = 0;
     }
 }

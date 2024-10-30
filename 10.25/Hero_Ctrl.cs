@@ -17,7 +17,7 @@ public class Hero_Ctrl : MonoBehaviour
 
     //총알 발사를 위한 변수
     public GameObject bulletPrefab;
-    float shootCool = 0.0f;
+    //float shootCool = 0.0f;
 
     //체력 관련 변수
     public Image Hpbar;
@@ -39,7 +39,7 @@ public class Hero_Ctrl : MonoBehaviour
 
         KeyBDUpdate();
         ChangeAnimation();
-        FireUpdate();
+        //FireUpdate();
     }
 
     void KeyBDUpdate()
@@ -93,38 +93,38 @@ public class Hero_Ctrl : MonoBehaviour
         }
     }
 
-    void FireUpdate()
-    {
-        if (0.0f < shootCool)
-            shootCool -= Time.deltaTime;
+    //void fireupdate()
+    //{
+    //    if (0.0f < shootcool)
+    //        shootcool -= time.deltatime;
 
-        if (Input.GetMouseButton(0))
-        {
-            if (shootCool <= 0.0f)
-            {
-                //발사주기 생성
-                shootCool = 0.3f;
+    //    if (input.getmousebutton(0))
+    //    {
+    //        if (shootcool <= 0.0f)
+    //        {
+    //            //발사주기 생성
+    //            shootcool = 0.3f;
 
-                //마우스 좌표를 월드좌표로 변환
-                Vector3 targetPostion = Input.mousePosition;
-                targetPostion = Camera.main.ScreenToWorldPoint(targetPostion);
-                targetPostion.z = 0.0f;
+    //            //마우스 좌표를 월드좌표로 변환
+    //            vector3 targetpostion = input.mouseposition;
+    //            targetpostion = camera.main.screentoworldpoint(targetpostion);
+    //            targetpostion.z = 0.0f;
 
-                //현재 위치에서 마우스를 향하는 방향벡터 구하기
-                Vector3 dirV = targetPostion - transform.position; 
-                dirV.Normalize();
+    //            //현재 위치에서 마우스를 향하는 방향벡터 구하기
+    //            vector3 dirv = targetpostion - transform.position; 
+    //            dirv.normalize();
 
-                //총알 생성 및 좌표 넘겨주기
-                GameObject bullet = Instantiate(bulletPrefab);
-                BulletCtrl bulletCtrl = bullet.GetComponent<BulletCtrl>();
-                bulletCtrl.BulletSpawn(transform.position, dirV);
+    //            //총알 생성 및 좌표 넘겨주기
+    //            gameobject bullet = instantiate(bulletprefab);
+    //            bulletctrl bulletctrl = bullet.getcomponent<bulletctrl>();
+    //            bulletctrl.bulletspawn(transform.position, dirv);
 
-                //총알 회전
-                bullet.transform.right = new Vector3(dirV.x, dirV.y, 0.0f);
+    //            //총알 회전
+    //            bullet.transform.right = new vector3(dirv.x, dirv.y, 0.0f);
 
-            }
-        }
-    }
+    //        }
+    //    }
+    //}
 
     public void TakeDamage(float damage = 10.0f)
     {
