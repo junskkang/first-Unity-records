@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.UI;
 
 
 public class Ally_Atrribute //속성
@@ -42,7 +43,8 @@ public class AllyUnit : MonoBehaviour
 
     [HideInInspector] public int curLevel = 0;
 
-    [HideInInspector] public float curHp = 0;     //게임 중에 변하는 Hp
+    [HideInInspector] public float maxHp = 0;     //게임 중에 변하는 Hp
+    public float curHp = 0;     //게임 중에 변하는 Hp
     [HideInInspector] public float curMp = 0;   //게임 중에 변하는 Mana
     [HideInInspector] public float curAttDamage = 0;    //게임 중에 변하는 공격력
     [HideInInspector] public float curAttRange = 0;
@@ -57,9 +59,14 @@ public class AllyUnit : MonoBehaviour
     [HideInInspector] public int skillHitLimit = 0;
     public int monKill = 0;
 
-    [HideInInspector] public Vector3 cacDir = Vector3.zero;
+    [HideInInspector] public bool isSkilled = false;
 
+    [HideInInspector] public Vector3 cacDir = Vector3.zero;
+    
     [HideInInspector] public GameManager m_RefGameMgr = null;  //InGameMgr와 소통을 위한 객체
+
+    public Canvas canvas = null;
+    public Image hpBar = null;
     // Start is called before the first frame update
     protected virtual void Start()
     {
@@ -80,21 +87,31 @@ public class AllyUnit : MonoBehaviour
         
         //스탯치 상태 변수에 충전       
         StatSetUp();
+
+        //UI연결
+        UISetUp();
     }
 
     // Update is called once per frame
     protected virtual void Update()
     {
         curAttCool -= Time.deltaTime;
-
-        if (curAttCool <= 0)
+        if (curAttCool <= 0 && attackCount == skillPossible && !isSkilled)
         {
-            Attack();
+            isSkilled = true;
+            Skill();
             curAttCool = curAttSpeed;
         }
 
-        if (attackCount == skillPossible)
-            Skill();
+        if (curAttCool <= 0 && !isSkilled)
+        {
+            Attack();
+            curAttCool = curAttSpeed;
+
+            curHp -= curAttDamage / 2;
+        }
+
+        UIUpdate();
     }
 
     public virtual void Attack()
@@ -110,13 +127,14 @@ public class AllyUnit : MonoBehaviour
     void StatSetUp()
     {
         curLevel = ally_Attribute.level;
-        curHp = ally_Attribute.maxHp;
+        maxHp = ally_Attribute.maxHp;
+        curHp = maxHp;
         curMp = ally_Attribute.maxMp;
 
         curAttDamage = ally_Attribute.attackDamage;
         curAttRange = ally_Attribute.attackRange;
         curAttSpeed = ally_Attribute.attackSpeed;
-        curAttCool = ally_Attribute.attackCool;
+        curAttCool = curAttSpeed;
 
         attackCount = ally_Attribute.attackCount;
         skillPossible = ally_Attribute.skillPossible;
@@ -126,6 +144,21 @@ public class AllyUnit : MonoBehaviour
         skillHitLimit = ally_Attribute.skillHitLimit;
 
         Debug.Log("스탯 설정 완료");
+    }
+
+    void UISetUp()
+    {
+        if (canvas == null)
+            canvas = GetComponentInChildren<Canvas>();
+
+        if (canvas != null)
+            hpBar = canvas.transform.Find("Hpbar").GetComponent<Image>();       
+    }
+
+    void UIUpdate()
+    {
+        if (hpBar != null)
+            hpBar.fillAmount = curHp / maxHp;
     }
 
     public void Levelup()

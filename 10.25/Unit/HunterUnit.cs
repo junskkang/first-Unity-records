@@ -47,7 +47,7 @@ public class Hunter_Att : Ally_Atrribute
 public class HunterUnit : AllyUnit
 {
     public GameObject bulletPrefab;
-
+    
     // Start is called before the first frame update
     protected override void Start()
     {
@@ -132,5 +132,6 @@ public class HunterUnit : AllyUnit
             }
         }
         attackCount = 0;
+        isSkilled = false;
     }
 }

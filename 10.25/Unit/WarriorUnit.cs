@@ -62,7 +62,8 @@ public class WarriorUnit : AllyUnit
     }
 
     public override void Attack()
-    {
+    {      
+
         //워리어 고유 공격 패턴
         Collider2D[] colls = Physics2D.OverlapCircleAll(transform.position, curAttRange);
 
@@ -102,7 +103,7 @@ public class WarriorUnit : AllyUnit
     {
         //워리어 고유 스킬 패턴
         Debug.Log("워리어 스킬 발동!");
-
+        
         Collider2D[] colls = Physics2D.OverlapCircleAll(transform.position, skillRange);
 
         GameObject effect = null;
@@ -135,5 +136,7 @@ public class WarriorUnit : AllyUnit
         }
 
         attackCount = 0;
+
+        isSkilled = false;
     }
 }

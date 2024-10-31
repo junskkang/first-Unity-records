@@ -4,18 +4,33 @@ using UnityEngine;
 public class Priest_Att : Ally_Atrribute
 {
     //프리스트 고유 속성 추가
-
+    public float skillDur = 0;
     public Priest_Att()    //생성자 오버로딩 함수
     {
         //아군 공통 속성 기본값 부여
         type = AllyType.Priest;
         name = "프리스트";
-        level = 0;
-        maxHp = 0;
-        maxMp = 0;
-        //attack = 0;
+        level = 1;
+        maxHp = 100;
+        maxMp = 20;
+
+        attackDamage = 10;
+        attackRange = 4.0f;
+        attackSpeed = 3.0f;
+        attackCool = 0.0f;
+
+        attackCount = 0;
+        skillPossible = 5;
+        anyHit = false;
+        skillRange = 4.0f;
+        skillDamage = 5.0f;
+        skillHitLimit = 0;
+
+        attackEff = Resources.Load($"{type}AttackEff") as GameObject;
+        skillEff = Resources.Load($"{type}SkillEff") as GameObject;
 
         //프리스트 고유 속성 기본값 부여
+        skillDur = 5.0f;
     }
 
     //Ally게임 오브젝트에 빙의시킬 Ally클래스를 추가해주는 함수
@@ -32,6 +47,9 @@ public class Priest_Att : Ally_Atrribute
 
 public class PriestUnit : AllyUnit
 {
+    List<float> allyHpValue = new List<float>();
+    List<int> whosHpIdx = new List<int>();
+    float lessHp = 0;
     // Start is called before the first frame update
     protected override void Start()
     {
@@ -41,16 +59,76 @@ public class PriestUnit : AllyUnit
     // Update is called once per frame
     protected override void Update()
     {
+        base.Update();
         //프리스트 고유 행동 패턴
     }
 
     public override void Attack()
     {
         //프리스트 고유 공격 패턴
+        Collider2D[] colls = Physics2D.OverlapCircleAll(transform.position, curAttRange);
+        
+        GameObject effect = null;
+        
+        for (int i = 0;  i < colls.Length; i++)
+        {
+            if (!colls[i].tag.Contains("Ally")) continue;
+
+            if (colls[i].GetComponent<AllyUnit>().curHp < colls[i].GetComponent<AllyUnit>().maxHp)
+            {
+                //Debug.Log(colls[i].GetComponent<AllyUnit>().curHp);
+                //Debug.Log(colls[i].GetComponent<AllyUnit>().maxHp);
+                whosHpIdx.Add(i);
+                allyHpValue.Add(colls[i].GetComponent<AllyUnit>().curHp);
+            }            
+        }
+        //만약 10마리가 있고 그 중에 아군이 5명이야. 짝수가 아군이라 치자
+        //whosHp[0] = 2
+        if (whosHpIdx.Count == 0) return;
+
+        lessHp = allyHpValue[0];
+        int idx = 0;
+
+        for (int j = 0; j < allyHpValue.Count; j++)
+        {
+            if (lessHp > allyHpValue[j])
+            {
+                lessHp = allyHpValue[j];
+                idx = j;
+            }                
+        }
+
+        Debug.Log("제일 낮은 피를 가진 유닛의 인덱스" + whosHpIdx[idx]);
+
+        if (colls[whosHpIdx[idx]].GetComponent<AllyUnit>().curHp + curAttDamage < colls[whosHpIdx[idx]].GetComponent<AllyUnit>().maxHp)
+            colls[whosHpIdx[idx]].GetComponent<AllyUnit>().curHp += curAttDamage;
+        else
+            colls[whosHpIdx[idx]].GetComponent<AllyUnit>().curHp = colls[whosHpIdx[idx]].GetComponent<AllyUnit>().maxHp;
+
+        Debug.Log(colls[whosHpIdx[idx]].name + "에게 힐 시전완료");
+        anyHit = true;
+
+        //이펙트 생성
+        if (base.ally_Attribute.attackEff != null)
+        {
+            effect = Instantiate(base.ally_Attribute.attackEff) as GameObject;
+            effect.transform.position = colls[whosHpIdx[idx]].transform.position;
+            Destroy(effect, 2.5f);
+        }
+        allyHpValue.Clear();
+        whosHpIdx.Clear();
+
+        if (anyHit)
+        {
+            attackCount++;
+            anyHit = false;
+        }
     }
 
     public override void Skill()
     {
         //프리스트 고유 스킬 패턴
+        isSkilled = false;
+        attackCount = 0;
     }
 }
