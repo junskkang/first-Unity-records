@@ -7,6 +7,7 @@ public class Mage_Att : Ally_Atrribute
     public int multiMin = 0;
     public int multiMax = 0;
     public float skillDur = 0;
+    public float skillTick = 0;
     public GameObject[] attackEffs = new GameObject[4];
     public GameObject[] skillEffs = new GameObject[2];
 
@@ -37,6 +38,7 @@ public class Mage_Att : Ally_Atrribute
         multiMin = 1;
         multiMax = 5;
         skillDur = 5.0f;
+        skillTick = 0.1f;
         for (int i = 0; i < attackEffs.Length; i++)
         {
             attackEffs[i] = Resources.Load($"{type}AttackEff{i}") as GameObject;
@@ -162,7 +164,7 @@ public class MageUnit : AllyUnit
         //데미지 부여
         Collider2D[] colls;
 
-        for (int i = 0; i < ((Mage_Att)ally_Attribute).skillDur / 0.1f; i++)
+        for (int i = 0; i < ((Mage_Att)ally_Attribute).skillDur / ((Mage_Att)ally_Attribute).skillTick; i++)
         {
             colls = Physics2D.OverlapCircleAll(transform.position, skillRange);
             //Debug.Log(colls.Length);
@@ -179,7 +181,7 @@ public class MageUnit : AllyUnit
                     //Debug.Log("메테오 데미지" + skillDamage);
                 }
             }
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(((Mage_Att)ally_Attribute).skillTick);
         }
     }
 }

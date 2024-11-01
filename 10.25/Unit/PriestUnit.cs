@@ -5,6 +5,7 @@ public class Priest_Att : Ally_Atrribute
 {
     //프리스트 고유 속성 추가
     public float skillDur = 0;
+    public float skillTick = 0;
     public Priest_Att()    //생성자 오버로딩 함수
     {
         //아군 공통 속성 기본값 부여
@@ -22,15 +23,16 @@ public class Priest_Att : Ally_Atrribute
         attackCount = 0;
         skillPossible = 5;
         anyHit = false;
-        skillRange = 4.0f;
-        skillDamage = 5.0f;
-        skillHitLimit = 0;
+        skillRange = 2.0f;
+        skillDamage = 3.0f;
+        skillHitLimit = 4;
 
         attackEff = Resources.Load($"{type}AttackEff") as GameObject;
         skillEff = Resources.Load($"{type}SkillEff") as GameObject;
 
         //프리스트 고유 속성 기본값 부여
         skillDur = 5.0f;
+        skillTick = 0.5f;
     }
 
     //Ally게임 오브젝트에 빙의시킬 Ally클래스를 추가해주는 함수
@@ -72,7 +74,9 @@ public class PriestUnit : AllyUnit
         
         for (int i = 0;  i < colls.Length; i++)
         {
+            if (colls[i] == null) continue;
             if (!colls[i].tag.Contains("Ally")) continue;
+            if (colls[i].GetComponent<AllyUnit>().curHp == colls[i].GetComponent<AllyUnit>().maxHp) continue;
 
             if (colls[i].GetComponent<AllyUnit>().curHp < colls[i].GetComponent<AllyUnit>().maxHp)
             {
@@ -128,6 +132,66 @@ public class PriestUnit : AllyUnit
     public override void Skill()
     {
         //프리스트 고유 스킬 패턴
+        StartCoroutine(DoTHeal());
+    }
+    IEnumerator DoTHeal()
+    {
+        Collider2D[] colls = Physics2D.OverlapCircleAll(transform.position, curAttRange);
+        
+        GameObject effect = null;
+        //이펙트생성
+        foreach (Collider2D coll in colls)
+        {
+            if (coll == null) continue;
+            if (!coll.tag.Contains("Ally")) continue;
+
+            if (coll.GetComponent<AllyUnit>().curHp < coll.GetComponent<AllyUnit>().maxHp)
+            {
+                if (base.ally_Attribute.skillEff != null)
+                {
+                    //이펙트 중복되지 않도록 
+                    if (coll.GetComponent<AllyUnit>().isDoTHeal) continue;
+
+                    effect = Instantiate(base.ally_Attribute.skillEff) as GameObject;
+                    effect.transform.position = coll.transform.position;
+                    coll.GetComponent<AllyUnit>().isDoTHeal = true;
+                    coll.GetComponent<AllyUnit>().whosHeal = this.gameObject;
+                    Destroy(effect, ((Priest_Att)ally_Attribute).skillDur);
+                }
+            }
+        }
+
+        //힐 데미지 부여    
+        for (int i = 0; i < ((Priest_Att)ally_Attribute).skillDur / ((Priest_Att)ally_Attribute).skillTick; i++)
+        {
+            foreach (Collider2D coll in colls)
+            {
+                if (coll == null) continue;
+                if (!coll.tag.Contains("Ally")) continue;
+
+                if (coll.GetComponent<AllyUnit>().isDoTHeal &&
+                    coll.GetComponent<AllyUnit>().whosHeal == this.gameObject)
+                {
+                    if (coll.GetComponent<AllyUnit>().curHp + skillDamage < coll.GetComponent<AllyUnit>().maxHp)
+                        coll.GetComponent<AllyUnit>().curHp += skillDamage;
+                    else
+                        coll.GetComponent<AllyUnit>().curHp = coll.GetComponent<AllyUnit>().maxHp;
+                }
+            }
+
+            yield return new WaitForSeconds(((Priest_Att)ally_Attribute).skillTick);
+        }
+
+        //스킬 종료 후 도트힐 상태 꺼주기
+        foreach (Collider2D coll in colls)
+        {
+            if (coll == null) continue;
+            if (!coll.tag.Contains("Ally")) continue;
+
+            if (coll.GetComponent<AllyUnit>().isDoTHeal)
+                coll.GetComponent<AllyUnit>().isDoTHeal = false;
+        }
+
         isSkilled = false;
         attackCount = 0;
     }

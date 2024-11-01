@@ -60,6 +60,8 @@ public class AllyUnit : MonoBehaviour
     public int monKill = 0;
 
     [HideInInspector] public bool isSkilled = false;
+    [HideInInspector] public bool isDoTHeal = false;
+    [HideInInspector] public GameObject whosHeal = null;
 
     [HideInInspector] public Vector3 cacDir = Vector3.zero;
     
@@ -95,7 +97,9 @@ public class AllyUnit : MonoBehaviour
     // Update is called once per frame
     protected virtual void Update()
     {
-        curAttCool -= Time.deltaTime;
+        if (!isSkilled)
+            curAttCool -= Time.deltaTime;
+
         if (curAttCool <= 0 && attackCount == skillPossible && !isSkilled)
         {
             isSkilled = true;

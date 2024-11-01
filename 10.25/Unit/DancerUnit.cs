@@ -4,16 +4,38 @@ using UnityEngine;
 public class Dancer_Att : Ally_Atrribute
 {
     //댄서 고유 속성 추가
-
+    public float attackDur;
+    public float bewitchedSpeed;
+    public float skillDur;
+    
     public Dancer_Att()    //생성자 오버로딩 함수
     {
         //아군 공통 속성 기본값 부여
         type = AllyType.Dancer;
         name = "댄서";
-        level = 0;
-        maxHp = 0;
-        maxMp = 0;
-        //attack = 0;
+        level = 1;
+        maxHp = 100;
+        maxMp = 20;
+
+        attackDamage = 1;
+        attackRange = 4.0f;
+        attackSpeed = 3.0f;
+        attackCool = 0.0f;
+
+        attackCount = 0;
+        skillPossible = 2;
+        anyHit = false;
+        skillRange = 4.0f;
+        skillDamage = 3.0f;
+        skillHitLimit = 5;
+
+        attackEff = Resources.Load($"{type}AttackEff") as GameObject;
+        skillEff = Resources.Load($"{type}SkillEff") as GameObject;
+
+        //프리스트 고유 속성 기본값 부여
+        attackDur = 3.0f;
+        bewitchedSpeed = 0.4f;
+        skillDur = 5.0f;
 
         //댄서 고유 속성 기본값 부여
     }
@@ -41,12 +63,76 @@ public class DancerUnit : AllyUnit
     // Update is called once per frame
     protected override void Update()
     {
+        base.Update();
         //댄서 고유 행동 패턴
     }
 
     public override void Attack()
     {
+        StartCoroutine(Bewitch());
+    }
+
+    IEnumerator Bewitch()
+    {
         //댄서 고유 공격 패턴
+        Collider2D[] colls = Physics2D.OverlapCircleAll(transform.position, curAttRange);
+
+        isSkilled = true;
+
+        GameObject effect = null;
+
+        foreach (Collider2D coll in colls)
+        {
+            if (skillHitLimit <= 0)
+            {
+                skillHitLimit = ally_Attribute.skillHitLimit;
+                break;
+            }
+            if (coll == null) continue;
+            if (!coll.tag.Contains("Monster")) continue;
+            if (coll.GetComponent<Monster_Ctrl>().isBewitched) continue;
+
+            cacDir = coll.transform.position - transform.position;
+
+            if (cacDir.magnitude <= curAttRange)
+            {
+                //이펙트 생성
+                if (base.ally_Attribute.attackEff != null)
+                {
+                    effect = Instantiate(base.ally_Attribute.attackEff) as GameObject;
+                    effect.transform.position = coll.transform.position;
+                    effect.transform.SetParent(coll.transform);
+                    coll.GetComponent<Monster_Ctrl>().isBewitched = true;
+                    coll.GetComponent<Monster_Ctrl>().bewitchedSpeed = ((Dancer_Att)ally_Attribute).bewitchedSpeed;
+                    coll.GetComponent<Monster_Ctrl>().whosBewitch = this.gameObject;
+                    Destroy(effect, ((Dancer_Att)ally_Attribute).attackDur);
+                }
+                skillHitLimit--;
+                anyHit = true;
+            }
+        }
+
+        yield return new WaitForSeconds(((Dancer_Att)ally_Attribute).attackDur);
+
+        foreach (Collider2D coll in colls)
+        {
+            if (coll == null) continue;
+            if (!coll.tag.Contains("Monster")) continue;
+            if (coll.GetComponent<Monster_Ctrl>().isBewitched &&
+                coll.GetComponent<Monster_Ctrl>().whosBewitch == this.gameObject)
+            {
+                coll.GetComponent<Monster_Ctrl>().isBewitched = false;
+            }
+        }
+        
+        if (anyHit)
+        {
+            attackCount++;
+            anyHit = false;
+        }
+
+        isSkilled = false;
+
     }
 
     public override void Skill()

@@ -2,10 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    //유닛 설치를 위한 타일 좌표
+    public Tilemap tileMap;
+    Vector3 worldPos;
+    LayerMask monsterRoadLayer = -1;
+    
+    
+
+
+
     int curPoint = 0;
     public Text pointText;
 
@@ -33,6 +43,8 @@ public class GameManager : MonoBehaviour
             //Debug.Log(allyLoadObject[i]);
         }
         refHero = GameObject.FindObjectOfType<Hero_Ctrl>();
+
+        monsterRoadLayer = 1 << LayerMask.NameToLayer("InstallImpossible");
 
     }
 
@@ -72,13 +84,33 @@ public class GameManager : MonoBehaviour
 
     void UnitBuild(AllyType ally)
     {
+        if (Physics2D.Raycast(refHero.transform.position, -refHero.transform.forward, Mathf.Infinity, monsterRoadLayer.value))
+        {
+            Debug.Log("해당 위치에 유닛을 설치할 수 없습니다.");
+            return;
+        }
+
+        worldPos = refHero.transform.position;
+        Vector3 worldToCellPos = tileMap.WorldToCell(worldPos);
+        worldToCellPos.x += 0.5f;
+        worldToCellPos.y += 0.5f;
+        
+        if (Physics2D.Raycast(worldToCellPos, -refHero.transform.forward, Mathf.Infinity, monsterRoadLayer.value))
+        {
+            Debug.Log("해당 위치에 유닛이 이미 설치되어 있습니다..");
+            return;
+        }
+
         if (allyLoadObject != null)
         {
             GameObject cloneObject = Instantiate(allyLoadObject[(int)ally]);
             if (cloneObject != null)
             {
-                AllyUnit refAlly = GlobalValue.g_AllyList[(int)ally].MyAddComponent(cloneObject);
-                refAlly.transform.position = refHero.transform.position;
+                AllyUnit refAlly = GlobalValue.g_AllyList[(int)ally].MyAddComponent(cloneObject);                              
+
+
+
+                refAlly.transform.position = worldToCellPos;
             }
         }
     }

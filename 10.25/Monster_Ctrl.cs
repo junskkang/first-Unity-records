@@ -7,7 +7,6 @@ public class Monster_Ctrl : MonoBehaviour
 {
     //플레이어를 추적하도록 하기 위한 변수
     Hero_Ctrl refHero;  //추적하게 될 대상
-    float speed = 5.0f; //이동속도
     Vector3 curPos;
     Vector3 dirVec;
     int monsterType = 0;
@@ -30,12 +29,24 @@ public class Monster_Ctrl : MonoBehaviour
     float curHp = 20;
     float maxHp = 20;
 
+    //피격 연출
+    SpriteRenderer spriteRenderer;
+    Color hitColor = new Color(1.0f, 0.5f, 0.5f);
+    Color originColor = Color.white;
+    float hitTimer = 0.0f;
+
+    //디버프 관련 변수
+    [HideInInspector] public bool isBewitched = false;
+    [HideInInspector] public GameObject whosBewitch = null;
+    [HideInInspector] public float bewitchedSpeed = 0.0f; 
+
     // Start is called before the first frame update
     void Start()
     {
         refHero = GameObject.FindObjectOfType<Hero_Ctrl>();
         rigid2D = GetComponent<Rigidbody2D>();
         anim = GetComponentInChildren<Animator>();
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
         switch (gameObject.name)
         {
@@ -74,6 +85,17 @@ public class Monster_Ctrl : MonoBehaviour
         //}
         WayPointMove();
         ChangeAnimation();
+
+        if (hitTimer > 0.0f)
+        {
+            hitTimer -= Time.deltaTime;
+            spriteRenderer.color = hitColor;
+        }
+        else if (hitTimer <= 0.0f)
+        {
+            hitTimer = 0.0f;
+            spriteRenderer.color = originColor;
+        }        
     }
     void WayPointMove()
     {
@@ -92,7 +114,8 @@ public class Monster_Ctrl : MonoBehaviour
 
         //toNextPoint.Normalize();
         //transform.rotation = Quaternion.LookRotation(transform.forward, toNextPoint);
-        transform.position = Vector3.MoveTowards(transform.position, wayPoint[wayPointIdx].position, moveSpeed * Time.deltaTime);
+        float speed = isBewitched ? bewitchedSpeed : moveSpeed;
+        transform.position = Vector3.MoveTowards(transform.position, wayPoint[wayPointIdx].position, speed * Time.deltaTime);
     }
     void ChangeAnimation()
     {
@@ -126,6 +149,7 @@ public class Monster_Ctrl : MonoBehaviour
         if (curHp < 0) return;
 
         curHp -= value;
+        hitTimer = 0.1f;
         Hpbar.fillAmount = curHp / maxHp;
 
         if (curHp < 0) curHp = 0;
@@ -141,9 +165,6 @@ public class Monster_Ctrl : MonoBehaviour
 
             Destroy(gameObject);
         }
-
-
-
     }
     private void OnCollisionEnter2D(Collision2D coll)
     {
