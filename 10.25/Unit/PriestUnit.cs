@@ -136,7 +136,7 @@ public class PriestUnit : AllyUnit
     }
     IEnumerator DoTHeal()
     {
-        Collider2D[] colls = Physics2D.OverlapCircleAll(transform.position, curAttRange);
+        Collider2D[] colls = Physics2D.OverlapCircleAll(transform.position, skillRange);
         
         GameObject effect = null;
         //ÀÌÆåÆ®»ý¼º
@@ -188,7 +188,8 @@ public class PriestUnit : AllyUnit
             if (coll == null) continue;
             if (!coll.tag.Contains("Ally")) continue;
 
-            if (coll.GetComponent<AllyUnit>().isDoTHeal)
+            if (coll.GetComponent<AllyUnit>().isDoTHeal &&
+                    coll.GetComponent<AllyUnit>().whosHeal == this.gameObject)
                 coll.GetComponent<AllyUnit>().isDoTHeal = false;
         }
 

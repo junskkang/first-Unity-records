@@ -38,8 +38,12 @@ public class Monster_Ctrl : MonoBehaviour
     //디버프 관련 변수
     [HideInInspector] public bool isBewitched = false;
     [HideInInspector] public GameObject whosBewitch = null;
-    [HideInInspector] public float bewitchedSpeed = 0.0f; 
+    [HideInInspector] public float bewitchedSpeed = 0.0f;
 
+    private void Awake()
+    {
+        RoundAttribute();
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -114,7 +118,7 @@ public class Monster_Ctrl : MonoBehaviour
 
         //toNextPoint.Normalize();
         //transform.rotation = Quaternion.LookRotation(transform.forward, toNextPoint);
-        float speed = isBewitched ? bewitchedSpeed : moveSpeed;
+        float speed = isBewitched ? bewitchedSpeed * moveSpeed : moveSpeed;
         transform.position = Vector3.MoveTowards(transform.position, wayPoint[wayPointIdx].position, speed * Time.deltaTime);
     }
     void ChangeAnimation()
@@ -165,6 +169,16 @@ public class Monster_Ctrl : MonoBehaviour
 
             Destroy(gameObject);
         }
+    }
+    void RoundAttribute()
+    {
+        moveSpeed = moveSpeed * (1 + (float)GameManager.Inst.round/10.0f);
+        Debug.Log(moveSpeed);
+
+        maxHp = maxHp * (1 + (float)GameManager.Inst.round / 10.0f);
+        curHp = maxHp;
+
+        Debug.Log(curHp);
     }
     private void OnCollisionEnter2D(Collision2D coll)
     {

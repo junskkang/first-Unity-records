@@ -1,7 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 
@@ -62,13 +60,21 @@ public class AllyUnit : MonoBehaviour
     [HideInInspector] public bool isSkilled = false;
     [HideInInspector] public bool isDoTHeal = false;
     [HideInInspector] public GameObject whosHeal = null;
+    [HideInInspector] public bool isAccel = false;
+    [HideInInspector] public GameObject whosAccel = null;
 
     [HideInInspector] public Vector3 cacDir = Vector3.zero;
     
     [HideInInspector] public GameManager m_RefGameMgr = null;  //InGameMgr와 소통을 위한 객체
 
-    public Canvas canvas = null;
-    public Image hpBar = null;
+    //UI 관련 변수
+    Canvas canvas = null;
+    public bool isClicked = false;
+    Image hpBar = null;
+    //EventTrigger eventTrigger = null;
+    SpriteRenderer mesh = null;
+    RectTransform[] rangeUI = null;
+
     // Start is called before the first frame update
     protected virtual void Start()
     {
@@ -97,8 +103,8 @@ public class AllyUnit : MonoBehaviour
     // Update is called once per frame
     protected virtual void Update()
     {
-        if (!isSkilled)
-            curAttCool -= Time.deltaTime;
+        if (!isSkilled && MonsterGenerator.inst.curMonCount != 0)
+            curAttCool -= isAccel ? Time.deltaTime * 2.0f : Time.deltaTime;
 
         if (curAttCool <= 0 && attackCount == skillPossible && !isSkilled)
         {
@@ -152,15 +158,35 @@ public class AllyUnit : MonoBehaviour
 
     void UISetUp()
     {
-        if (canvas == null)
-            canvas = GetComponentInChildren<Canvas>();
+        //eventTrigger = GetComponent<EventTrigger>();
 
+        //EventTrigger.Entry entry = new EventTrigger.Entry();
+        //entry.eventID = EventTriggerType.PointerDown;
+        //entry.callback.AddListener((Data) =>
+        //                            { 
+        //                                OnPointerClick((PointerEventData)Data);
+        //                            });
+        //eventTrigger.triggers.Add(entry);
+        
+        if (canvas == null)
+            canvas = GetComponentInChildren<Canvas>(true);
+
+        if (mesh == null)
+            mesh = GetComponentInChildren<SpriteRenderer>();
+        
         if (canvas != null)
-            hpBar = canvas.transform.Find("Hpbar").GetComponent<Image>();       
+            hpBar = canvas.transform.Find("Hpbar").GetComponent<Image>();    
+        
+        //if (rangeUI != null)
+        //{
+        //    for 
+        //}
+        //    rangeUI = canvas.transform.Find("Range").GetComponent<RectTransform>();
     }
 
     void UIUpdate()
-    {
+    {            
+
         if (hpBar != null)
             hpBar.fillAmount = curHp / maxHp;
     }
@@ -183,4 +209,24 @@ public class AllyUnit : MonoBehaviour
             skillHitLimit += 1;
         }
     }
+
+    public void UnitClick()
+    {
+        isClicked = !isClicked;
+
+        if (isClicked)
+        {
+            canvas.gameObject.SetActive(true);
+            canvas.sortingOrder += 5;
+            mesh.sortingOrder += 5;
+        }
+        else
+        {
+            canvas.gameObject.SetActive(false);
+            canvas.sortingOrder -= 5;
+            mesh.sortingOrder -= 5;
+        }
+    }
+
+
 }

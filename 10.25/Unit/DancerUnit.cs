@@ -7,7 +7,8 @@ public class Dancer_Att : Ally_Atrribute
     public float attackDur;
     public float bewitchedSpeed;
     public float skillDur;
-    
+    public GameObject[] skillEffs = new GameObject[2];
+
     public Dancer_Att()    //생성자 오버로딩 함수
     {
         //아군 공통 속성 기본값 부여
@@ -32,12 +33,15 @@ public class Dancer_Att : Ally_Atrribute
         attackEff = Resources.Load($"{type}AttackEff") as GameObject;
         skillEff = Resources.Load($"{type}SkillEff") as GameObject;
 
-        //프리스트 고유 속성 기본값 부여
+        //댄서 고유 속성 기본값 부여
         attackDur = 3.0f;
         bewitchedSpeed = 0.4f;
         skillDur = 5.0f;
-
-        //댄서 고유 속성 기본값 부여
+        
+        for (int i = 0; i < skillEffs.Length; i++)
+        {
+            skillEffs[i] = Resources.Load($"{type}SkillEff{i}") as GameObject;
+        }
     }
 
     //Ally게임 오브젝트에 빙의시킬 Ally클래스를 추가해주는 함수
@@ -138,5 +142,65 @@ public class DancerUnit : AllyUnit
     public override void Skill()
     {
         //댄서 고유 스킬 패턴
+        StartCoroutine(Accelerando());
+    }
+
+    IEnumerator Accelerando()
+    {
+        Collider2D[] colls = Physics2D.OverlapCircleAll(transform.position, skillRange);
+
+        GameObject effect1;
+        GameObject effect2;
+
+        SpriteRenderer[] randomSR;
+        int ran;
+
+        //이펙트생성
+        foreach (Collider2D coll in colls)
+        {
+            if (coll == null) continue;
+            if (!coll.tag.Contains("Ally")) continue;
+                       
+            if (((Dancer_Att)ally_Attribute).skillEffs != null)
+            {
+                //이펙트 중복되지 않도록 
+                if (coll.GetComponent<AllyUnit>().isAccel) continue;
+
+                effect1 = Instantiate(((Dancer_Att)ally_Attribute).skillEffs[1]) as GameObject;
+                effect1.transform.position = coll.transform.position;
+
+                effect2 = Instantiate(((Dancer_Att)ally_Attribute).skillEffs[0]) as GameObject;
+                effect2.transform.position = coll.transform.position;
+                randomSR = effect2.GetComponentsInChildren<SpriteRenderer>(true);
+                //Debug.Log(randomSR.Length);
+                ran = Random.Range(0, randomSR.Length);
+                randomSR[ran].gameObject.SetActive(true);
+
+                coll.GetComponent<AllyUnit>().isAccel = true;
+                coll.GetComponent<AllyUnit>().whosAccel = this.gameObject;
+
+                //효과 부여
+
+                //이펙트 제거 예약
+                Destroy(effect1, ((Dancer_Att)ally_Attribute).skillDur);
+                Destroy(effect2, ((Dancer_Att)ally_Attribute).skillDur);
+            }            
+        }
+
+        yield return new WaitForSeconds(((Dancer_Att)ally_Attribute).skillDur);
+
+        //스킬 종료 후 아첼레란도 상태 꺼주기
+        foreach (Collider2D coll in colls)
+        {
+            if (coll == null) continue;
+            if (!coll.tag.Contains("Ally")) continue;
+
+            if (coll.GetComponent<AllyUnit>().isAccel &&
+                coll.GetComponent<AllyUnit>().whosAccel == this.gameObject)
+                coll.GetComponent<AllyUnit>().isAccel = false;
+        }
+
+        isSkilled = false;
+        attackCount = 0;
     }
 }
