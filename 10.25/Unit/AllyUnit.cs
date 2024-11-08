@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -73,7 +74,7 @@ public class AllyUnit : MonoBehaviour
     Image hpBar = null;
     //EventTrigger eventTrigger = null;
     SpriteRenderer mesh = null;
-    RectTransform[] rangeUI = null;
+    RectTransform[] rangeUIs = new RectTransform[2];
 
     // Start is called before the first frame update
     protected virtual void Start()
@@ -175,13 +176,27 @@ public class AllyUnit : MonoBehaviour
             mesh = GetComponentInChildren<SpriteRenderer>();
         
         if (canvas != null)
-            hpBar = canvas.transform.Find("Hpbar").GetComponent<Image>();    
-        
-        //if (rangeUI != null)
-        //{
-        //    for 
-        //}
-        //    rangeUI = canvas.transform.Find("Range").GetComponent<RectTransform>();
+            hpBar = canvas.transform.Find("Hpbar").GetComponent<Image>();
+
+        if (rangeUIs != null)
+        {
+            string str = "";
+            for (int i = 0; i < rangeUIs.Length; i++)
+            {
+                //0 == 어택, 1 == 스킬                
+                if (i == 0)
+                    str = "Attack";
+                else if( i == 1)                    
+                    str = "Skill";                
+                
+                rangeUIs[i] = canvas.transform.Find($"{str}Range").GetComponent<RectTransform>();
+                
+                if(i == 0)
+                    rangeUIs[i].localScale = new Vector3(curAttRange * 2, curAttRange * 2, 1f);
+                else if (i == 1)
+                    rangeUIs[i].localScale = new Vector3(skillRange * 2, skillRange * 2, 1f);
+            }            
+        }        
     }
 
     void UIUpdate()
@@ -227,6 +242,4 @@ public class AllyUnit : MonoBehaviour
             mesh.sortingOrder -= 5;
         }
     }
-
-
 }

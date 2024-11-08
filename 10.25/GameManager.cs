@@ -18,7 +18,12 @@ public class GameManager : MonoBehaviour
     Vector2 mousePos;
     RaycastHit2D hit;
 
+    //UI
+    [SerializeField] private Canvas canvas;
+    [HideInInspector] public Transform unitBuildBack;
+    private bool isBuild = false;
 
+    GameObject clickUnit = null;
 
     int curPoint = 0;
     public Text pointText;
@@ -35,6 +40,7 @@ public class GameManager : MonoBehaviour
         Inst = this;
 
         round = 0;
+        unitBuildBack = canvas.transform.Find("UnitBuildBack");
     }
 
     void Start()
@@ -57,29 +63,18 @@ public class GameManager : MonoBehaviour
     {
         MouseClick();
 
-        if (Input.GetKeyDown(KeyCode.Alpha1))
+        KeyboardControl();
+
+    }
+    void KeyboardControl()
+    {
+        if (Input.GetKeyDown(KeyCode.B))
         {
-            UnitBuild(AllyType.Warrior);
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            UnitBuild(AllyType.Mage);
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            UnitBuild(AllyType.Hunter);
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha4))
-        {
-            UnitBuild(AllyType.Priest);
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha5))
-        {
-            UnitBuild(AllyType.Dancer);
+            isBuild = !isBuild;
+            unitBuildBack.gameObject.SetActive(isBuild);
         }
 
     }
-
     public void AddPoint(int value = 10)
     {
         curPoint += value;
@@ -88,25 +83,8 @@ public class GameManager : MonoBehaviour
             pointText.text = $"POINT : {curPoint}";
     }
 
-    void UnitBuild(AllyType ally)
-    {        
-        if (Physics2D.Raycast(refHero.transform.position, -refHero.transform.forward, Mathf.Infinity, monsterRoadLayer.value))
-        {
-            Debug.Log("해당 위치에 유닛을 설치할 수 없습니다.");
-            return;
-        }
-
-        worldPos = refHero.transform.position;
-        Vector3 worldToCellPos = tileMap.WorldToCell(worldPos);
-        worldToCellPos.x += 0.5f;
-        worldToCellPos.y += 0.5f;
-        
-        if (Physics2D.Raycast(worldToCellPos, -refHero.transform.forward, Mathf.Infinity, existUnit.value))
-        {
-            Debug.Log("해당 위치에 유닛이 이미 설치되어 있습니다..");
-            return;
-        }
-
+    public void UnitBuild(AllyType ally, Vector2 buildPos)
+    {      
         if (allyLoadObject != null)
         {
             GameObject cloneObject = Instantiate(allyLoadObject[(int)ally]);
@@ -116,17 +94,31 @@ public class GameManager : MonoBehaviour
 
 
 
-                refAlly.transform.position = worldToCellPos;
+                refAlly.transform.position = buildPos;
             }
         }
     }
+    public bool BuildPossible(Vector2 buildPos)
+    {
+        if (Physics2D.Raycast(buildPos, -Vector3.forward, Mathf.Infinity, monsterRoadLayer.value))
+        {
+            Debug.Log("해당 위치에 유닛을 설치할 수 없습니다.");
+            Debug.Log(buildPos);
+            return false;
+        }
 
+        if (Physics2D.Raycast(buildPos, -Vector3.forward, Mathf.Infinity, existUnit.value))
+        {
+            Debug.Log("해당 위치에 유닛이 이미 설치되어 있습니다..");
+            return false;
+        }
+
+        return true;
+    }
     void MouseClick()
     {
         if (Input.GetMouseButtonDown(0))
-        {
-            GameObject target = null;
-
+        {           
             mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Ray2D ray = new Ray2D(mousePos, Vector2.zero);
             hit = Physics2D.Raycast(ray.origin, ray.direction, Mathf.Infinity, existUnit.value);
@@ -134,19 +126,15 @@ public class GameManager : MonoBehaviour
 
             if (hit)
             {
-                target = hit.collider.gameObject;
-                target.GetComponent<AllyUnit>().UnitClick();
+                clickUnit = hit.collider.gameObject;
+                clickUnit.GetComponent<AllyUnit>().UnitClick();
             }
-
-
-            if (Physics2D.Raycast(mousePos, mousePos.normalized, Mathf.Infinity, existUnit.value))
+            else if (!hit && clickUnit != null)
             {
-                Debug.Log("유닛에 히트");
-            }
+                clickUnit.GetComponent<AllyUnit>().UnitClick();
+                clickUnit = null;
 
-            
+            }          
         }
-    }
-
-    
+    }    
 }
