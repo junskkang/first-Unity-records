@@ -164,8 +164,8 @@ public class Monster_Ctrl : MonoBehaviour
             
             MonsterGenerator.inst.curMonCount--;
             whosAttack.GetComponent<AllyUnit>().monKill++;
-            if (whosAttack.GetComponent<AllyUnit>().monKill % 10 == 0)
-                whosAttack.GetComponent<AllyUnit>().Levelup();
+            //if (whosAttack.GetComponent<AllyUnit>().monKill % 10 == 0)
+            //    whosAttack.GetComponent<AllyUnit>().Levelup();
 
             Destroy(gameObject);
         }

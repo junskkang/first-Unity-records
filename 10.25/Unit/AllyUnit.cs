@@ -1,13 +1,14 @@
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 
-public class Ally_Atrribute //加己
+public class Ally_Attribute //加己
 {
     public AllyType type;
-    public string name = "";
+    public string unitName = "";
     public int level = 0;
 
     public float maxHp = 0;
@@ -38,7 +39,7 @@ public class Ally_Atrribute //加己
 
 public class AllyUnit : MonoBehaviour
 {
-    [HideInInspector] public Ally_Atrribute ally_Attribute = null;
+    [HideInInspector] public Ally_Attribute ally_Attribute = null;
 
     [HideInInspector] public int curLevel = 0;
 
@@ -62,6 +63,7 @@ public class AllyUnit : MonoBehaviour
     [HideInInspector] public bool isDoTHeal = false;
     [HideInInspector] public GameObject whosHeal = null;
     [HideInInspector] public bool isAccel = false;
+    [HideInInspector] public float accel = 0.0f;
     [HideInInspector] public GameObject whosAccel = null;
 
     [HideInInspector] public Vector3 cacDir = Vector3.zero;
@@ -105,7 +107,7 @@ public class AllyUnit : MonoBehaviour
     protected virtual void Update()
     {
         if (!isSkilled && MonsterGenerator.inst.curMonCount != 0)
-            curAttCool -= isAccel ? Time.deltaTime * 2.0f : Time.deltaTime;
+            curAttCool -= isAccel ? Time.deltaTime * accel : Time.deltaTime;
 
         if (curAttCool <= 0 && attackCount == skillPossible && !isSkilled)
         {
@@ -137,6 +139,7 @@ public class AllyUnit : MonoBehaviour
 
     void StatSetUp()
     {
+        //unitName = ally_Attribute.unitName;
         curLevel = ally_Attribute.level;
         maxHp = ally_Attribute.maxHp;
         curHp = maxHp;
@@ -207,8 +210,9 @@ public class AllyUnit : MonoBehaviour
     }
 
     public void Levelup()
-    {
+    {        
         if (curLevel >= 10) return;
+        Debug.Log("蜡粗 饭骇诀" + ally_Attribute.unitName); 
         curLevel++;
 
         curAttDamage += 1.0f;
@@ -222,6 +226,18 @@ public class AllyUnit : MonoBehaviour
         {
             skillPossible -= 1;
             skillHitLimit += 1;
+        }
+
+        if (rangeUIs != null)
+        {
+            
+            for (int i = 0; i < rangeUIs.Length; i++)
+            {
+                if (i == 0)
+                    rangeUIs[i].localScale = new Vector3(curAttRange * 2, curAttRange * 2, 1f);
+                else if (i == 1)
+                    rangeUIs[i].localScale = new Vector3(skillRange * 2, skillRange * 2, 1f);
+            }
         }
     }
 

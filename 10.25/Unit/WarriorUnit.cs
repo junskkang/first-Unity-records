@@ -1,8 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditorInternal;
 using UnityEngine;
-public class Warrior_Att : Ally_Atrribute
+public class Warrior_Att : Ally_Attribute
 {
     //워리어 고유 속성 추가   
 
@@ -10,7 +9,7 @@ public class Warrior_Att : Ally_Atrribute
     {
         //아군 공통 속성 기본값 부여
         type = AllyType.Warrior;
-        name = "워리어";
+        unitName = "워리어";
         level = 1;
         maxHp = 100;
         maxMp = 20;

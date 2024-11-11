@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-public class Hunter_Att : Ally_Atrribute
+public class Hunter_Att : Ally_Attribute
 {
     //헌터 고유 속성 추가
 
@@ -9,7 +9,7 @@ public class Hunter_Att : Ally_Atrribute
     {
         //아군 공통 속성 기본값 부여
         type = AllyType.Hunter;
-        name = "헌터";
+        unitName = "헌터";
         level = 1;
         maxHp = 100;
         maxMp = 20;

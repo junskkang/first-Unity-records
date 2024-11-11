@@ -22,8 +22,15 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Canvas canvas;
     [HideInInspector] public Transform unitBuildBack;
     private bool isBuild = false;
+    
+    //유닛 정보패널
+    Transform unitInfoPanel;
+    AllyUnit clickUnit = null;
+    public Text infoText;
+    public Button unitLevelUpBtn;
+    public Button unitRemoveBtn;
 
-    GameObject clickUnit = null;
+    
 
     int curPoint = 0;
     public Text pointText;
@@ -41,6 +48,7 @@ public class GameManager : MonoBehaviour
 
         round = 0;
         unitBuildBack = canvas.transform.Find("UnitBuildBack");
+        unitInfoPanel = canvas.transform.Find("UnitInfo");
     }
 
     void Start()
@@ -70,6 +78,8 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.B))
         {
+            if (clickUnit != null) return;
+
             isBuild = !isBuild;
             unitBuildBack.gameObject.SetActive(isBuild);
         }
@@ -118,23 +128,80 @@ public class GameManager : MonoBehaviour
     void MouseClick()
     {
         if (Input.GetMouseButtonDown(0))
-        {           
+        {
+            if (EventSystem.current.IsPointerOverGameObject()) return;
             mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Ray2D ray = new Ray2D(mousePos, Vector2.zero);
             hit = Physics2D.Raycast(ray.origin, ray.direction, Mathf.Infinity, existUnit.value);
             //Debug.Log(mousePos);
 
-            if (hit)
-            {
-                clickUnit = hit.collider.gameObject;
-                clickUnit.GetComponent<AllyUnit>().UnitClick();
-            }
-            else if (!hit && clickUnit != null)
-            {
+            if (clickUnit != null)
+            {               
                 clickUnit.GetComponent<AllyUnit>().UnitClick();
                 clickUnit = null;
+                unitInfoPanel.gameObject.SetActive(false);
+            }
+                
 
-            }          
+            if (hit)
+            {
+                clickUnit = hit.collider.gameObject.GetComponent<AllyUnit>();
+                clickUnit.GetComponent<AllyUnit>().UnitClick();
+                unitInfoPanel.gameObject.SetActive(true);
+                UnitInfo(clickUnit);
+
+                if (unitBuildBack.gameObject.activeSelf)
+                {
+                    isBuild = !isBuild;
+                    unitBuildBack.gameObject.SetActive(isBuild);
+                }
+            }        
         }
     }    
+    
+    void UnitInfo(AllyUnit unit)
+    {
+        if (infoText != null)
+        {
+            infoText.text = "";
+
+            infoText.text = $"직업 : {unit.ally_Attribute.unitName}\n\n" +
+                            $"레벨 : {unit.curLevel}\n\n" +
+                            $"체력 : {unit.curHp.ToString("N0")}\n\n" +
+                            $"공격력 : {unit.curAttDamage.ToString("N0")}\n" +
+                            $"공격속도 : {unit.curAttSpeed.ToString("N1")}\n" +
+                            $"공격범위 : {unit.curAttRange.ToString("N1")}\n\n" +
+                            $"스킬공격력 : {unit.skillDamage.ToString("N0")}\n" +
+                            $"스킬범위 : {unit.skillRange.ToString("N1")}\n";
+        }
+
+        if (unitLevelUpBtn != null)
+        {
+            unitLevelUpBtn.onClick.RemoveAllListeners();
+            unitLevelUpBtn.onClick.AddListener(() =>
+            {
+                unit.Levelup();
+
+                infoText.text = $"직업 : {unit.ally_Attribute.unitName}\n\n" +
+                $"레벨 : {unit.curLevel}\n\n" +
+                $"체력 : {unit.curHp.ToString("N0")}\n\n" +
+                $"공격력 : {unit.curAttDamage.ToString("N0")}\n" +
+                $"공격속도 : {unit.curAttSpeed.ToString("N1")}\n" +
+                $"공격범위 : {unit.curAttRange.ToString("N1")}\n\n" +
+                $"스킬공격력 : {unit.skillDamage.ToString("N0")}\n" +
+                $"스킬범위 : {unit.skillRange.ToString("N1")}\n";
+            });
+        }
+
+
+        if (unitRemoveBtn != null)
+        {
+            unitRemoveBtn.onClick.RemoveAllListeners();
+            unitRemoveBtn.onClick.AddListener(() =>
+            {
+                unitInfoPanel.gameObject.SetActive(false);
+                Destroy(unit.gameObject);
+            });
+        }
+    }
 }

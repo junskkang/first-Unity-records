@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-public class Priest_Att : Ally_Atrribute
+public class Priest_Att : Ally_Attribute
 {
     //프리스트 고유 속성 추가
     public float skillDur = 0;
@@ -10,7 +10,7 @@ public class Priest_Att : Ally_Atrribute
     {
         //아군 공통 속성 기본값 부여
         type = AllyType.Priest;
-        name = "프리스트";
+        unitName = "프리스트";
         level = 1;
         maxHp = 100;
         maxMp = 20;

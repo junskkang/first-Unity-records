@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-public class Mage_Att : Ally_Atrribute
+public class Mage_Att : Ally_Attribute
 {
     //메이지 고유 속성 추가
     public int multiMin = 0;
@@ -15,7 +15,7 @@ public class Mage_Att : Ally_Atrribute
     {
         //아군 공통 속성 기본값 부여
         type = AllyType.Mage;
-        name = "메이지";
+        unitName = "메이지";
         level = 1;
         maxHp = 100;
         maxMp = 20;

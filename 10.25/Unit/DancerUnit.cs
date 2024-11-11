@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-public class Dancer_Att : Ally_Atrribute
+public class Dancer_Att : Ally_Attribute
 {
     //댄서 고유 속성 추가
     public float attackDur;
@@ -13,7 +13,7 @@ public class Dancer_Att : Ally_Atrribute
     {
         //아군 공통 속성 기본값 부여
         type = AllyType.Dancer;
-        name = "댄서";
+        unitName = "댄서";
         level = 1;
         maxHp = 100;
         maxMp = 20;
@@ -27,7 +27,7 @@ public class Dancer_Att : Ally_Atrribute
         skillPossible = 2;
         anyHit = false;
         skillRange = 4.0f;
-        skillDamage = 3.0f;
+        skillDamage = 1.2f;
         skillHitLimit = 5;
 
         attackEff = Resources.Load($"{type}AttackEff") as GameObject;
@@ -177,6 +177,7 @@ public class DancerUnit : AllyUnit
                 randomSR[ran].gameObject.SetActive(true);
 
                 coll.GetComponent<AllyUnit>().isAccel = true;
+                coll.GetComponent<AllyUnit>().accel = skillDamage;
                 coll.GetComponent<AllyUnit>().whosAccel = this.gameObject;
 
                 //효과 부여
