@@ -11,7 +11,10 @@ public class Priest_Att : Ally_Attribute
         //아군 공통 속성 기본값 부여
         type = AllyType.Priest;
         unitName = "프리스트";
-        level = 1;
+        level = 0;
+        unlockCost = 50;
+        buildCost = 50;
+
         maxHp = 100;
         maxMp = 20;
 

@@ -10,7 +10,10 @@ public class Warrior_Att : Ally_Attribute
         //아군 공통 속성 기본값 부여
         type = AllyType.Warrior;
         unitName = "워리어";
-        level = 1;
+        level = 0;
+        unlockCost = 10;
+        buildCost = 10;
+
         maxHp = 100;
         maxMp = 20;
 

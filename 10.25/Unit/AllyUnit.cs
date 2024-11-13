@@ -1,5 +1,6 @@
 using System.Collections;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -10,6 +11,8 @@ public class Ally_Attribute //속성
     public AllyType type;
     public string unitName = "";
     public int level = 0;
+    public int unlockCost = 0;
+    public int buildCost = 0;
 
     public float maxHp = 0;
     public float maxMp = 0;
@@ -42,7 +45,7 @@ public class AllyUnit : MonoBehaviour
     [HideInInspector] public Ally_Attribute ally_Attribute = null;
 
     [HideInInspector] public int curLevel = 0;
-
+    [HideInInspector] public float levelUpCost = 0;
     [HideInInspector] public float maxHp = 0;     //게임 중에 변하는 Hp
     public float curHp = 0;     //게임 중에 변하는 Hp
     [HideInInspector] public float curMp = 0;   //게임 중에 변하는 Mana
@@ -58,6 +61,8 @@ public class AllyUnit : MonoBehaviour
     [HideInInspector] public float skillDamage = 0;
     [HideInInspector] public int skillHitLimit = 0;
     public int monKill = 0;
+
+    bool skillEnabled = false;
 
     [HideInInspector] public bool isSkilled = false;
     [HideInInspector] public bool isDoTHeal = false;
@@ -77,13 +82,16 @@ public class AllyUnit : MonoBehaviour
     //EventTrigger eventTrigger = null;
     SpriteRenderer mesh = null;
     RectTransform[] rangeUIs = new RectTransform[2];
+    GameObject levelUpEff = null;
+    GameObject MasterEff = null;
 
     // Start is called before the first frame update
     protected virtual void Start()
     {
         //캐릭터 공통 등장 준비
         m_RefGameMgr = FindObjectOfType<GameManager>(); //InGameManager와 소통을 위한 객체를 찾아 놓음
-
+        levelUpEff = Resources.Load("LevelUpEff") as GameObject;
+        MasterEff = Resources.Load("MasterEff") as GameObject;
         //캐릭터 등장시 호출함수 (외형 모델링 로딩 리소스 셋팅, 캐릭터 고유 이펙트 메모리풀 준비)
         //상속받는 쪽 공통 등장 코드(스폰 위치 등)
 
@@ -94,8 +102,8 @@ public class AllyUnit : MonoBehaviour
         //    GameObject a_Clone = Instantiate(a_ChrSprite); //지금 이 Hero GameObject에 붙일 스프라이트 스폰
         //    a_Clone.transform.SetParent(this.transform, false); //Hero 밑에 child로 스프라이트 붙이기
         //}
-        
-        
+
+
         //스탯치 상태 변수에 충전       
         StatSetUp();
 
@@ -109,7 +117,7 @@ public class AllyUnit : MonoBehaviour
         if (!isSkilled && MonsterGenerator.inst.curMonCount != 0)
             curAttCool -= isAccel ? Time.deltaTime * accel : Time.deltaTime;
 
-        if (curAttCool <= 0 && attackCount == skillPossible && !isSkilled)
+        if (curAttCool <= 0 && attackCount == skillPossible && !isSkilled && skillEnabled)
         {
             isSkilled = true;
             Skill();
@@ -156,6 +164,8 @@ public class AllyUnit : MonoBehaviour
         skillRange = ally_Attribute.skillRange;
         skillDamage = ally_Attribute.skillDamage;
         skillHitLimit = ally_Attribute.skillHitLimit;
+
+        levelUpCost = ally_Attribute.buildCost;
 
         Debug.Log("스탯 설정 완료");
     }
@@ -212,8 +222,22 @@ public class AllyUnit : MonoBehaviour
     public void Levelup()
     {        
         if (curLevel >= 10) return;
-        Debug.Log("유닛 레벨업" + ally_Attribute.unitName); 
+        //Debug.Log("유닛 레벨업" + ally_Attribute.unitName); 
+        if (levelUpCost > GlobalValue.g_Gold) return;
+
+        Debug.Log(levelUpCost);
+
+        if (levelUpEff != null)
+        {
+            GameObject go = Instantiate(levelUpEff);
+            go.transform.position = transform.position;
+            go.GetComponentInChildren<SpriteRenderer>().sortingOrder = mesh.sortingOrder + 1;
+            Destroy(go, 1.6f);
+        }
+
         curLevel++;
+
+        GameManager.Inst.GetGold(-(int)levelUpCost);
 
         curAttDamage += 1.0f;
         curAttRange += 0.1f;
@@ -221,12 +245,34 @@ public class AllyUnit : MonoBehaviour
 
         skillRange += 0.2f;
         skillDamage += 2.0f;
+        if (curLevel % 2 == 0)
+        {
+            float sizeUp = 1.0f + (float)curLevel / 20.0f;
+            //Debug.Log(sizeUp);
+            mesh.transform.localScale = new Vector3(sizeUp, sizeUp);
+        }
 
-        if (curLevel % 4 == 0)
+        if (curLevel == 4)
+        {
+            skillEnabled = true;
+            attackCount = 0;
+
+            Debug.Log("스킬 사용 가능 여부 : " + skillEnabled);
+        }
+        else if (curLevel % 5 == 0)
         {
             skillPossible -= 1;
             skillHitLimit += 1;
         }
+
+        if (curLevel == 10 && MasterEff != null)
+        {
+            GameObject go = Instantiate(MasterEff);
+            go.transform.position = transform.position;
+            go.GetComponentInChildren<SpriteRenderer>().sortingOrder = - 1;
+            go.transform.SetParent(transform, true);
+        }
+
 
         if (rangeUIs != null)
         {
@@ -239,6 +285,8 @@ public class AllyUnit : MonoBehaviour
                     rangeUIs[i].localScale = new Vector3(skillRange * 2, skillRange * 2, 1f);
             }
         }
+
+        levelUpCost = ally_Attribute.buildCost * (1 + curLevel); 
     }
 
     public void UnitClick()

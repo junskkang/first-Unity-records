@@ -16,6 +16,7 @@ public class GlobalValue
     public static string g_NickName = "";
     public static int g_Round = 0;
     public static int g_BestScore = 0;
+    public static int g_Gold = 0;
 
     public static List<Ally_Attribute> g_AllyList = new List<Ally_Attribute> ();    //보유 중인 아군 리스트
 

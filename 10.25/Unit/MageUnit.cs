@@ -16,7 +16,10 @@ public class Mage_Att : Ally_Attribute
         //아군 공통 속성 기본값 부여
         type = AllyType.Mage;
         unitName = "메이지";
-        level = 1;
+        level = 0;
+        unlockCost = 50;
+        buildCost = 30;
+
         maxHp = 100;
         maxMp = 20;
 
@@ -38,7 +41,7 @@ public class Mage_Att : Ally_Attribute
         multiMin = 1;
         multiMax = 5;
         skillDur = 5.0f;
-        skillTick = 0.1f;
+        skillTick = 0.2f;
         for (int i = 0; i < attackEffs.Length; i++)
         {
             attackEffs[i] = Resources.Load($"{type}AttackEff{i}") as GameObject;

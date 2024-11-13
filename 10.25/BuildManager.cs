@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
@@ -22,6 +23,14 @@ public class BuildManager : MonoBehaviour
     Vector3 origin = new Vector3(0, 0);
     Vector3 hide = new Vector3(0, -200);
     float hideSpeed = 400.0f;
+
+   
+    
+    public static BuildManager instance;
+    private void Awake()
+    {
+        instance = this;
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -65,10 +74,27 @@ public class BuildManager : MonoBehaviour
             if (unitBuildBtn[i].gameObject.activeSelf &&
                 IsCollNode(unitBuildBtn[i].gameObject))
             {
-                saveIdx = i;
-                mouseImg.sprite = unitBuildBtn[i].sprite;
-                isPossibleImg.gameObject.SetActive(true);
-                break;
+                //해금 전
+                if (unitBuildBtn[i].unlockedPossible && !unitBuildBtn[i].isUnlocked)
+                {
+                    GameManager.Inst.GetGold(-GlobalValue.g_AllyList[i].unlockCost);
+                    unitBuildBtn[i].isUnlocked = true;
+                    GameManager.Inst.notifyObject.SetActive(true);
+                    GameManager.Inst.notifyObject.GetComponent<NotifyCtrl>().NotifyOn(GlobalValue.g_AllyList[i].unitName);
+
+                    return;
+                }
+
+
+                //해금 후
+                if (unitBuildBtn[i].isUnlocked && unitBuildBtn[i].buildPossible)
+                {                    
+                    saveIdx = i;
+                    mouseImg.sprite = unitBuildBtn[i].sprite;
+                    isPossibleImg.gameObject.SetActive(true);
+                    break;
+                }
+
             }
         }
     }
@@ -122,7 +148,7 @@ public class BuildManager : MonoBehaviour
         }                   
         
         GameManager.Inst.UnitBuild((AllyType)saveIdx, saveVec);
-
+        GameManager.Inst.GetGold(-GlobalValue.g_AllyList[saveIdx].buildCost);
         isPossibleImg.gameObject.SetActive(false);
         saveIdx = -1;
         saveVec = Vector3.zero;

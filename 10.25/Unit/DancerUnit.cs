@@ -14,7 +14,10 @@ public class Dancer_Att : Ally_Attribute
         //아군 공통 속성 기본값 부여
         type = AllyType.Dancer;
         unitName = "댄서";
-        level = 1;
+        level = 0;
+        unlockCost = 70;
+        buildCost = 100;
+
         maxHp = 100;
         maxMp = 20;
 

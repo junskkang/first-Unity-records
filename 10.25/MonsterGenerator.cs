@@ -111,7 +111,9 @@ public class MonsterGenerator : MonoBehaviour
                 monster.transform.SetParent(this.transform);
                 curMonCount++;
 
-                yield return new WaitForSeconds(0.8f);               
+                yield return new WaitForSeconds(0.8f);   
+                
+                //if (GameManager.Inst.round % 5 == 0 && i == monsterCount -1) //보스몬스터 소환
             }                    
         }
 

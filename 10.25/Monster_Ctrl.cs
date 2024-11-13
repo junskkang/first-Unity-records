@@ -35,6 +35,9 @@ public class Monster_Ctrl : MonoBehaviour
     Color originColor = Color.white;
     float hitTimer = 0.0f;
 
+    //골드값
+    int money = 1;
+
     //디버프 관련 변수
     [HideInInspector] public bool isBewitched = false;
     [HideInInspector] public GameObject whosBewitch = null;
@@ -166,19 +169,23 @@ public class Monster_Ctrl : MonoBehaviour
             whosAttack.GetComponent<AllyUnit>().monKill++;
             //if (whosAttack.GetComponent<AllyUnit>().monKill % 10 == 0)
             //    whosAttack.GetComponent<AllyUnit>().Levelup();
-
+            GameManager.Inst.GetGold(money);
             Destroy(gameObject);
         }
     }
     void RoundAttribute()
     {
+        if (GameManager.Inst.round == 0) return;
+
         moveSpeed = moveSpeed * (1 + (float)GameManager.Inst.round/10.0f);
-        Debug.Log(moveSpeed);
+        //Debug.Log(moveSpeed);
 
         maxHp = maxHp * (1 + (float)GameManager.Inst.round / 10.0f);
         curHp = maxHp;
 
-        Debug.Log(curHp);
+        money = money * (1 + (int)GameManager.Inst.round);
+
+        //Debug.Log(curHp);
     }
     private void OnCollisionEnter2D(Collision2D coll)
     {

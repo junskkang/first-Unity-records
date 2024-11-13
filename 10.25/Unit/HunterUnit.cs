@@ -10,7 +10,10 @@ public class Hunter_Att : Ally_Attribute
         //아군 공통 속성 기본값 부여
         type = AllyType.Hunter;
         unitName = "헌터";
-        level = 1;
+        level = 0;
+        unlockCost = 30;
+        buildCost = 20;
+
         maxHp = 100;
         maxMp = 20;
 

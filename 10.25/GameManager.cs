@@ -30,6 +30,9 @@ public class GameManager : MonoBehaviour
     public Button unitLevelUpBtn;
     public Button unitRemoveBtn;
 
+    //알림창
+    public GameObject notifyObject;
+    
     
 
     int curPoint = 0;
@@ -49,6 +52,7 @@ public class GameManager : MonoBehaviour
         round = 0;
         unitBuildBack = canvas.transform.Find("UnitBuildBack");
         unitInfoPanel = canvas.transform.Find("UnitInfo");
+        GetGold(30);
     }
 
     void Start()
@@ -82,6 +86,11 @@ public class GameManager : MonoBehaviour
 
             isBuild = !isBuild;
             unitBuildBack.gameObject.SetActive(isBuild);
+        }
+
+        if (Input.GetKeyDown(KeyCode.G))
+        {
+            GlobalValue.g_Gold += 10;
         }
 
     }
@@ -177,10 +186,31 @@ public class GameManager : MonoBehaviour
 
         if (unitLevelUpBtn != null)
         {
+            if (unit.curLevel >= 10)
+            {
+                unitLevelUpBtn.GetComponentInChildren<Text>().text = "최대 레벨 달성";
+                unitLevelUpBtn.interactable = false;
+            }
+            else
+            {
+                unitLevelUpBtn.GetComponentInChildren<Text>().text = $"레벨 상승 : {unit.levelUpCost}골";
+                unitLevelUpBtn.interactable = true;
+            }
+
             unitLevelUpBtn.onClick.RemoveAllListeners();
             unitLevelUpBtn.onClick.AddListener(() =>
             {
                 unit.Levelup();
+                if (unit.curLevel >= 10)
+                {
+                    unitLevelUpBtn.GetComponentInChildren<Text>().text = "최대 레벨 달성";
+                    unitLevelUpBtn.interactable = false;
+                }
+                else
+                {
+                    unitLevelUpBtn.GetComponentInChildren<Text>().text = $"레벨 상승 : {unit.levelUpCost}골";
+                    unitLevelUpBtn.interactable = true;
+                }
 
                 infoText.text = $"직업 : {unit.ally_Attribute.unitName}\n\n" +
                 $"레벨 : {unit.curLevel}\n\n" +
@@ -203,5 +233,16 @@ public class GameManager : MonoBehaviour
                 Destroy(unit.gameObject);
             });
         }
+    }
+
+    public void GetGold(int value)
+    {
+        if (value < 0 && GlobalValue.g_Gold < Mathf.Abs(value)) return;
+
+
+        GlobalValue.g_Gold += value;
+
+        if (pointText != null)
+            pointText.text = $"GOLD : {GlobalValue.g_Gold}";
     }
 }
