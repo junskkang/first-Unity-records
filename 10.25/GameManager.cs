@@ -122,7 +122,7 @@ public class GameManager : MonoBehaviour
         if (Physics2D.Raycast(buildPos, -Vector3.forward, Mathf.Infinity, monsterRoadLayer.value))
         {
             Debug.Log("해당 위치에 유닛을 설치할 수 없습니다.");
-            Debug.Log(buildPos);
+            //Debug.Log(buildPos);
             return false;
         }
 

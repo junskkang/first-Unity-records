@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class MonsterGenerator : MonoBehaviour
 {
     public GameObject[] prefabMonster;
+    public GameObject[] bossMonster;
     public Transform startPos;
     Animator anim;
     public GameObject warningEff;
@@ -17,6 +18,7 @@ public class MonsterGenerator : MonoBehaviour
     int monsterCount = 15;
     [HideInInspector] public int curMonCount = 0;
     bool createDone = false;
+    public bool monsterExist = false;
 
     public static MonsterGenerator inst;
 
@@ -47,7 +49,7 @@ public class MonsterGenerator : MonoBehaviour
         {
             GameManager.Inst.round++;
             createDone = false;
-            anim.SetTrigger("doorOpen");
+            anim.SetTrigger("doorOpen");            
             //StartCoroutine(MonsterCreate());
             timeSpawn = 0.0f;  //diffSpawn 값만큼 주기가 생성되게 됨
             
@@ -57,6 +59,11 @@ public class MonsterGenerator : MonoBehaviour
             timerText.text = timeSpawn.ToString("N2");
         else
             timerText.text = $"{GameManager.Inst.round}라운드 몬스터 등장!!";
+
+        if (curMonCount > 0)
+            monsterExist = true;
+        else
+            monsterExist = false;
 
             ////초기위치 잡아주기
             //Vector3 spawnPos = Vector3.zero;
@@ -97,9 +104,7 @@ public class MonsterGenerator : MonoBehaviour
     }
 
     IEnumerator MonsterCreate()
-    {
-        
-
+    {       
         if (timeSpawn <= 0.0f)
         {
             for (int i = 0; i < monsterCount; i++)
@@ -113,7 +118,14 @@ public class MonsterGenerator : MonoBehaviour
 
                 yield return new WaitForSeconds(0.8f);   
                 
-                //if (GameManager.Inst.round % 5 == 0 && i == monsterCount -1) //보스몬스터 소환
+                if (GameManager.Inst.round % 5 == 0 && i == monsterCount -1) //보스몬스터 소환
+                {
+                    GameObject boss = Instantiate(bossMonster[0]);
+
+                    boss.transform.position = startPos.position;
+                    boss.transform.SetParent(this.transform);
+                    //curMonCount++;
+                }
             }                    
         }
 
@@ -121,5 +133,7 @@ public class MonsterGenerator : MonoBehaviour
         createDone = true;
         anim.SetTrigger("doorClose");
         warningEff.gameObject.SetActive(false);
+
+        Debug.Log("현재 몬스터 수 : " + curMonCount);
     }
 }

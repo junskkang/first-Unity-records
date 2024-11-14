@@ -39,7 +39,7 @@ public class Dancer_Att : Ally_Attribute
         //댄서 고유 속성 기본값 부여
         attackDur = 3.0f;
         bewitchedSpeed = 0.4f;
-        skillDur = 5.0f;
+        skillDur = 3.0f;
         
         for (int i = 0; i < skillEffs.Length; i++)
         {
@@ -135,6 +135,7 @@ public class DancerUnit : AllyUnit
         if (anyHit)
         {
             attackCount++;
+            curHp -= 1;
             anyHit = false;
         }
 

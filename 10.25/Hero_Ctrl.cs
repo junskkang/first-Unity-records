@@ -21,14 +21,16 @@ public class Hero_Ctrl : MonoBehaviour
 
     //체력 관련 변수
     public Image Hpbar;
-    float maxHp = 200.0f;
-    [HideInInspector] public float curHp = 200.0f;
+    float maxHp = 20.0f;
+    [HideInInspector] public float curHp = 20.0f;
 
     // Start is called before the first frame update
     void Start()
     {
         m_Anim = GetComponentInChildren<Animator>();    //Animator 컴포넌트 찾아오기...
         rigid2D = GetComponent<Rigidbody2D>();          //Rigidbody2D 컴포넌트 찾아오기
+
+        curHp = maxHp;
     }
 
     // Update is called once per frame
@@ -126,7 +128,7 @@ public class Hero_Ctrl : MonoBehaviour
     //    }
     //}
 
-    public void TakeDamage(float damage = 10.0f)
+    public void TakeDamage(float damage = 1f)
     {
         if (curHp <= 0.0f)
             return;
@@ -139,6 +141,7 @@ public class Hero_Ctrl : MonoBehaviour
         if(Hpbar != null)
             Hpbar.fillAmount = curHp/maxHp;
 
+        Debug.Log("남은 체력 : " + curHp);
         if (curHp <= 0.0f)
         {
             //사망처리

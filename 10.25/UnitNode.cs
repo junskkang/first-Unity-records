@@ -47,7 +47,7 @@ public class UnitNode : MonoBehaviour
             string name = this.gameObject.name;
             
             name = name.Substring(8);
-            Debug.Log(name);
+            //Debug.Log(name);
             switch (name)
             {
                 case "Warrior":

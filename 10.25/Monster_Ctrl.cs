@@ -3,13 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum MonsterType
+{
+    normal,
+    boss
+}
+
 public class Monster_Ctrl : MonoBehaviour
 {
+    MonsterType type = MonsterType.normal;
+
     //플레이어를 추적하도록 하기 위한 변수
     Hero_Ctrl refHero;  //추적하게 될 대상
     Vector3 curPos;
     Vector3 dirVec;
-    int monsterType = 0;
+    int monsterType = -1;
 
     //웨이포인트 관련 이동 변수
     public GameObject wayPointParent;
@@ -38,6 +46,13 @@ public class Monster_Ctrl : MonoBehaviour
     //골드값
     int money = 1;
 
+    //라운드별 스탯 가중치
+    int roundAtt = 10;
+    float addSpeed = 0.0f;
+    float addHp = 1.0f;
+    bool isRocked = false;
+    [HideInInspector] public bool isFlying = false;
+
     //디버프 관련 변수
     [HideInInspector] public bool isBewitched = false;
     [HideInInspector] public GameObject whosBewitch = null;
@@ -45,16 +60,11 @@ public class Monster_Ctrl : MonoBehaviour
 
     private void Awake()
     {
-        RoundAttribute();
+
     }
     // Start is called before the first frame update
     void Start()
     {
-        refHero = GameObject.FindObjectOfType<Hero_Ctrl>();
-        rigid2D = GetComponent<Rigidbody2D>();
-        anim = GetComponentInChildren<Animator>();
-        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-
         switch (gameObject.name)
         {
             case "Monster_1(Clone)":
@@ -63,7 +73,18 @@ public class Monster_Ctrl : MonoBehaviour
             case "Monster_2(Clone)":
                 monsterType = 2;
                 break;
+            case "BossMonster(Clone)":
+                monsterType = 1;
+                type = MonsterType.boss;
+                break;
         }
+
+        RoundAttribute();
+
+        refHero = GameObject.FindObjectOfType<Hero_Ctrl>();
+        rigid2D = GetComponent<Rigidbody2D>();
+        anim = GetComponentInChildren<Animator>();
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
         if (wayPointParent == null)
         {
@@ -111,9 +132,22 @@ public class Monster_Ctrl : MonoBehaviour
         if (wayPointIdx == (wayPoint.Length - 1) && toNextPoint.magnitude < 0.1f)
         {
             //도착판정
-            MonsterGenerator.inst.curMonCount--;
-            Destroy(this.gameObject);
-            //Debug.Log(wayPointIdx);
+            if (type == MonsterType.boss)
+            {
+                wayPointIdx = 1;
+                transform.position = wayPoint[wayPointIdx].position;
+                
+                //목숨 깎기
+                refHero.TakeDamage(5);
+            }
+            else if (type == MonsterType.normal)
+            {
+                MonsterGenerator.inst.curMonCount--;
+                //목숨깎기
+                refHero.TakeDamage();
+                Destroy(this.gameObject);
+            }            
+            
             return;
         }
         else if (toNextPoint.magnitude < 0.1f)
@@ -121,33 +155,68 @@ public class Monster_Ctrl : MonoBehaviour
 
         //toNextPoint.Normalize();
         //transform.rotation = Quaternion.LookRotation(transform.forward, toNextPoint);
-        float speed = isBewitched ? bewitchedSpeed * moveSpeed : moveSpeed;
+
+        float speed = 0.0f;
+        if (type == MonsterType.normal)
+            speed = isBewitched ? bewitchedSpeed * moveSpeed : moveSpeed;
+        else if (type == MonsterType.boss)
+            speed = moveSpeed;
+
         transform.position = Vector3.MoveTowards(transform.position, wayPoint[wayPointIdx].position, speed * Time.deltaTime);
     }
     void ChangeAnimation()
     {
-         if(0.01f < toNextPoint.magnitude) //이동 중일 때
-        {
-            if(Mathf.Abs(toNextPoint.x) > Mathf.Abs(toNextPoint.y))  //좌우 이동
+        if (type == MonsterType.normal)
+        {         
+            if (0.01f < toNextPoint.magnitude) //이동 중일 때
             {
-                if (toNextPoint.x > 0) //오른쪽으로 이동 중일 때
-                    anim.Play($"Mon{monsterType}_Right_Walk");
-                else  //왼쪽으로 이동 중일 때
-                    anim.Play($"Mon{monsterType}_Left_Walk");
-            }
-            else  //상하 이동
-            {
-                if (toNextPoint.y < 0)
-                    anim.Play($"Mon{monsterType}_Front_Walk");
-                else
-                    anim.Play($"Mon{monsterType}_Back_Walk");
-            }
+                if (Mathf.Abs(toNextPoint.x) > Mathf.Abs(toNextPoint.y))  //좌우 이동
+                {
+                    if (toNextPoint.x > 0) //오른쪽으로 이동 중일 때
+                        anim.Play($"Mon{monsterType}_Right_Walk");
+                    else  //왼쪽으로 이동 중일 때
+                        anim.Play($"Mon{monsterType}_Left_Walk");
+                }
+                else  //상하 이동
+                {
+                    if (toNextPoint.y < 0)
+                        anim.Play($"Mon{monsterType}_Front_Walk");
+                    else
+                        anim.Play($"Mon{monsterType}_Back_Walk");
+                }
 
-            anim.speed = 0.6f;    //애니메이션 플레이 속도 조절  
+                anim.speed = 0.6f;    //애니메이션 플레이 속도 조절  
+            }
+            else  //멈춰 있을 때
+            {
+                anim.speed = 0.0f;    //애니메이션 속도를 0으로 설정하여 멈춤
+            }
         }
-        else  //멈춰 있을 때
+        else if (type == MonsterType.boss)
         {
-            anim.speed = 0.0f;    //애니메이션 속도를 0으로 설정하여 멈춤
+            if (0.01f < toNextPoint.magnitude) //이동 중일 때
+            {
+                if (Mathf.Abs(toNextPoint.x) > Mathf.Abs(toNextPoint.y))  //좌우 이동
+                {
+                    if (toNextPoint.x > 0) //오른쪽으로 이동 중일 때
+                        anim.Play($"Boss{monsterType}_Right_Walk");
+                    else  //왼쪽으로 이동 중일 때
+                        anim.Play($"Boss{monsterType}_Left_Walk");
+                }
+                else  //상하 이동
+                {
+                    if (toNextPoint.y < 0)
+                        anim.Play($"Boss{monsterType}_Front_Walk");
+                    else
+                        anim.Play($"Boss{monsterType}_Back_Walk");
+                }
+
+                anim.speed = 0.6f;    //애니메이션 플레이 속도 조절  
+            }
+            else  //멈춰 있을 때
+            {
+                anim.speed = 0.0f;    //애니메이션 속도를 0으로 설정하여 멈춤
+            }
         }
     }
 
@@ -155,7 +224,7 @@ public class Monster_Ctrl : MonoBehaviour
     {
         if (curHp < 0) return;
 
-        curHp -= value;
+        curHp -= isRocked? 1 : value;
         hitTimer = 0.1f;
         Hpbar.fillAmount = curHp / maxHp;
 
@@ -175,25 +244,75 @@ public class Monster_Ctrl : MonoBehaviour
     }
     void RoundAttribute()
     {
-        if (GameManager.Inst.round == 0) return;
+        //라운드별 몬스터 특성 살리기
+        if (GameManager.Inst.round > 45)
+            roundAtt = 1;
+        else if (GameManager.Inst.round > 40)
+            roundAtt = 2;
+        else if (GameManager.Inst.round > 35)
+            roundAtt = 3;
+        else if (GameManager.Inst.round > 30)
+            roundAtt = 4;
+        else if (GameManager.Inst.round > 25)
+            roundAtt = 5;
+        else if (GameManager.Inst.round > 20)
+            roundAtt = 6;
+        else if (GameManager.Inst.round > 15)
+            roundAtt = 7;
+        else if (GameManager.Inst.round > 10)
+            roundAtt = 8;
+        else if (GameManager.Inst.round > 5)
+            roundAtt = 9;
 
-        moveSpeed = moveSpeed * (1 + (float)GameManager.Inst.round/10.0f);
-        //Debug.Log(moveSpeed);
-
-        maxHp = maxHp * (1 + (float)GameManager.Inst.round / 10.0f);
-        curHp = maxHp;
-
-        money = money * (1 + (int)GameManager.Inst.round);
-
-        //Debug.Log(curHp);
-    }
-    private void OnCollisionEnter2D(Collision2D coll)
-    {
-        if (coll.gameObject.name.Contains("Hero"))
-        {
-            MonsterGenerator.inst.curMonCount--;
-            Destroy(this.gameObject);
-            refHero.TakeDamage(10.0f);
+        if(GameManager.Inst.round > 5)
+        {        
+            if (GameManager.Inst.round % 5 == 1)      //이속이 빠른 라운드
+            {
+                addHp = 0.8f;
+                addSpeed = 2.5f;
+                isFlying = true;
+            }
+            else if (GameManager.Inst.round % 5 == 3) //체력이 많은 라운드   
+            {
+                addHp = 2.0f;
+                addSpeed *= 0.7f;
+            }
+            else if (GameManager.Inst.round % 5 == 4) //체력은 낮지만 모든 데미지가 1씩만 들어오는 라운드
+            { 
+                isRocked = true;
+            }
         }
+
+        if (type == MonsterType.normal)
+        {
+            if (GameManager.Inst.round == 1) return;
+
+            moveSpeed = moveSpeed * (1 + (float)GameManager.Inst.round / (roundAtt * 10) + addSpeed);
+
+            maxHp = isRocked ? GameManager.Inst.round : (maxHp * (1 + ((float)GameManager.Inst.round / roundAtt))) * addHp;
+            curHp = maxHp;
+
+            money = money * (1 + (int)GameManager.Inst.round);
+        }
+        else if (type == MonsterType.boss)
+        {
+            moveSpeed = moveSpeed * (1 + (float)GameManager.Inst.round / (roundAtt * 5));
+
+            maxHp = maxHp * (10 * (float)GameManager.Inst.round / roundAtt * addHp);
+            curHp = maxHp;
+
+            money = money * (10 + (int)GameManager.Inst.round);
+        }        
+
+        Debug.Log($"{GameManager.Inst.round}라운드 [{type}]체력 : {curHp}, 이동속도 : {moveSpeed}");
     }
+    //private void OnCollisionEnter2D(Collision2D coll)
+    //{
+    //    if (coll.gameObject.name.Contains("Hero"))
+    //    {
+    //        MonsterGenerator.inst.curMonCount--;
+    //        Destroy(this.gameObject);
+    //        refHero.TakeDamage(10.0f);
+    //    }
+    //}
 }

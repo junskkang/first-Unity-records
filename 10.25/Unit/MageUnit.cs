@@ -31,7 +31,7 @@ public class Mage_Att : Ally_Attribute
         attackCount = 0;
         skillPossible = 3;
         anyHit = false;
-        skillRange = 4.0f;
+        skillRange = 3.0f;
         skillDamage = 0.5f;
         skillHitLimit = 0;        
 
@@ -119,6 +119,7 @@ public class MageUnit : AllyUnit
         if (anyHit)
         {
             attackCount++;
+            curHp -= 1;
             anyHit = false;
         }
     }

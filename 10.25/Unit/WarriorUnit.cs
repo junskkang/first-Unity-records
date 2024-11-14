@@ -72,11 +72,11 @@ public class WarriorUnit : AllyUnit
         GameObject effect = null;
         foreach (Collider2D coll in colls)
         {
-            if (!coll.tag.Contains("Monster")) continue;
+            if (!coll.tag.Contains("Monster") || coll.GetComponent<Monster_Ctrl>().isFlying) continue;
 
             cacDir = coll.transform.position - transform.position;
 
-            if (cacDir.magnitude <= curAttRange)
+            if (cacDir.magnitude <= curAttRange + 0.1f)
             {
                 //데미지 부여
                 coll.GetComponent<Monster_Ctrl>().TakeDamage(curAttDamage, this.gameObject);
@@ -97,6 +97,7 @@ public class WarriorUnit : AllyUnit
         if (anyHit)
         {
             attackCount++;
+            curHp -= 1;
             anyHit = false;
         }
     }
@@ -116,7 +117,7 @@ public class WarriorUnit : AllyUnit
                 skillHitLimit = ally_Attribute.skillHitLimit;
                 break;
             }
-            if (!coll.tag.Contains("Monster")) continue;
+            if (!coll.tag.Contains("Monster") || coll.GetComponent<Monster_Ctrl>().isFlying) continue;
 
             cacDir = coll.transform.position - transform.position;
 

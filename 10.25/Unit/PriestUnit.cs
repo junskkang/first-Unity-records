@@ -18,7 +18,7 @@ public class Priest_Att : Ally_Attribute
         maxHp = 100;
         maxMp = 20;
 
-        attackDamage = 10;
+        attackDamage = 5;
         attackRange = 4.0f;
         attackSpeed = 3.0f;
         attackCool = 0.0f;
@@ -27,7 +27,7 @@ public class Priest_Att : Ally_Attribute
         skillPossible = 5;
         anyHit = false;
         skillRange = 2.0f;
-        skillDamage = 3.0f;
+        skillDamage = 1.0f;
         skillHitLimit = 4;
 
         attackEff = Resources.Load($"{type}AttackEff") as GameObject;
@@ -35,7 +35,7 @@ public class Priest_Att : Ally_Attribute
 
         //프리스트 고유 속성 기본값 부여
         skillDur = 5.0f;
-        skillTick = 0.5f;
+        skillTick = 1.0f;
     }
 
     //Ally게임 오브젝트에 빙의시킬 Ally클래스를 추가해주는 함수
@@ -128,6 +128,7 @@ public class PriestUnit : AllyUnit
         if (anyHit)
         {
             attackCount++;
+            curHp -= 1;
             anyHit = false;
         }
     }

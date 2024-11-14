@@ -85,7 +85,13 @@ public class HunterUnit : AllyUnit
                 bulletCtrl = bullet.GetComponent<BulletCtrl>();
                 bulletCtrl.BulletSpawn(transform.position, cacDir.normalized, curAttDamage
                                         , base.ally_Attribute.attackEff, this);
+                StartCoroutine(bulletCtrl.EffectOn(coll.transform.position));
                 bullet.transform.right = new Vector3(cacDir.normalized.x, cacDir.normalized.y, 0.0f);
+                
+                if (coll.GetComponent<Monster_Ctrl>().isFlying) //공중몹 1.5배 데미지
+                    coll.GetComponent<Monster_Ctrl>().TakeDamage(curAttDamage * 1.5f, this.gameObject);
+                else
+                    coll.GetComponent<Monster_Ctrl>().TakeDamage(curAttDamage, this.gameObject);
 
                 anyHit = true;
                 break;
@@ -95,6 +101,7 @@ public class HunterUnit : AllyUnit
         if (anyHit)
         {
             attackCount++;
+            curHp -= 1;
             anyHit = false;
         }
     }
@@ -121,7 +128,10 @@ public class HunterUnit : AllyUnit
             if (cacDir.magnitude <= skillRange)
             {
                 //데미지 부여
-                coll.GetComponent<Monster_Ctrl>().TakeDamage(skillDamage, this.gameObject);
+                if (coll.GetComponent<Monster_Ctrl>().isFlying) //공중몹 1.5배 데미지
+                    coll.GetComponent<Monster_Ctrl>().TakeDamage(skillDamage * 1.5f, this.gameObject);
+                else
+                    coll.GetComponent<Monster_Ctrl>().TakeDamage(skillDamage, this.gameObject);
 
                 //이펙트 생성
                 if (base.ally_Attribute.skillEff != null)

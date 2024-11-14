@@ -5,6 +5,12 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+public enum UnitState
+{
+    idle,
+    wounded,
+    die
+}
 
 public class Ally_Attribute //속성
 {
@@ -85,6 +91,12 @@ public class AllyUnit : MonoBehaviour
     GameObject levelUpEff = null;
     GameObject MasterEff = null;
 
+    //애니메이션 변화
+    Animator anim = null;
+
+    //유닛 상태
+    UnitState unitState = UnitState.idle;
+
     // Start is called before the first frame update
     protected virtual void Start()
     {
@@ -114,25 +126,27 @@ public class AllyUnit : MonoBehaviour
     // Update is called once per frame
     protected virtual void Update()
     {
-        if (!isSkilled && MonsterGenerator.inst.curMonCount != 0)
+        if (unitState == UnitState.die) return;
+
+        if (!isSkilled) //&& MonsterGenerator.inst.curMonCount != 0
             curAttCool -= isAccel ? Time.deltaTime * accel : Time.deltaTime;
 
         if (curAttCool <= 0 && attackCount == skillPossible && !isSkilled && skillEnabled)
         {
             isSkilled = true;
             Skill();
-            curAttCool = curAttSpeed;
+            curAttCool = unitState == UnitState.wounded? curAttSpeed * 0.7f : curAttSpeed;
         }
 
         if (curAttCool <= 0 && !isSkilled)
         {
             Attack();
-            curAttCool = curAttSpeed;
-
-            curHp -= curAttDamage / 2;
+            curAttCool = unitState == UnitState.wounded ? curAttSpeed * 0.7f : curAttSpeed;
         }
 
         UIUpdate();
+
+        AnimUpdate();
     }
 
     public virtual void Attack()
@@ -167,7 +181,7 @@ public class AllyUnit : MonoBehaviour
 
         levelUpCost = ally_Attribute.buildCost;
 
-        Debug.Log("스탯 설정 완료");
+        //Debug.Log("스탯 설정 완료");
     }
 
     void UISetUp()
@@ -190,6 +204,9 @@ public class AllyUnit : MonoBehaviour
         
         if (canvas != null)
             hpBar = canvas.transform.Find("Hpbar").GetComponent<Image>();
+
+        if (anim == null)
+            anim = GetComponentInChildren<Animator>();
 
         if (rangeUIs != null)
         {
@@ -304,6 +321,26 @@ public class AllyUnit : MonoBehaviour
             canvas.gameObject.SetActive(false);
             canvas.sortingOrder -= 5;
             mesh.sortingOrder -= 5;
+        }
+    }
+
+    void AnimUpdate()
+    {
+        if (curHp <= 0)
+        {
+            curHp = 0;
+            unitState = UnitState.die;
+            anim.Play($"Ally{((int)ally_Attribute.type + 1)}_Die");
+        }
+        else if (curHp < 30.0f)
+        {
+            unitState = UnitState.wounded;
+            anim.Play($"Ally{((int)ally_Attribute.type + 1)}_Wounded");
+        }
+        else
+        {
+            unitState = UnitState.idle;
+            anim.Play($"Ally{((int)ally_Attribute.type + 1)}_Idle");
         }
     }
 }

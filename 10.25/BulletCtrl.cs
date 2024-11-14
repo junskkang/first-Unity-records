@@ -5,15 +5,17 @@ using UnityEngine;
 public class BulletCtrl : MonoBehaviour
 {
     Vector3 dirVec = Vector3.right;
-    float moveSpeed = 50.0f;        //날아가는 속도
+    float moveSpeed = 70.0f;        //날아가는 속도
 
     [HideInInspector] public float curAttDamage = 0;
     [HideInInspector] public GameObject hunterAttackEff = null;
     [HideInInspector] public HunterUnit hunterUnit = null;
+    [HideInInspector] public GameObject target = null;
     // Start is called before the first frame update
     void Start()
     {
-        Destroy(gameObject, 3.0f);
+        Destroy(gameObject, 0.5f);
+        //Invoke("EffectOn", 0.1f);
     }
 
     // Update is called once per frame
@@ -42,19 +44,35 @@ public class BulletCtrl : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D coll)
     {
         if (coll.tag == "Monster")
-        {         
-            coll.GetComponent<Monster_Ctrl>().TakeDamage(curAttDamage, hunterUnit.gameObject);
+        {     
+            //데미지는 직접 주는 걸로
+            //coll.GetComponent<Monster_Ctrl>().TakeDamage(curAttDamage, hunterUnit.gameObject);
 
-            GameObject effect;
-            //이펙트 생성
-            if (hunterAttackEff != null)
-            {
-                effect = Instantiate(hunterAttackEff) as GameObject;
-                effect.transform.position = coll.transform.position;
-                Destroy(effect, 0.25f);
-            }
+            //GameObject effect;
+            ////이펙트 생성
+            //if (hunterAttackEff != null)
+            //{
+            //    effect = Instantiate(hunterAttackEff) as GameObject;
+            //    effect.transform.position = coll.transform.position;
+            //    Destroy(effect, 0.25f);
+            //}
 
             Destroy(this.gameObject);
+        }
+    }
+
+    public IEnumerator EffectOn(Vector3 position)
+    {
+        yield return new WaitForSeconds(0.1f);
+
+        GameObject effect;
+        //이펙트 생성
+        if (hunterAttackEff != null)        {           
+
+            effect = Instantiate(hunterAttackEff) as GameObject;
+            
+            effect.transform.position = position;
+            Destroy(effect, 0.25f);
         }
     }
 }
