@@ -1,19 +1,27 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class CameraResolution : MonoBehaviour
 {
+    Camera a_Cam = null;
     public GameObject UI_MaskGroup;
 
     //Viewport ÁÂÇ¥¸¦ ¿ùµåÁÂÇ¥·Î Viewport to World
     public static Vector3 minVtW = new Vector3(-9.0f, 5.0f, 0.0f);
     public static Vector3 maxVtW = new Vector3(9.0f, 5.0f, 0.0f);
 
+    Vector3 defaultCamPos = Vector3.zero;
+    public GameObject zoomTarget = null;
+    float cal = 0.0f;
+    float zoomSpeed = 2.0f;
+    public static bool isZoom = false;
     // Start is called before the first frame update
     void Start()
     {
-        Camera a_Cam = GetComponent<Camera>();
+        a_Cam = GetComponent<Camera>();
+        defaultCamPos = a_Cam.transform.position;
         Rect rect = a_Cam.rect;
         float scaleHeight = ((float)Screen.width / Screen.height) /
                                     ((float) 16 / 9);
@@ -60,7 +68,38 @@ public class CameraResolution : MonoBehaviour
 
     // Update is called once per frame
     void Update()
+    { 
+        ZoomIn(zoomTarget);
+    }
+
+    public void ZoomIn(GameObject target = null)
     {
-       
+        if (target == null)
+        {
+            transform.position = defaultCamPos;
+            a_Cam.orthographicSize = 7;
+            isZoom = false;
+        }
+        else
+        {
+            isZoom = true;
+            Vector3 outZ = new Vector3(target.transform.position.x, target.transform.position.y, -10);            
+                        
+            if ((outZ - transform.position).magnitude > 0.01f) 
+                transform.position = Vector3.Lerp(transform.position, outZ, Time.deltaTime * zoomSpeed * 2);
+            else 
+                transform.position = outZ;
+            
+            if (a_Cam.orthographicSize >= 5.01f)
+            {
+                cal += Time.deltaTime * zoomSpeed;
+                a_Cam.orthographicSize = Mathf.Lerp(7, 5, cal);
+            }
+            else
+            {
+                cal = 0.0f;
+                a_Cam.orthographicSize = 5;
+            }              
+        }
     }
 }

@@ -37,7 +37,7 @@ public class MonsterGenerator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (curMonCount == 0 && timeSpawn > 10.0f && createDone == true)
+        if (curMonCount <= 0 && timeSpawn > 10.0f && createDone == true)
             timeSpawn = 5.0f;
 
         timeSpawn -= Time.deltaTime;

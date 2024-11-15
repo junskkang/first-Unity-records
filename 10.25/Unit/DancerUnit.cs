@@ -27,11 +27,11 @@ public class Dancer_Att : Ally_Attribute
         attackCool = 0.0f;
 
         attackCount = 0;
-        skillPossible = 2;
+        skillPossible = 4;
         anyHit = false;
-        skillRange = 4.0f;
+        skillRange = 3.0f;
         skillDamage = 1.2f;
-        skillHitLimit = 5;
+        skillHitLimit = 4;
 
         attackEff = Resources.Load($"{type}AttackEff") as GameObject;
         skillEff = Resources.Load($"{type}SkillEff") as GameObject;
@@ -207,5 +207,28 @@ public class DancerUnit : AllyUnit
 
         isSkilled = false;
         attackCount = 0;
+    }
+
+    public override void LevelUp()
+    {
+        base.LevelUp();
+
+        curAttDamage += 1.0f;
+        curAttRange += 0.05f;
+        curAttSpeed -= 0.1f;
+
+        if (curLevel > 4)
+        {
+            skillRange += 0.15f;
+            skillDamage += 0.2f;
+        }
+        else if (curLevel % 5 == 0)
+        {
+            ((Dancer_Att)ally_Attribute).skillDur += 0.5f;
+            ((Dancer_Att)ally_Attribute).attackDur += 0.5f;
+            ((Dancer_Att)ally_Attribute).bewitchedSpeed -= 0.1f;
+            ally_Attribute.skillHitLimit += 1;
+            skillPossible -= 1;
+        }
     }
 }

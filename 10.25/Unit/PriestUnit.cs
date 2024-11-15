@@ -20,7 +20,7 @@ public class Priest_Att : Ally_Attribute
 
         attackDamage = 5;
         attackRange = 4.0f;
-        attackSpeed = 3.0f;
+        attackSpeed = 5.0f;
         attackCool = 0.0f;
 
         attackCount = 0;
@@ -199,5 +199,26 @@ public class PriestUnit : AllyUnit
 
         isSkilled = false;
         attackCount = 0;
+    }
+
+    public override void LevelUp()
+    {
+        base.LevelUp();
+
+        curAttDamage += 1.0f;
+        curAttRange += 0.05f;
+        curAttSpeed -= 0.1f;
+
+        if (curLevel > 4)
+        {
+            skillRange += 0.15f;
+            skillDamage += 0.1f;
+        }
+        else if (curLevel % 5 == 0)
+        {
+            ((Priest_Att)ally_Attribute).skillDur += 0.5f;
+            ((Priest_Att)ally_Attribute).skillTick -= 0.1f;
+            skillPossible -= 1;
+        }
     }
 }

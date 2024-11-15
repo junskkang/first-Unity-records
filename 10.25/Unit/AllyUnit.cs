@@ -52,6 +52,7 @@ public class AllyUnit : MonoBehaviour
 
     [HideInInspector] public int curLevel = 0;
     [HideInInspector] public float levelUpCost = 0;
+    [HideInInspector] public float resellCost = 0;
     [HideInInspector] public float maxHp = 0;     //게임 중에 변하는 Hp
     public float curHp = 0;     //게임 중에 변하는 Hp
     [HideInInspector] public float curMp = 0;   //게임 중에 변하는 Mana
@@ -126,6 +127,9 @@ public class AllyUnit : MonoBehaviour
     // Update is called once per frame
     protected virtual void Update()
     {
+        AnimUpdate();
+        UIUpdate();
+
         if (unitState == UnitState.die) return;
 
         if (!isSkilled) //&& MonsterGenerator.inst.curMonCount != 0
@@ -135,18 +139,14 @@ public class AllyUnit : MonoBehaviour
         {
             isSkilled = true;
             Skill();
-            curAttCool = unitState == UnitState.wounded? curAttSpeed * 0.7f : curAttSpeed;
+            curAttCool = unitState == UnitState.wounded? curAttSpeed * 1.3f : curAttSpeed;
         }
 
         if (curAttCool <= 0 && !isSkilled)
         {
             Attack();
-            curAttCool = unitState == UnitState.wounded ? curAttSpeed * 0.7f : curAttSpeed;
-        }
-
-        UIUpdate();
-
-        AnimUpdate();
+            curAttCool = unitState == UnitState.wounded ? curAttSpeed * 1.3f : curAttSpeed;
+        }     
     }
 
     public virtual void Attack()
@@ -236,13 +236,13 @@ public class AllyUnit : MonoBehaviour
             hpBar.fillAmount = curHp / maxHp;
     }
 
-    public void Levelup()
+    public virtual void LevelUp()
     {        
         if (curLevel >= 10) return;
         //Debug.Log("유닛 레벨업" + ally_Attribute.unitName); 
         if (levelUpCost > GlobalValue.g_Gold) return;
 
-        Debug.Log(levelUpCost);
+        //Debug.Log(levelUpCost);
 
         if (levelUpEff != null)
         {
@@ -255,13 +255,8 @@ public class AllyUnit : MonoBehaviour
         curLevel++;
 
         GameManager.Inst.GetGold(-(int)levelUpCost);
+        resellCost += levelUpCost;
 
-        curAttDamage += 1.0f;
-        curAttRange += 0.1f;
-        curAttSpeed -= 0.1f;
-
-        skillRange += 0.2f;
-        skillDamage += 2.0f;
         if (curLevel % 2 == 0)
         {
             float sizeUp = 1.0f + (float)curLevel / 20.0f;
@@ -276,11 +271,6 @@ public class AllyUnit : MonoBehaviour
 
             Debug.Log("스킬 사용 가능 여부 : " + skillEnabled);
         }
-        else if (curLevel % 5 == 0)
-        {
-            skillPossible -= 1;
-            skillHitLimit += 1;
-        }
 
         if (curLevel == 10 && MasterEff != null)
         {
@@ -289,7 +279,6 @@ public class AllyUnit : MonoBehaviour
             go.GetComponentInChildren<SpriteRenderer>().sortingOrder = - 1;
             go.transform.SetParent(transform, true);
         }
-
 
         if (rangeUIs != null)
         {

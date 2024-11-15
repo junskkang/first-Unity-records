@@ -23,7 +23,7 @@ public class Mage_Att : Ally_Attribute
         maxHp = 100;
         maxMp = 20;
 
-        attackDamage = 7;
+        attackDamage = 10;
         attackRange = 5.0f;
         attackSpeed = 4.0f;
         attackCool = 0.0f;
@@ -186,6 +186,29 @@ public class MageUnit : AllyUnit
                 }
             }
             yield return new WaitForSeconds(((Mage_Att)ally_Attribute).skillTick);
+        }
+    }
+
+    public override void LevelUp()
+    {
+        base.LevelUp();
+
+        curAttDamage += 1.0f;
+        curAttRange += 0.05f;
+        curAttSpeed -= 0.2f;
+
+        if (curLevel > 4)
+        {
+            skillRange += 0.2f;
+            skillDamage += 0.5f;
+        }
+        else if (curLevel % 5 == 0)
+        {
+            ((Mage_Att)ally_Attribute).multiMin += 1;
+            ((Mage_Att)ally_Attribute).multiMax += 1;
+            ((Mage_Att)ally_Attribute).skillDur -= 0.7f;
+            ((Mage_Att)ally_Attribute).skillTick -= 0.05f;
+            skillPossible -= 1;
         }
     }
 }

@@ -142,4 +142,24 @@ public class WarriorUnit : AllyUnit
 
         isSkilled = false;
     }
+
+    public override void LevelUp()
+    {
+        base.LevelUp();
+
+        curAttDamage += 2.0f;
+        curAttRange += 0.1f;
+        curAttSpeed -= 0.1f;
+
+        if (curLevel > 4)
+        {
+            skillRange += 0.1f;
+            skillDamage += 3.0f;
+        }
+        else if (curLevel % 5 == 0)
+        {
+            skillPossible -= 1;
+            ally_Attribute.skillHitLimit += 1;
+        }
+    }
 }

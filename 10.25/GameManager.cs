@@ -32,8 +32,12 @@ public class GameManager : MonoBehaviour
 
     //알림창
     public GameObject notifyObject;
-    
-    
+
+    //줌인 카메라
+    CameraResolution cam;
+
+    //게임오버 판넬
+    public GameObject gameOverPanel;
 
     int curPoint = 0;
     public Text pointText;
@@ -52,11 +56,13 @@ public class GameManager : MonoBehaviour
         round = 0;
         unitBuildBack = canvas.transform.Find("UnitBuildBack");
         unitInfoPanel = canvas.transform.Find("UnitInfo");
+        cam = Camera.main.transform.GetComponent < CameraResolution>();
         GetGold(30);
     }
 
     void Start()
     {
+
         GlobalValue.LoadGameData();
         for (int i = 0; i < GlobalValue.g_AllyList.Count; i++)
         {
@@ -68,6 +74,8 @@ public class GameManager : MonoBehaviour
 
         monsterRoadLayer = 1 << LayerMask.NameToLayer("InstallImpossible");
         existUnit = 1 << LayerMask.NameToLayer("Unit");
+
+        //Time.timeScale = 15.0f;
     }
 
     
@@ -149,6 +157,7 @@ public class GameManager : MonoBehaviour
                 clickUnit.GetComponent<AllyUnit>().UnitClick();
                 clickUnit = null;
                 unitInfoPanel.gameObject.SetActive(false);
+                cam.zoomTarget = null;
             }
                 
 
@@ -158,6 +167,7 @@ public class GameManager : MonoBehaviour
                 clickUnit.GetComponent<AllyUnit>().UnitClick();
                 unitInfoPanel.gameObject.SetActive(true);
                 UnitInfo(clickUnit);
+                cam.zoomTarget = hit.collider.gameObject;
 
                 if (unitBuildBack.gameObject.activeSelf)
                 {
@@ -200,7 +210,7 @@ public class GameManager : MonoBehaviour
             unitLevelUpBtn.onClick.RemoveAllListeners();
             unitLevelUpBtn.onClick.AddListener(() =>
             {
-                unit.Levelup();
+                unit.LevelUp();
                 if (unit.curLevel >= 10)
                 {
                     unitLevelUpBtn.GetComponentInChildren<Text>().text = "최대 레벨 달성";
@@ -226,9 +236,11 @@ public class GameManager : MonoBehaviour
 
         if (unitRemoveBtn != null)
         {
+            unitRemoveBtn.GetComponentInChildren<Text>().text = $"유닛 판매 : {(int)(unit.resellCost * 0.7f)}골";
             unitRemoveBtn.onClick.RemoveAllListeners();
             unitRemoveBtn.onClick.AddListener(() =>
             {
+                GlobalValue.g_Gold += (int)(unit.resellCost * 0.7f);
                 unitInfoPanel.gameObject.SetActive(false);
                 Destroy(unit.gameObject);
             });
@@ -244,5 +256,30 @@ public class GameManager : MonoBehaviour
 
         if (pointText != null)
             pointText.text = $"GOLD : {GlobalValue.g_Gold}";
+    }
+    float alpha = 0.0f;
+    Color alphaColor = Color.white;
+    public IEnumerator GameOver()
+    {
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.gameObject.SetActive(true);
+
+            while (alpha <= 1.0f)
+            {
+                alpha += Time.unscaledDeltaTime * 10;
+                Debug.Log(alpha);
+
+                if (alpha >= 1.0f)
+                    alpha = 1.0f;
+
+                alphaColor = new Color(1.0f, 1.0f, 1.0f, alpha);
+                gameOverPanel.GetComponent<Image>().color = alphaColor;
+                if (alpha >= 1.0f)
+                    yield break;
+
+                yield return new WaitForSecondsRealtime(0.1f);
+            }
+        }
     }
 }

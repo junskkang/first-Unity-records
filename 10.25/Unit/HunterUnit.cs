@@ -147,4 +147,24 @@ public class HunterUnit : AllyUnit
         attackCount = 0;
         isSkilled = false;
     }
+
+    public override void LevelUp()
+    {
+        base.LevelUp();
+
+        curAttDamage += 1.5f;
+        curAttRange += 0.1f;
+        curAttSpeed -= 0.1f;
+
+        if (curLevel > 4)
+        {
+            skillRange += 0.2f;
+            skillDamage += 2.0f;
+        }
+        else if (curLevel % 5 == 0)
+        {
+            skillPossible -= 1;
+            ally_Attribute.skillHitLimit += 1;
+        }
+    }
 }

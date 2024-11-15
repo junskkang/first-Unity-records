@@ -46,6 +46,8 @@ public class Hero_Ctrl : MonoBehaviour
 
     void KeyBDUpdate()
     {
+        if (CameraResolution.isZoom == true) return;
+
         h = Input.GetAxisRaw("Horizontal");
         v = Input.GetAxisRaw("Vertical");
 
@@ -60,12 +62,25 @@ public class Hero_Ctrl : MonoBehaviour
             //transform.position += (m_DirVec * m_MoveSpeed * Time.deltaTime);
 
             rigid2D.velocity = (m_DirVec * m_MoveSpeed);
+
+            Vector3 pos = Camera.main.WorldToViewportPoint(transform.position);
+
+            pos.x = Mathf.Clamp(pos.x, 0.03f, 0.97f);
+            pos.y = Mathf.Clamp(pos.y, 0.07f, 0.95f);
+
+            Vector3 converterToWorld = Camera.main.ViewportToWorldPoint(pos);
+            converterToWorld.z = transform.position.z;
+            transform.position = converterToWorld;
         }
         else  // ∏ÿ√Á ¿÷¿ª ∂ß
         {
             m_DirVec = Vector3.zero;
             rigid2D.velocity = (m_DirVec * m_MoveSpeed);
         }
+
+        
+
+        
     }//void KeyBDUpdate()
 
     void ChangeAnimation()
@@ -145,7 +160,8 @@ public class Hero_Ctrl : MonoBehaviour
         if (curHp <= 0.0f)
         {
             //ªÁ∏¡√≥∏Æ
-            Time.timeScale = 0.0f;
+            StartCoroutine(GameManager.Inst.GameOver());
+            Time.timeScale = 0.0f;            
         }
     }
 }
