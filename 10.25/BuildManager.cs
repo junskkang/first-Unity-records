@@ -40,6 +40,8 @@ public class BuildManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (NotifyCtrl.isNotify) return;
+
         if (mouseImg != null)
         {
             if (Input.GetMouseButtonDown(0))

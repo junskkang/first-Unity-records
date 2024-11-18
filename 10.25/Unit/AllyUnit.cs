@@ -127,6 +127,8 @@ public class AllyUnit : MonoBehaviour
     // Update is called once per frame
     protected virtual void Update()
     {
+        if (NotifyCtrl.isNotify) return;
+
         AnimUpdate();
         UIUpdate();
 

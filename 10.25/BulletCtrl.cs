@@ -21,6 +21,8 @@ public class BulletCtrl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (NotifyCtrl.isNotify) return;
+
         transform.position += dirVec * moveSpeed * Time.deltaTime;
 
         //화면 밖을 벗어난 총알 바로 삭제

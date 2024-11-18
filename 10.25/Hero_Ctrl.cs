@@ -36,6 +36,8 @@ public class Hero_Ctrl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (NotifyCtrl.isNotify) return;
+
         if (curHp <= 0.0f)
             return;
 

@@ -55,6 +55,8 @@ public class PriestUnit : AllyUnit
     List<float> allyHpValue = new List<float>();
     List<int> whosHpIdx = new List<int>();
     float lessHp = 0;
+
+    Color healColor = new Color(0.0f, 1.0f, 0.37f);
     // Start is called before the first frame update
     protected override void Start()
     {
@@ -105,14 +107,17 @@ public class PriestUnit : AllyUnit
             }                
         }
 
-        Debug.Log("제일 낮은 피를 가진 유닛의 인덱스" + whosHpIdx[idx]);
+        //Debug.Log("제일 낮은 피를 가진 유닛의 인덱스" + whosHpIdx[idx]);
 
         if (colls[whosHpIdx[idx]].GetComponent<AllyUnit>().curHp + curAttDamage < colls[whosHpIdx[idx]].GetComponent<AllyUnit>().maxHp)
             colls[whosHpIdx[idx]].GetComponent<AllyUnit>().curHp += curAttDamage;
         else
             colls[whosHpIdx[idx]].GetComponent<AllyUnit>().curHp = colls[whosHpIdx[idx]].GetComponent<AllyUnit>().maxHp;
 
-        Debug.Log(colls[whosHpIdx[idx]].name + "에게 힐 시전완료");
+        if (GameManager.Inst != null)
+            GameManager.Inst.DamageText((int)curAttDamage, colls[whosHpIdx[idx]].transform.position, healColor);
+
+        //Debug.Log(colls[whosHpIdx[idx]].name + "에게 힐 시전완료");
         anyHit = true;
 
         //이펙트 생성
@@ -180,6 +185,9 @@ public class PriestUnit : AllyUnit
                         coll.GetComponent<AllyUnit>().curHp += skillDamage;
                     else
                         coll.GetComponent<AllyUnit>().curHp = coll.GetComponent<AllyUnit>().maxHp;
+
+                    if (GameManager.Inst != null)
+                        GameManager.Inst.DamageText((int)skillDamage, coll.transform.position, healColor);
                 }
             }
 
@@ -212,7 +220,7 @@ public class PriestUnit : AllyUnit
         if (curLevel > 4)
         {
             skillRange += 0.15f;
-            skillDamage += 0.1f;
+            skillDamage += 0.5f;
         }
         else if (curLevel % 5 == 0)
         {

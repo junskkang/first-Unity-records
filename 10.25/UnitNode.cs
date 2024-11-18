@@ -109,6 +109,8 @@ public class UnitNode : MonoBehaviour
 
     public void OnPointerEnter()
     {
+        if (NotifyCtrl.isNotify) return;
+
         if (!unlockedPossible) return;
 
         if (isUnlocked)

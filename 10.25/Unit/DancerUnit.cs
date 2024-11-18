@@ -220,12 +220,12 @@ public class DancerUnit : AllyUnit
         if (curLevel > 4)
         {
             skillRange += 0.15f;
-            skillDamage += 0.2f;
+            skillDamage += 0.5f;
         }
         else if (curLevel % 5 == 0)
         {
-            ((Dancer_Att)ally_Attribute).skillDur += 0.5f;
-            ((Dancer_Att)ally_Attribute).attackDur += 0.5f;
+            ((Dancer_Att)ally_Attribute).skillDur += 2f;
+            ((Dancer_Att)ally_Attribute).attackDur += 1f;
             ((Dancer_Att)ally_Attribute).bewitchedSpeed -= 0.1f;
             ally_Attribute.skillHitLimit += 1;
             skillPossible -= 1;

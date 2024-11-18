@@ -111,6 +111,8 @@ public class Monster_Ctrl : MonoBehaviour
         //    dirVec = Vector3.zero;
         //    rigid2D.velocity = Vector3.zero;
         //}
+        if (NotifyCtrl.isNotify) return;
+
         WayPointMove();
         ChangeAnimation();
 
@@ -157,10 +159,9 @@ public class Monster_Ctrl : MonoBehaviour
         //transform.rotation = Quaternion.LookRotation(transform.forward, toNextPoint);
 
         float speed = 0.0f;
-        if (type == MonsterType.normal)
-            speed = isBewitched ? bewitchedSpeed * moveSpeed : moveSpeed;
-        else if (type == MonsterType.boss)
-            speed = moveSpeed;
+
+        speed = isBewitched ? bewitchedSpeed * moveSpeed : moveSpeed;
+
 
         transform.position = Vector3.MoveTowards(transform.position, wayPoint[wayPointIdx].position, speed * Time.deltaTime);
     }
@@ -226,6 +227,10 @@ public class Monster_Ctrl : MonoBehaviour
 
         curHp -= isRocked? 1 : value;
         hitTimer = 0.1f;
+
+        if (GameManager.Inst != null)
+            GameManager.Inst.DamageText(-(int)value, this.transform.position, Color.red);
+
         Hpbar.fillAmount = curHp / maxHp;
 
         if (curHp < 0) curHp = 0;
@@ -315,4 +320,9 @@ public class Monster_Ctrl : MonoBehaviour
     //        refHero.TakeDamage(10.0f);
     //    }
     //}
+
+    IEnumerator BossPatern()
+    {
+        yield break;
+    }
 }

@@ -39,6 +39,16 @@ public class GameManager : MonoBehaviour
     //게임오버 판넬
     public GameObject gameOverPanel;
 
+    //배속 재생을 위한 변수
+    [HideInInspector] public int isFast = 1;
+
+    //데미지 텍스트 관련 변수
+    public Transform damageCanvas = null;   //유니티 연결용
+    public GameObject damagePrefab = null;  //유니티 연결용
+    GameObject damageClone;                 //복사본
+    DamageCtrl damageText;                  //컴포넌트 받아오기용
+    Vector3 startPos = Vector3.zero;
+
     int curPoint = 0;
     public Text pointText;
 
@@ -81,6 +91,8 @@ public class GameManager : MonoBehaviour
     
     void Update()
     {
+        if (NotifyCtrl.isNotify) return;
+
         MouseClick();
 
         KeyboardControl();
@@ -99,6 +111,15 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.G))
         {
             GlobalValue.g_Gold += 10;
+        }
+
+        if (Input.GetKeyDown(KeyCode.R)) 
+        {
+            isFast++;            
+
+            Time.timeScale = isFast;
+
+            if (isFast == 3) isFast = 0;
         }
 
     }
@@ -280,6 +301,19 @@ public class GameManager : MonoBehaviour
 
                 yield return new WaitForSecondsRealtime(0.1f);
             }
+        }
+    }
+
+    public void DamageText(int Value, Vector3 ownerPos, Color ownerColor)
+    {
+        damageClone = Instantiate(damagePrefab);
+        if (damageClone != null && damageCanvas != null)
+        {
+            startPos = new Vector3(ownerPos.x, ownerPos.y + 0.2f, ownerPos.z);
+            damageClone.transform.SetParent(damageCanvas);
+            damageText = damageClone.GetComponent<DamageCtrl>();
+            damageText.DamageSpawn(Value, ownerColor);
+            damageClone.transform.position = startPos;
         }
     }
 }

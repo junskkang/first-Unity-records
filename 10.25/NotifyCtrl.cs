@@ -9,6 +9,7 @@ public class NotifyCtrl : MonoBehaviour
     public Text messageText;
     public Button confirmButton;
     string savetext = "@@";
+    public static bool isNotify = false;
     // Start is called before the first frame update
 
     void Start()
@@ -17,6 +18,8 @@ public class NotifyCtrl : MonoBehaviour
         if (confirmButton != null)
             confirmButton.onClick.AddListener(() =>
             {
+                isNotify = false;
+                Time.timeScale = GameManager.Inst.isFast;
                 gameObject.SetActive(false);
             });
     }
@@ -29,9 +32,10 @@ public class NotifyCtrl : MonoBehaviour
 
     public void NotifyOn(string msg)
     {
-        string change = messageText.text.Replace(savetext, msg);
-
+        string change = messageText.text.Replace(savetext, msg);        
         messageText.text = change;
         savetext = msg;
+        isNotify = true;
+        Time.timeScale = 0;
     }
 }
